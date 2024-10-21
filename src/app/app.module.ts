@@ -13,6 +13,8 @@ import { AngularFireAuthModule } from '@angular/fire/compat/auth';
 import { AngularFirestoreModule } from '@angular/fire/compat/firestore';
 import { environment } from '../environments/environment';
 
+import { FirestoreService } from 'src/app/services/firestore.service';
+
 // Custom components
 
 
@@ -26,7 +28,16 @@ import { environment } from '../environments/environment';
     AngularFireAuthModule,
     AngularFirestoreModule
   ],
-  providers: [{ provide: RouteReuseStrategy, useClass: IonicRouteStrategy }],
+  providers: 
+  [ FirestoreService, 
+    { 
+      provide: 
+      RouteReuseStrategy, 
+      
+      useClass: 
+      IonicRouteStrategy 
+    }
+  ],
   bootstrap: [AppComponent],
 })
 export class AppModule {}
