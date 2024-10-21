@@ -46,6 +46,10 @@ const routes: Routes = [
     path: 'view-staff',
     loadChildren: () => import('./pages/view-staff/view-staff.module').then( m => m.ViewStaffPageModule)
   },
+  {
+    path: 'hod-analytics',
+    loadChildren: () => import('./pages/hod-analytics/hod-analytics.module').then( m => m.HODANALYTICSPageModule)
+  },
 
 ];
 
