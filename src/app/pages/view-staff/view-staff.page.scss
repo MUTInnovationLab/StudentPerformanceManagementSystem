@@ -1,0 +1,405 @@
+/* Search Section Styles */
+.search-section {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 2rem 0; /* Space around the search bar */
+  }
+  
+  .search-input {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.1rem;
+    padding: 1rem 2rem; /* Comfortable padding for typing */
+    border: none;
+    border-radius: 25px; /* Rounded corners for modern feel */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* Soft shadow */
+    width: 100%;
+    max-width: 500px; /* Limit the width on larger screens */
+    transition: box-shadow 0.3s ease, transform 0.3s ease; /* Smooth transition for interaction */
+    background-color: rgba(255, 255, 255, 0.9); /* Glassmorphic effect */
+    
+    &::placeholder {
+      color: rgba(0, 0, 0, 0.5); /* Softer color for placeholder */
+    }
+  
+    &:focus {
+      outline: none; /* Remove default focus outline */
+      box-shadow: 0 6px 20px rgba(0, 180, 216, 0.3); /* Stronger shadow on focus */
+      transform: scale(1.02); /* Slightly enlarge on focus */
+    }
+  }
+  
+//   .search-button {
+//     background-image: var(--gradient-primary);
+//     border: none;
+//     border-radius: 25px; /* Matching border radius */
+//     color: white;
+//     font-weight: bold;
+//     font-size: 1.1rem;
+//     padding: 1rem 2rem;
+//     margin-left: 1rem; /* Space between input and button */
+//     cursor: pointer;
+//     transition: background 0.3s ease, transform 0.3s ease; /* Smooth hover transition */
+//     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* Soft shadow */
+    
+//     &:hover {
+//       background-image: var(--gradient-secondary); /* Change gradient on hover */
+//       transform: scale(1.05); /* Slight enlargement for interaction */
+//     }
+//   }
+  
+.table-container {
+    display: flex;
+    color: var(  --ion-color-primary-shade);
+    justify-content: center;
+    align-items: center;
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    max-height: fit-content;
+    width: calc(100% - 40px); /* Adjust width based on padding */
+    margin: 0 auto;
+    overflow: hidden; /* Prevents overflow */
+}
+
+.table-wrapper {
+    width: 100%;
+    max-height: fit-content;
+    overflow-y: auto;
+    overflow-x: hidden; /* Prevents horizontal scrolling */
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 10px;
+}
+
+th {
+    background-color: var(--ion-color-secondary-tint);
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+    color: white;
+}
+
+td {
+    //background-color: #054c5b;
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid white;
+}
+
+.details {
+    //background-color: #054c5b;
+    color: white;
+    transition: background-color 0.3s ease, color 0.3s ease, transform 0.3s ease; /* Smooth transition for scaling */
+}
+
+.details:hover {
+    background-color: rgb(201, 145, 21);
+    text-decoration: solid;
+    color:  rgba(0, 180, 216, 0.3);
+    transform: scale(1.005);
+}
+
+:root {
+    /* Enhanced color scheme */
+    --ion-color-primary: #007BFF;
+    --ion-color-primary-rgb: 0, 123, 255;
+    --ion-color-primary-contrast: #ffffff;
+    --ion-color-primary-shade: #0066cc;
+    --ion-color-primary-tint: #3399ff;
+  
+    --ion-color-secondary: #FF4081;
+    --ion-color-secondary-rgb: 255, 64, 129;
+    --ion-color-secondary-contrast: #ffffff;
+    --ion-color-secondary-shade: #e53671;
+    --ion-color-secondary-tint: #ff6d95;
+  
+    --background-color: #f0f4f8; /* Soft and neutral background */
+    --text-color: #2e3440;
+    --card-background: #ffffff;
+    --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* Softer shadow for a modern look */
+    --gradient-primary: linear-gradient(135deg, #007BFF, #3399ff);
+    --gradient-secondary: linear-gradient(135deg, #FF4081, #ff6d95);
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --background-color: #121212;
+      --text-color: #e0e0e0;
+      --card-background: #1e1e1e;
+      --card-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+    }
+  }
+  
+  /* General Typography & Fluid Scaling */
+  body, ion-content {
+    font-family: 'Inter', sans-serif; /* Modern, web-safe font */
+    color: var(--text-color);
+    background-color: var(--background-color);
+    line-height: 1.7;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  
+  /* Fluid, scalable typography with breakpoints */
+  h1, .main-title {
+    font-size: clamp(2.2rem, 5vw, 4rem); /* Adaptive sizing based on viewport */
+    color: var(--ion-color-primary);
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 1.2rem;
+  }
+
+  .main-title2 {
+    font-size: clamp(1.1rem, 2.5vw, 2rem); /* Adaptive sizing based on viewport */
+    color: var(--ion-color-primary-contrast);
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 1.2rem;
+  }
+  
+  h2, .subtitle {
+    font-size: clamp(1.5rem, 4vw, 2.6rem);
+    color: var(--ion-color-secondary);
+    font-weight: 500;
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+  
+  /* Responsive spacing and card elevation */
+  .intro-card, .feature-card {
+    background: var(--card-background);
+    border-radius: 16px; /* Softer edges for modern look */
+    box-shadow: var(--card-shadow);
+    margin-bottom: 2rem;
+    padding: 2rem;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    
+    &:hover {
+      transform: translateY(-6px); /* More dynamic lift */
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12); /* Slightly stronger shadow on hover */
+    }
+  }
+  
+  ion-card-header {
+    background-image: var(--gradient-primary); /* Gradient for elegance */
+    color: var(--ion-color-primary-contrast);
+    font-size: 1.5rem;
+    padding: 2rem; /* Larger padding for better spacing */
+  }
+  
+  ion-card-title {
+    font-size: 1.8rem;
+    font-weight: bold;
+    margin-bottom: 1.2rem;
+  }
+  
+  ion-card-content {
+    color: var(--text-color);
+    padding: 1.75rem;
+  }
+  
+  /* Modern icons with interactive hover effects */
+  ion-icon {
+    font-size: 2.8rem;
+    color: var(--ion-color-primary-contrast);
+    margin-bottom: 1.2rem;
+    transition: color 0.3s ease, transform 0.2s ease;
+    
+    &:hover {
+      color: var(--ion-color-secondary);
+      transform: scale(1.1); /* Slight icon scale on hover */
+    }
+  }
+  
+  /* Enhanced button styling for modern web apps */
+  .login-button {
+    background-image: var(--gradient-secondary);
+    color: var(--ion-color-secondary-contrast);
+    font-weight: 700;
+    margin-top: 2rem;
+    height: 54px;
+    border-radius: 12px;
+    font-size: 1.25rem;
+    transition: background 0.3s ease, transform 0.2s ease;
+    
+    &:hover {
+      transform: translateY(-4px); /* Lift effect on hover */
+      background-image: linear-gradient(135deg, #ff6d95, #FF4081); /* Gradient shift */
+    }
+  }
+  
+  /* Tagline with centered focus */
+  .tagline {
+    color: var(--text-color);
+    opacity: 0.8;
+    font-style: italic;
+    text-align: center;
+    margin-top: 3rem;
+    font-size: 1.3rem;
+  }
+  
+  /* Improved fade-in animation for smoother transitions */
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Footer Styles */
+.footer-toolbar {
+    background-color: var(--ion-color-primary); /* Use a primary color for the footer */
+    color: var(--ion-color-primary-contrast); /* Ensure text contrasts well */
+    text-align: center; /* Center-align the content */
+   // padding: 1rem 0; /* Add padding for a comfortable height */
+  }
+  
+  .footer-slogan {
+    font-size: 1.5em; /* Font size for the slogan */
+    margin: 0; /* Remove default margin */
+    display: flex; /* Use flex to align items */
+    justify-content: center; /* Center the content */
+    align-items: center; /* Vertically center the content */
+  }
+  
+  .heart-icon {
+    font-size: 1.5rem; /* Font size for the slogan */
+    color: red; /* Change heart icon color for emphasis */
+    margin: 0; /* Add a little margin around the icon */
+  }
+  
+  
+  /* Optimized responsiveness for large desktops */
+  @media (min-width: 1200px) {
+    .main-title {
+      font-size: 4.5rem; /* Larger for big displays */
+    }
+  
+    .subtitle {
+      font-size: 2.8rem;
+    }
+  
+    .feature-card {
+      padding: 3rem;
+      margin-bottom: 2.5rem;
+    }
+  
+    .login-button {
+      font-size: 1.4rem;
+      height: 60px;
+    }
+
+    .table-container {
+        width: 100%;
+    }
+
+    .slogan{
+        overflow: hidden; /* Prevents overflow */
+        max-width: auto;
+        font-size: small;
+    }
+  }
+  
+  /* Responsive Design for tablets and laptops */
+  @media (max-width: 1024px) {
+    .main-title {
+      font-size: clamp(2rem, 4vw, 3.5rem);
+    }
+  
+    .subtitle {
+      font-size: clamp(1.4rem, 3.5vw, 2.4rem);
+    }
+  
+    .feature-card {
+      margin-bottom: 1.8rem;
+      padding: 1.8rem;
+    }
+  
+    ion-card-header, ion-card-content {
+      padding: 1.5rem;
+    }
+  
+    .login-button {
+      font-size: 1.2rem;
+      height: 52px;
+    }
+  }
+  
+  /* Mobile-first responsiveness */
+  @media (max-width: 768px) {
+    h1, .main-title {
+      font-size: clamp(1.8rem, 6vw, 2.8rem);
+    }
+  
+    h2, .subtitle {
+      font-size: clamp(1.3rem, 5vw, 1.9rem);
+    }
+  
+    .feature-card {
+      margin-bottom: 1.5rem;
+      padding: 1.6rem;
+    }
+  
+    ion-card-header, ion-card-content {
+      padding: 1.25rem;
+    }
+  
+    .login-button {
+      height: 50px;
+      font-size: 1.1rem;
+      border-radius: 10px;
+    }
+    
+    ion-icon {
+      font-size: 2.4rem;
+    }
+  }
+  
+  /* Further Mobile Optimizations for smaller devices */
+  @media (max-width: 480px) {
+    h1, .main-title {
+      font-size: clamp(1.5rem, 6.5vw, 2.2rem);
+    }
+  
+    h2, .subtitle {
+      font-size: 1.4rem;
+    }
+  
+    ion-card-title {
+      font-size: 1.4rem;
+    }
+  
+    .login-button {
+      height: 48px;
+      font-size: 1rem;
+      padding: 0 16px;
+    }
+  
+    ion-icon {
+      font-size: 2rem;
+    }
+  
+    .tagline {
+      font-size: 1.2rem;
+    }
+  }
+  
+  /* Enhanced touch targets for mobile screens */
+  @media (max-width: 768px) {
+    .login-button {
+      height: 56px;
+      font-size: 1.2rem;
+      padding: 0 20px; /* Ensures button remains tappable */
+    }
+  
+    ion-card-header, ion-card-content {
+      padding: 20px;
+    }
+  }
+  

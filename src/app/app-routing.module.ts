@@ -42,7 +42,11 @@ const routes: Routes = [
   {
     path: 'super-analytics',
     loadChildren: () => import('./pages/super-analytics/super-analytics.module').then( m => m.SuperAnalyticsPageModule)
+  },  {
+    path: 'view-staff',
+    loadChildren: () => import('./pages/view-staff/view-staff.module').then( m => m.ViewStaffPageModule)
   },
+
 ];
 
 @NgModule({

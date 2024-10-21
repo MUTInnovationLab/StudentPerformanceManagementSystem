@@ -1,0 +1,79 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button class="back-icon" (click)="goBack()" aria-label="Go back">
+        <ion-icon slot="start" name="arrow-back" class="back-icon"></ion-icon>
+        Back
+      </ion-button>
+    </ion-buttons>
+    <h1 class="main-title2">All Staff</h1>
+    <!-- <ion-buttons slot="end">
+      <ion-button aria-label="Profile">
+        <ion-icon slot="icon-only" name="person" class="profile-icon"></ion-icon>
+      </ion-button>
+    </ion-buttons> -->
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="content-background">
+  <ion-title class="page-title"></ion-title>
+  
+  <!-- Diamond Shape Container -->
+  <div class="diamond-container">
+    <div class="diamond white-diamond"></div>
+    <div class="diamond maroon-diamond"></div>
+    <div class="diamond yellow-diamond"></div>
+  </div>
+
+  <!-- Modern Search Box -->
+  <div class="search-section">
+    <input type="text" 
+           placeholder="Search by email, staff number, or role..." 
+           class="search-input" 
+           [(ngModel)]="searchTerm" 
+           (ngModelChange)="filterUsers()">
+    <!-- <button class="search-button">
+      <ion-icon name="search" class="search-icon"></ion-icon>
+    </button> -->
+  </div>
+
+  <!-- Table for User Data -->
+  <div class="table-container">
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Department</th>
+            <th>Full Name</th>
+            <th>Email</th>
+            <th>Staff Number</th>
+            <th>Role</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let user of filteredUsers" (click)="selectUser(user)"
+              [class.selected-row]="selectedUser === user">
+              <td>{{ user.department }}</td>
+              <td>{{ user.fullName }}</td>
+              <td>{{ user.email }}</td>
+              <td>{{ user.staffNumber }}</td>
+              <td>{{ user.position }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <div *ngIf="filteredUsers.length === 0" class="empty-state">
+        <p>No users found.</p>
+      </div>
+    </div>
+  </div>
+</ion-content>
+
+<!-- Footer -->
+<ion-footer>
+  <ion-toolbar class="footer-toolbar">
+    <ion-title class="footer-slogan">
+      Designed with <ion-icon name="heart" class="heart-icon"></ion-icon> by MUT INNOVATION LAB
+    </ion-title>
+  </ion-toolbar>
+</ion-footer>
+
