@@ -1,13 +1,107 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
-    <ion-title>csv</ion-title>
+    <ion-title>CSV Generator</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content [fullscreen]="true">
   <ion-header collapse="condense">
     <ion-toolbar>
-      <ion-title size="large">csv</ion-title>
+      <ion-title size="large">CSV Generator</ion-title>
     </ion-toolbar>
   </ion-header>
+
+  <ion-grid>
+    <ion-row>
+      <ion-col>
+        <ion-item>
+          <ion-label position="floating">Module Code</ion-label>
+          <ion-input [(ngModel)]="moduleCode"></ion-input>
+        </ion-item>
+      </ion-col>
+    </ion-row>
+
+    <ion-row>
+      <ion-col>
+        <ion-item>
+          <ion-label>Calculate Average</ion-label>
+          <ion-toggle [(ngModel)]="calculateAverage" (ionChange)="toggleCalculateAverage()"></ion-toggle>
+        </ion-item>
+      </ion-col>
+    </ion-row>
+
+    <ion-row *ngIf="calculateAverage">
+      <ion-col size="12" size-md="6" size-lg="3" *ngFor="let test of tests; let i = index">
+        <ion-item>
+          <ion-label position="floating">Test {{i + 1}} %</ion-label>
+          <ion-input type="number" [(ngModel)]="test.percentage" (ionChange)="calculateAverages()"></ion-input>
+        </ion-item>
+      </ion-col>
+    </ion-row>
+
+    <ion-row>
+      <ion-col>
+        <ion-button expand="block" (click)="generateSpreadsheet()" [disabled]="isLoading">
+          <ion-spinner name="crescent" *ngIf="isLoading"></ion-spinner>
+          <span *ngIf="!isLoading">Generate Template</span>
+        </ion-button>
+      </ion-col>
+    </ion-row>
+
+    <ion-row>
+      <ion-col>
+        <ion-item>
+          <ion-label>Upload Spreadsheet</ion-label>
+          <input type="file" (change)="onFileChange($event)" accept=".xlsx, .xls" [disabled]="isLoading">
+        </ion-item>
+      </ion-col>
+    </ion-row>
+
+    <ion-row>
+      <ion-col>
+        <ion-button expand="block" (click)="previewSpreadsheet()" [disabled]="!file || isLoading">
+          <ion-spinner name="crescent" *ngIf="isLoading"></ion-spinner>
+          <span *ngIf="!isLoading">Preview Spreadsheet</span>
+        </ion-button>
+      </ion-col>
+    </ion-row>
+
+    <ion-row>
+      <ion-col>
+        <ion-button expand="block" (click)="uploadToFirestore()" [disabled]="previewData.length === 0 || isLoading">
+          <ion-spinner name="crescent" *ngIf="isLoading"></ion-spinner>
+          <span *ngIf="!isLoading">Upload to Firestore</span>
+        </ion-button>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+
+  <ion-list *ngIf="previewData.length > 0">
+    <ion-list-header>
+      <ion-label>Preview</ion-label>
+    </ion-list-header>
+    <ion-item *ngFor="let row of previewData">
+      <ion-label>
+        Student Number: {{row.studentNumber}}, 
+        <ng-container *ngFor="let test of tests; let i = index">
+          Test {{i + 1}}: {{row['test' + (i + 1)]}}, 
+        </ng-container>
+        <ng-container *ngIf="calculateAverage">Average: {{row.average}}%</ng-container>
+      </ion-label>
+    </ion-item>
+  </ion-list>
+
+  <ion-toast
+    [isOpen]="isToastOpen"
+    [message]="toastMessage"
+    [color]="toastColor"
+    [duration]="3000"
+    (didDismiss)="isToastOpen = false"
+  ></ion-toast>
+
+  <ion-loading
+    [isOpen]="isLoading"
+    message="Please wait..."
+    [duration]="3000"
+  ></ion-loading>
 </ion-content>
