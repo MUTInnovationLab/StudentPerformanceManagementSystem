@@ -4,7 +4,7 @@
 
 export const environment = {
   production: false,
-  firebaseConfig: {
+  firebaseConfig : {
     apiKey: "AIzaSyD7u_jf9-wQ_Mth7uy6cRzG97urfJvtRpU",
     authDomain: "attendify-6202e.firebaseapp.com",
     projectId: "attendify-6202e",
