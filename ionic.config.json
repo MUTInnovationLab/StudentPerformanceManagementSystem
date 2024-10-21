@@ -1,0 +1,7 @@
+{
+  "name": "StudentPerformanceManagementSystem",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}
