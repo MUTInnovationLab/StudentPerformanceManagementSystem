@@ -1,0 +1,85 @@
+/* login.page.scss */
+.login-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 16px;
+  }
+  ion-toolbar {
+    display: flex;
+    justify-content: center;
+  }
+  
+  ion-title {
+    text-align: center;
+  }
+  
+  
+  .logo-container {
+    text-align: center;
+    margin-bottom: 32px;
+  
+    .login-icon {
+      font-size: 64px;
+      color: var(--ion-color-primary);
+    }
+  
+    h1 {
+      margin-top: 16px;
+      font-size: 24px;
+      color: var(--ion-color-dark);
+    }
+  }
+  
+  .form-container {
+    width: 100%;
+    max-width: 400px;
+  
+    ion-card {
+      margin: 0;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+    }
+  }
+  
+  ion-item {
+    --padding-start: 0;
+    margin-bottom: 16px;
+  }
+  
+  .error-container {
+    padding: 0 16px;
+    margin-top: -12px;
+    margin-bottom: 16px;
+  
+    ion-text {
+      font-size: 12px;
+      display: block;
+      margin-bottom: 4px;
+    }
+  }
+  
+  ion-button[expand="block"] {
+    margin: 16px 0;
+    --border-radius: 8px;
+    min-height: 48px;
+  }
+  
+  // Responsive adjustments
+  @media (max-width: 576px) {
+    .login-container {
+      padding: 16px;
+    }
+  
+    .logo-container {
+      .login-icon {
+        font-size: 48px;
+      }
+  
+      h1 {
+        font-size: 20px;
+      }
+    }
+  }
