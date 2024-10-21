@@ -1,13 +1,61 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>login</ion-title>
+<ion-header>
+  <ion-toolbar color="primary">
+    <div style="flex: 1; display: flex; justify-content: center;">
+      <ion-title>Login</ion-title>
+    </div>
+    <ion-buttons slot="end">
+      <ion-button (click)="navigateHome()" fill="clear">
+        <ion-icon name="home"></ion-icon>
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">login</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content class="ion-padding">
+  <div class="login-container">
+    <!-- App Logo or Icon -->
+    <div class="logo-container">
+      <ion-icon name="lock-closed" class="login-icon"></ion-icon>
+      <h1>Welcome Back</h1>
+    </div>
+
+    <!-- Login Form -->
+    <form [formGroup]="loginForm" (ngSubmit)="loginUser()" class="form-container">
+      <ion-card>
+        <ion-card-content>
+          <!-- Email Input -->
+          <ion-item lines="full">
+            <ion-label position="floating">Email</ion-label>
+            <ion-input type="email" formControlName="email"></ion-input>
+          </ion-item>
+          <div class="error-container" *ngIf="loginForm.get('email')?.touched && loginForm.get('email')?.invalid">
+            <ion-text color="danger" *ngIf="loginForm.get('email')?.errors?.['required']">
+              Email is required
+            </ion-text>
+            <ion-text color="danger" *ngIf="loginForm.get('email')?.errors?.['email']">
+              Please enter a valid email
+            </ion-text>
+          </div>
+
+          <!-- Staff Number Input -->
+          <ion-item lines="full">
+            <ion-label position="floating">Staff Number</ion-label>
+            <ion-input type="text" formControlName="staffNumber"></ion-input>
+          </ion-item>
+          <div class="error-container" *ngIf="loginForm.get('staffNumber')?.touched && loginForm.get('staffNumber')?.invalid">
+            <ion-text color="danger" *ngIf="loginForm.get('staffNumber')?.errors?.['required']">
+              Staff number is required
+            </ion-text>
+          </div>
+
+          <!-- Submit Button -->
+          <div class="ion-padding">
+            <ion-button expand="block" type="submit" [disabled]="!loginForm.valid">
+              Login
+            </ion-button>
+          </div>
+        </ion-card-content>
+      </ion-card>
+    </form>
+  </div>
 </ion-content>
