@@ -1,0 +1,3 @@
+npm install @angular/fire
+npm install chart.js
+npm install jspdf
