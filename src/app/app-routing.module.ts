@@ -28,8 +28,21 @@ const routes: Routes = [
     loadChildren: () => import('./pages/add-lecturer/add-lecturer.module').then( m => m.AddLecturerPageModule)
   },
   {
-    path: 'add-mentor',
-    loadChildren: () => import('./pages/add-mentor/add-mentor.module').then( m => m.AddMentorPageModule)
+    path: 'mentors',
+    children: [
+      {
+        path: '',
+        loadChildren: () => import('./pages/add-mentor/add-mentor.module').then(m => m.AddMentorPageModule)
+      },
+      {
+        path: 'add',
+        loadChildren: () => import('./pages/add-mentor/add-mentor.module').then(m => m.AddMentorPageModule)
+      },
+      {
+        path: 'edit/:id',
+        loadChildren: () => import('./pages/add-mentor/add-mentor.module').then(m => m.AddMentorPageModule)
+      }
+    ]
   },
   {
     path: 'csv',
@@ -42,7 +55,8 @@ const routes: Routes = [
   {
     path: 'super-analytics',
     loadChildren: () => import('./pages/super-analytics/super-analytics.module').then( m => m.SuperAnalyticsPageModule)
-  },  {
+  },
+  {
     path: 'view-staff',
     loadChildren: () => import('./pages/view-staff/view-staff.module').then( m => m.ViewStaffPageModule)
   },

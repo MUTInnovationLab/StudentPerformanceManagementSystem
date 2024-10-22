@@ -1,0 +1,68 @@
+/* src/app/pages/add-mentor/add-mentor.page.scss */
+ion-content {
+    --background: #f5f5f5;
+  }
+  
+  form {
+    background: #ffffff;
+    border-radius: 8px;
+    margin: 16px 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  ion-list {
+    background: transparent;
+  }
+  
+  ion-item {
+    --background: transparent;
+    --padding-start: 16px;
+    --padding-end: 16px;
+    --padding-top: 8px;
+    --padding-bottom: 8px;
+    --border-color: #dedede;
+  }
+  
+  ion-text[color="danger"] {
+    font-size: 12px;
+    margin-top: 4px;
+    display: block;
+  }
+  
+  ion-note {
+    font-size: 12px;
+    color: #666;
+    margin-top: 4px;
+    display: block;
+  }
+  
+  .ion-padding-start {
+    padding-left: 16px;
+  }
+  
+  ion-button {
+    margin-top: 24px;
+    --box-shadow: none;
+    
+    ion-spinner {
+      margin-right: 8px;
+    }
+  }
+
+  .selected {
+    --background: var(--ion-color-light);
+  }
+  
+  .mentor-id {
+    font-size: 0.8rem;
+    color: var(--ion-color-medium);
+  }
+  
+  ion-avatar ion-icon {
+    font-size: 2rem;
+  }
+  
+  .form-container {
+    max-width: 800px;
+    margin: 0 auto;
+  }
