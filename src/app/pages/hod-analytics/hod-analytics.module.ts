@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 
 import { HODANALYTICSPageRoutingModule } from './hod-analytics-routing.module';
-
+import { FirestoreModule } from '@angular/fire/firestore';
 import { HODANALYTICSPage } from './hod-analytics.page';
 
 @NgModule({
@@ -13,7 +13,8 @@ import { HODANALYTICSPage } from './hod-analytics.page';
     CommonModule,
     FormsModule,
     IonicModule,
-    HODANALYTICSPageRoutingModule
+    HODANALYTICSPageRoutingModule,
+    FirestoreModule
   ],
   declarations: [HODANALYTICSPage]
 })

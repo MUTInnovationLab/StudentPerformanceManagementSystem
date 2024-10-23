@@ -5,6 +5,9 @@ import { AngularFireAuth } from '@angular/fire/compat/auth'; // Ensure you have 
   providedIn: 'root'
 })
 export class AuthenticationService {
+  getLoggedInStaff(): any {
+    throw new Error('Method not implemented.');
+  }
   constructor(private afAuth: AngularFireAuth) {}
 
   // Login method using Firebase Authentication
