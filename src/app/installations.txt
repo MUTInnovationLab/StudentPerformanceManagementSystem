@@ -1,3 +1,28 @@
 npm install @angular/fire
 npm install chart.js
 npm install jspdf
+npm install xlsx
+
+
+
+
+fuculties example
+const faculty: Faculty = {
+  id: 'Faculty of Applied and Health Science',
+  departments: [
+    {
+      name: 'Information Communication Technology',
+      streams: {
+        CNET: [
+          { module: 'Networking', credits: 150, year: 'Y1' }
+        ],
+        SD: [
+          { module: 'System Software', credits: 200, year: 'y1' }
+        ]
+      }
+    },
+    {
+      name: 'Agriculture'  // No streams for this department
+    }
+  ]
+};

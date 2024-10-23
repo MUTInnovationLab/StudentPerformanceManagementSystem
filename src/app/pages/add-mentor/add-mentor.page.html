@@ -1,13 +1,157 @@
-<ion-header [translucent]="true">
+<ion-header>
   <ion-toolbar>
-    <ion-title>addMentor</ion-title>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/mentors"></ion-back-button>
+    </ion-buttons>
+    <ion-title>{{ isEditMode ? 'Edit' : 'Add New' }} Mentor</ion-title>
   </ion-toolbar>
 </ion-header>
+<ion-split-pane contentId="main-content">
+  <!-- Side Panel -->
+  <ion-menu contentId="main-content" [disabled]="isEditMode">
+    <ion-header>
+      <ion-toolbar color="primary">
+        <ion-title>Mentors List</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="resetForm()">
+            <ion-icon name="add"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+      <ion-toolbar>
+        <ion-searchbar
+          [(ngModel)]="searchTerm"
+          (ionInput)="filterMentors()"
+          placeholder="Search mentors..."
+          animated
+        ></ion-searchbar>
+      </ion-toolbar>
+    </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">addMentor</ion-title>
-    </ion-toolbar>
-  </ion-header>
+    <ion-content>
+      <ion-list>
+        <ion-item 
+          *ngFor="let mentor of filteredMentors$ | async"
+          [class.selected]="selectedMentorId === mentor.mentorID"
+          (click)="selectMentor(mentor.mentorID)"
+          button
+        >
+          <ion-avatar slot="start">
+            <ion-icon 
+              name="person-circle" 
+              size="large"
+              [style.color]="getAvatarColor(mentor.department)"
+            ></ion-icon>
+          </ion-avatar>
+          <ion-label>
+            <h2>{{ mentor.name }} {{ mentor.surname }}</h2>
+            <p>{{ mentor.department }}</p>
+            <p class="mentor-id">ID: {{ mentor.mentorID }}</p>
+          </ion-label>
+          <ion-badge slot="end" color="medium">
+            {{ mentor.modules.length }} modules
+          </ion-badge>
+        </ion-item>
+      </ion-list>
+    </ion-content>
+  </ion-menu>
+
+  <!-- Main Content -->
+  <div class="ion-page" id="main-content">
+    <ion-header>
+      <ion-toolbar>
+        <ion-buttons slot="start">
+          <ion-menu-button></ion-menu-button>
+          <ion-back-button defaultHref="/mentors"></ion-back-button>
+        </ion-buttons>
+        <ion-title>{{ isEditMode ? 'Edit' : 'Add New' }} Mentor</ion-title>
+      </ion-toolbar>
+    </ion-header>
+
+
+    <ion-content class="ion-padding">
+      <div class="form-container">
+        <form [formGroup]="mentorForm" (ngSubmit)="onSubmit()">
+          <!-- Your existing form content here -->
+          <ion-list>
+            <ion-item *ngIf="isEditMode">
+              <ion-label position="stacked">Mentor ID</ion-label>
+              <ion-input [value]="mentorID" readonly></ion-input>
+            </ion-item>
+
+      <ion-item>
+        <ion-label position="floating">Name <ion-text color="danger">*</ion-text></ion-label>
+        <ion-input formControlName="name" type="text" required></ion-input>
+      </ion-item>
+      <ion-text color="danger" class="ion-padding-start" *ngIf="mentorForm.get('name')?.touched && mentorForm.get('name')?.errors?.['required']">
+        Name is required
+      </ion-text>
+
+      <ion-item>
+        <ion-label position="floating">Surname <ion-text color="danger">*</ion-text></ion-label>
+        <ion-input formControlName="surname" type="text" required></ion-input>
+      </ion-item>
+      <ion-text color="danger" class="ion-padding-start" *ngIf="mentorForm.get('surname')?.touched && mentorForm.get('surname')?.errors?.['required']">
+        Surname is required
+      </ion-text>
+
+      <ion-item>
+        <ion-label position="floating">Email <ion-text color="danger">*</ion-text></ion-label>
+        <ion-input formControlName="email" type="email" required></ion-input>
+      </ion-item>
+      <ion-text color="danger" class="ion-padding-start" *ngIf="mentorForm.get('email')?.touched && mentorForm.get('email')?.errors?.['required']">
+        Email is required
+      </ion-text>
+      <ion-text color="danger" class="ion-padding-start" *ngIf="mentorForm.get('email')?.touched && mentorForm.get('email')?.errors?.['email']">
+        Please enter a valid email address
+      </ion-text>
+
+      <ion-item>
+        <ion-label position="floating">Faculty <ion-text color="danger">*</ion-text></ion-label>
+        <ion-input formControlName="faculty" type="text" required></ion-input>
+      </ion-item>
+      <ion-text color="danger" class="ion-padding-start" *ngIf="mentorForm.get('faculty')?.touched && mentorForm.get('faculty')?.errors?.['required']">
+        Faculty is required
+      </ion-text>
+
+      <ion-item>
+        <ion-label position="floating">Department <ion-text color="danger">*</ion-text></ion-label>
+        <ion-input formControlName="department" type="text" required></ion-input>
+      </ion-item>
+      <ion-text color="danger" class="ion-padding-start" *ngIf="mentorForm.get('department')?.touched && mentorForm.get('department')?.errors?.['required']">
+        Department is required
+      </ion-text>
+
+      <ion-item>
+        <ion-label position="floating">Stream</ion-label>
+        <ion-input formControlName="stream" type="text"></ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-label position="floating">Modules <ion-text color="danger">*</ion-text></ion-label>
+        <ion-textarea formControlName="modules" placeholder="Enter modules separated by commas" required rows="3">
+        </ion-textarea>
+      </ion-item>
+      <ion-text color="danger" class="ion-padding-start" *ngIf="mentorForm.get('modules')?.touched && mentorForm.get('modules')?.errors?.['required']">
+        At least one module is required
+      </ion-text>
+      <ion-note class="ion-padding-start">
+        Example: Networking, Data Structures, System Software
+      </ion-note>
+    </ion-list>
+
+    <div class="ion-padding">
+      <ion-button expand="block" type="submit" [disabled]="!mentorForm.valid || loading">
+        <ion-spinner name="crescent" *ngIf="loading"></ion-spinner>
+        <span *ngIf="!loading">{{ isEditMode ? 'Update' : 'Add' }} Mentor</span>
+      </ion-button>
+      
+      <ion-button expand="block" color="medium" type="button" (click)="cancelAdd()" class="ion-margin-top">
+        Cancel
+      </ion-button>
+    </div>
+  </form>
+</div>
 </ion-content>
+</div>
+</ion-split-pane>

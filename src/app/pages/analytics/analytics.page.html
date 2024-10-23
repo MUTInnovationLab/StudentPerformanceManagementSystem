@@ -1,13 +1,25 @@
-<ion-header [translucent]="true">
+<ion-header>
   <ion-toolbar>
-    <ion-title>analytics</ion-title>
+    <ion-title>Analytics</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">analytics</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content>
+  <!-- Loop through modules -->
+  <div *ngFor="let module of attendedModules">
+    <h3>{{ module.moduleName }}</h3> <!-- Module name (e.g., CA100, CF100) -->
+
+    <!-- Loop through each date within the module -->
+    <div *ngFor="let dateKey of objectKeys(module.dates)">
+      <h4>Date: {{ dateKey }}</h4> <!-- Display the date (e.g., 2024-10-14) -->
+      
+      <ul>
+        <!-- Loop through each attendance record for that date -->
+        <li *ngFor="let attendance of module.dates[dateKey]">
+          <span class="student-number">Student Number: {{ attendance.studentNumber }}</span>
+          <span class="scan-time"> - Scan Time: {{ attendance.scanTime }}</span>
+        </li>
+      </ul>
+    </div>
+  </div>
 </ion-content>
