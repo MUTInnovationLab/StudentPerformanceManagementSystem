@@ -1,0 +1,90 @@
+.analytics-table {
+    ion-list {
+      background: transparent;
+    }
+  
+    .header-row {
+      --background: var(--ion-color-light);
+      font-weight: bold;
+  
+      ion-col {
+        font-weight: bold;
+        color: var(--ion-color-dark);
+        text-align: center; /* Center text in header */
+        display: flex;
+        justify-content: center; /* Center the content horizontally */
+      }
+    }
+  
+    .data-row {
+      --background: transparent;
+      border-bottom: 1px solid var(--ion-color-light);
+  
+      &:hover {
+        --background: var(--ion-color-light-tint);
+      }
+  
+      &.alternate {
+        --background: var(--ion-color-light-tint);
+  
+        &:hover {
+          --background: var(--ion-color-light-shade);
+        }
+      }
+    }
+  
+    ion-col {
+      display: flex;
+      align-items: center;
+      padding: 8px;
+      text-align: center; /* Center text in data rows */
+      justify-content: center; /* Center the content horizontally */
+    }
+  
+    ion-item {
+      --padding-start: 0;
+      --padding-end: 0;
+      --inner-padding-end: 0;
+  
+      &::part(native) {
+        padding: 0;
+      }
+    }
+  }
+  
+  ion-item-divider {
+    --background: var(--ion-color-light);
+    --padding-start: 8px;
+    --padding-end: 8px;
+    --padding-top: 12px;
+    --padding-bottom: 12px;
+    font-weight: bold;
+    margin-top: 16px;
+  }
+  
+  .student-details {
+    padding: 8px 0;
+  
+    p {
+      margin: 8px 0;
+      line-height: 1.4;
+    }
+  }
+  
+  /* Blinking Effect for View Marks Links */
+  .view-marks-link {
+    color: lightblue; /* Link color */
+    text-decoration: none; /* Remove underline */
+    animation: blink 1s infinite; /* Blinking animation */
+    font-size: 24px; /* Increase icon size */
+  }
+  
+  @keyframes blink {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0;
+    }
+  }
+  

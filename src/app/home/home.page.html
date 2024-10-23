@@ -1,61 +1,71 @@
 <ion-content fullscreen class="ion-padding">
-  <div id="container" class="animate-fade-in">
-    <h1 class="main-title">Student Performance Management System</h1>
-    <h2 class="subtitle">Mangosuthu University of Technology</h2>
-
-    <ion-card class="intro-card">
-      <ion-card-header>
-        <ion-card-title>Track Your Academic Journey</ion-card-title>
-      </ion-card-header>
-      <ion-card-content>
-        <p>Our system helps you monitor and improve your academic performance efficiently.</p>
-      </ion-card-content>
-    </ion-card>
+  <!-- Animated background elements -->
+  <div class="background-pattern">
+    <div class="pattern-circle"></div>
+    <div class="pattern-square"></div>
+    <div class="pattern-dots"></div>
+  </div>
+  
+  <div class="gradient-overlay"></div>
+  
+  <div class="container">
+    <div class="header-section">
+      <h1 class="main-title">Student Performance Management System</h1>
+      <h2 class="subtitle">Mangosuthu University of Technology</h2>
+    </div>
 
     <ion-grid>
       <ion-row>
         <ion-col size="12" size-md="4">
           <ion-card class="feature-card">
             <ion-card-header>
-              <ion-icon name="bar-chart-outline" size="large"></ion-icon>
+              <div class="icon-wrapper">
+                <ion-icon name="bar-chart-outline"></ion-icon>
+              </div>
               <ion-card-title>Performance Analytics</ion-card-title>
             </ion-card-header>
             <ion-card-content>
-              View detailed insights into your academic progress.
+              <p>Track your academic progress with detailed analytics.</p>
+              <div class="card-hover-effect"></div>
             </ion-card-content>
           </ion-card>
         </ion-col>
+
         <ion-col size="12" size-md="4">
           <ion-card class="feature-card">
             <ion-card-header>
-              <ion-icon name="calendar-outline" size="large"></ion-icon>
+              <div class="icon-wrapper">
+                <ion-icon name="calendar-outline"></ion-icon>
+              </div>
               <ion-card-title>Schedule Management</ion-card-title>
             </ion-card-header>
             <ion-card-content>
-              Keep track of your classes, assignments, and exams.
+              <p>Organize your academic calendar efficiently.</p>
+              <div class="card-hover-effect"></div>
             </ion-card-content>
           </ion-card>
         </ion-col>
+
         <ion-col size="12" size-md="4">
           <ion-card class="feature-card">
             <ion-card-header>
-              <ion-icon name="people-outline" size="large"></ion-icon>
-              <ion-card-title>Collaboration Tools</ion-card-title>
+              <div class="icon-wrapper">
+                <ion-icon name="people-outline"></ion-icon>
+              </div>
+              <ion-card-title>Collaboration Hub</ion-card-title>
             </ion-card-header>
             <ion-card-content>
-              Connect with peers and instructors for academic support.
+              <p>Connect with peers and instructors seamlessly.</p>
+              <div class="card-hover-effect"></div>
             </ion-card-content>
           </ion-card>
         </ion-col>
       </ion-row>
     </ion-grid>
 
-    <ion-button expand="block" class="login-button ion-margin-top" routerLink="/login">
-      Log In to Your Account
+    <ion-button expand="block" class="login-button" routerLink="/login">
+      Access Dashboard
+      <ion-ripple-effect></ion-ripple-effect>
     </ion-button>
-
-    <p class="tagline ion-text-center ion-padding-top">
-      Empowering students to achieve academic excellence at MUT.
-    </p>
   </div>
 </ion-content>

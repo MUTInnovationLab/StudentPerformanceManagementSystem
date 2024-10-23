@@ -63,7 +63,11 @@ const routes: Routes = [
   {
     path: 'hod-analytics',
     loadChildren: () => import('./pages/hod-analytics/hod-analytics.module').then( m => m.HODANALYTICSPageModule)
+  },  {
+    path: 'supportfeedback',
+    loadChildren: () => import('./pages/supportfeedback/supportfeedback.module').then( m => m.SupportfeedbackPageModule)
   },
+
 
 ];
 
