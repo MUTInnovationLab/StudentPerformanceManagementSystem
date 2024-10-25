@@ -1,0 +1,117 @@
+<!-- faculty.page.html -->
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>Add Faculty</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <!-- <ion-item>
+    <ion-label position="floating">Faculty ID</ion-label>
+    <ion-input [(ngModel)]="faculty.id" type="text"></ion-input>
+  </ion-item> -->
+  <ion-item>
+    <ion-label>Select Faculty</ion-label>
+    <ion-select [(ngModel)]="faculty.id"  placeholder="Choose Faculty">
+      <ion-select-option value="Faculty of Management Science">Management Science</ion-select-option>
+      <ion-select-option value="Faculty of Engineering">Engineering</ion-select-option>
+      <ion-select-option value="Faculty of Applied and Health Science"> Applied and Health Science</ion-select-option>
+    </ion-select>
+  </ion-item>
+  
+
+  <ion-list>
+    <ion-list-header>
+      <ion-label>Departments</ion-label>
+      <ion-button size="small" (click)="addDepartment()">
+        <ion-icon name="add"></ion-icon>
+        Add Department
+      </ion-button>
+    </ion-list-header>
+
+    <ion-item-group *ngFor="let department of faculty.departments; let i = index">
+      <ion-item>
+        <ion-label position="floating">Department Name</ion-label>
+        <ion-input [(ngModel)]="department.name" type="text"></ion-input>
+        <ion-button slot="end" fill="clear" color="danger" (click)="removeDepartment(i)">
+          <ion-icon name="trash"></ion-icon>
+        </ion-button>
+      </ion-item>
+
+      <!-- Stream Section -->
+      <ion-button size="small" (click)="addStream(i)">
+        <ion-icon name="add"></ion-icon>
+        Add Stream
+      </ion-button>
+
+      <ion-item-group *ngFor="let streamKey of getStreamKeys(department)">
+        <ion-item-divider>
+          <ion-label>Stream: {{streamKey}}</ion-label>
+        </ion-item-divider>
+
+        <ion-item-group *ngFor="let stream of department.streams![streamKey]; let si = index">
+          <!-- <ion-item>
+            <ion-label position="floating">Credits</ion-label>
+            <ion-input [(ngModel)]="stream.credits" type="number"></ion-input>
+          </ion-item> -->
+
+          <ion-item>
+            <ion-label position="floating">Year</ion-label>
+            <ion-input [(ngModel)]="stream.name" type="text"></ion-input>
+          </ion-item>
+
+          <ion-button size="small" (click)="addModule(i, streamKey, si)">
+            <ion-icon name="add"></ion-icon>
+            Add Module
+          </ion-button>
+
+          <ion-item-group *ngFor="let module of stream.modules; let mi = index">
+            <ion-item>
+              <ion-label position="floating">Module Name</ion-label>
+              <ion-input [(ngModel)]="module.moduleName" type="text"></ion-input>
+            </ion-item>
+            <ion-item>
+              <ion-label position="floating">Module Code</ion-label>
+              <ion-input [(ngModel)]="module.moduleCode" type="text"></ion-input>
+            </ion-item>
+            <ion-item>
+              <ion-label position="floating">Module Level</ion-label>
+              <ion-input [(ngModel)]="module.moduleLevel" type="text"></ion-input>
+            </ion-item>
+            <ion-button fill="clear" color="danger" (click)="removeModule(i, mi, streamKey, si)">
+              <ion-icon name="trash"></ion-icon>
+            </ion-button>
+          </ion-item-group>
+        </ion-item-group>
+      </ion-item-group>
+
+      <!-- Department Modules Section -->
+      <ion-button size="small" (click)="addModule(i)">
+        <ion-icon name="add"></ion-icon>
+        Add Module
+      </ion-button>
+
+      <ion-item-group *ngFor="let module of department.modules; let mi = index">
+        <ion-item>
+          <ion-label position="floating">Module Name</ion-label>
+          <ion-input [(ngModel)]="module.moduleName" type="text"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-label position="floating">Module Code</ion-label>
+          <ion-input [(ngModel)]="module.moduleCode" type="text"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-label position="floating">Module Level</ion-label>
+          <ion-input [(ngModel)]="module.moduleLevel" type="text"></ion-input>
+        </ion-item>
+        <ion-button fill="clear" color="danger" (click)="removeModule(i, mi)">
+          <ion-icon name="trash"></ion-icon>
+        </ion-button>
+      </ion-item-group>
+    </ion-item-group>
+  </ion-list>
+
+  <ion-button expand="block" (click)="saveFaculty()">
+    Save Faculty
+  </ion-button>
+</ion-content>

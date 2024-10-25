@@ -67,6 +67,14 @@ const routes: Routes = [
     path: 'supportfeedback',
     loadChildren: () => import('./pages/supportfeedback/supportfeedback.module').then( m => m.SupportfeedbackPageModule)
   },
+  {
+    path: 'struggling-students',
+    loadChildren: () => import('./pages/struggling-students/struggling-students.module').then( m => m.StrugglingStudentsPageModule)
+  },
+  {
+    path: 'faculty-form',
+    loadChildren: () => import('./pages/faculty-form/faculty-form.module').then( m => m.FacultyFormPageModule)
+  },
 
 
 ];
