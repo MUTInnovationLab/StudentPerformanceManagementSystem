@@ -1,9 +1,3 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>Super Analytics</ion-title>
-  </ion-toolbar>
-</ion-header>
-
 <ion-content [fullscreen]="true">
   <ion-header collapse="condense">
     <ion-toolbar>
@@ -20,13 +14,11 @@
           </ion-card-header>
 
           <ion-card-content>
-            <!-- Loading indicator -->
             <div *ngIf="!(attendanceRecords$ | async)" class="ion-text-center">
               <ion-spinner></ion-spinner>
               <p>Loading records...</p>
             </div>
 
-            <!-- Table View -->
             <div class="analytics-table" *ngIf="attendanceRecords$ | async as records">
               <ng-container *ngFor="let recordGroup of records">
                 <ion-item-divider>
@@ -34,15 +26,13 @@
                 </ion-item-divider>
 
                 <ion-list>
-                  <!-- Header Row -->
                   <ion-item lines="full" class="header-row">
                     <ion-col size="4" class="text-center">Department</ion-col>
                     <ion-col size="3" class="text-center">Student No.</ion-col>
                     <ion-col size="4" class="text-center">Name</ion-col>
-                    <ion-col size="1" class="text-center">student work</ion-col> <!-- Updated Column Name -->
+                    <ion-col size="1" class="text-center">Details</ion-col>
                   </ion-item>
 
-                  <!-- Data Rows -->
                   <ion-item *ngFor="let record of recordGroup.records; let even = even"
                             button
                             [class.alternate]="even"
@@ -52,15 +42,15 @@
                     <ion-col size="3" class="text-center">{{ record.studentNumber }}</ion-col>
                     <ion-col size="4" class="text-center">
                       {{ record.studentDetails?.name || 'Unknown' }}
-                      <span *ngIf="record.studentDetails && record.studentDetails.surname"> {{ record.studentDetails.surname }}</span>
+                      <span>{{ record.studentDetails?.surname || 'Unknown' }}</span>
                     </ion-col>
                     <ion-col size="1" class="text-center">
-                      <!-- Each student component embedded here -->
-                      <app-each-student></app-each-student>
+                      <ion-button fill="clear" (click)="showStudentDetails(record)">
+                        View
+                      </ion-button>
                     </ion-col>
                   </ion-item>
 
-                  <!-- No records message for this date -->
                   <ion-item *ngIf="recordGroup.records.length === 0">
                     <ion-label class="ion-text-center">
                       No attendance records found for this date

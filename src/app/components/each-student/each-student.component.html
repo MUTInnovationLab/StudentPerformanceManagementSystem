@@ -1,3 +1,45 @@
-<p>
-  each-student works!
-</p>
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Student Details</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="dismiss()">Close</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-grid>
+    <ion-row>
+      <ion-col>
+        <h2>{{ studentDetails?.name }} {{ studentDetails?.surname }}</h2>
+        <p><strong>Student Number:</strong> {{ studentDetails?.studentNumber }}</p>
+        <p><strong>Email:</strong> {{ studentDetails?.email }}</p>
+        <p><strong>Course:</strong> {{ studentDetails?.course || 'N/A' }}</p>
+        <p><strong>Year:</strong> {{ studentDetails?.year || 'N/A' }}</p>
+        <p><strong>Department:</strong> {{ studentDetails?.department || 'N/A' }}</p>
+
+        <h3>Marks</h3>
+        <div *ngIf="marks && marks.length > 0; else noMarks">
+          <ion-list>
+            <ion-item *ngFor="let mark of marks">
+              <ion-label>
+                <strong>Module:</strong> {{ mark.moduleCode || 'N/A' }} <br>
+                <strong>Average:</strong> {{ mark.average }}% <br>
+                <strong>Test 1:</strong> {{ mark.test1 || 'N/A' }}% <br>
+                <strong>Test 2:</strong> {{ mark.test2 || 'N/A' }}% <br>
+                <strong>Test 3:</strong> {{ mark.test3 || 'N/A' }}% <br>
+                <strong>Test 4:</strong> {{ mark.test4 || 'N/A' }}% <br>
+                <strong>Test 5:</strong> {{ mark.test5 || 'N/A' }}% <br>
+                <strong>Test 6:</strong> {{ mark.test6 || 'N/A' }}% <br>
+                <strong>Test 7:</strong> {{ mark.test7 || 'N/A' }}% <br>
+              </ion-label>
+            </ion-item>
+          </ion-list>
+        </div>
+        <ng-template #noMarks>
+          <p>No marks available for this student.</p>
+        </ng-template>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+</ion-content>

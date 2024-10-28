@@ -1,0 +1,23 @@
+/* each-student.component.scss */
+.marks-button-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+  
+    ion-button {
+      --padding-start: 4px;
+      --padding-end: 4px;
+      
+      &:hover {
+        --background: rgba(var(--ion-color-primary-rgb), 0.1);
+      }
+    }
+  }
+  
+  :host ::ng-deep .marks-alert {
+    .alert-message {
+      font-family: monospace;
+      white-space: pre-wrap;
+    }
+  }

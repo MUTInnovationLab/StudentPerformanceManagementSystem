@@ -1,17 +1,14 @@
 <ion-header>
   <ion-toolbar>
     <ion-buttons slot="start">
-      <ion-button class="back-icon" (click)="goBack()" aria-label="Go back">
-        <ion-icon slot="start" name="arrow-back" class="back-icon"></ion-icon>
-        Back
+      <ion-button class="home-icon" (click)="goHome()" aria-label="Go home">
+        <ion-icon slot="icon-only" name="home" class="home-icon"></ion-icon>
       </ion-button>
     </ion-buttons>
-    <h1 class="main-title2">All Staff</h1>
-    <!-- <ion-buttons slot="end">
-      <ion-button aria-label="Profile">
-        <ion-icon slot="icon-only" name="person" class="profile-icon"></ion-icon>
-      </ion-button>
-    </ion-buttons> -->
+    <div class="header-title-container">
+      <ion-icon name="people" class="header-staff-icon"></ion-icon>
+      <h1 class="main-title2">All Staff</h1>
+    </div>
   </ion-toolbar>
 </ion-header>
 
@@ -24,40 +21,62 @@
     <div class="diamond maroon-diamond"></div>
     <div class="diamond yellow-diamond"></div>
   </div>
-
+  
   <!-- Modern Search Box -->
   <div class="search-section">
-    <input type="text" 
-           placeholder="Search by email, staff number, or role..." 
-           class="search-input" 
-           [(ngModel)]="searchTerm" 
+    <input type="text"
+           placeholder="Search by email, staff number, or role..."
+           class="search-input"
+           [(ngModel)]="searchTerm"
            (ngModelChange)="filterUsers()">
-    <!-- <button class="search-button">
-      <ion-icon name="search" class="search-icon"></ion-icon>
-    </button> -->
   </div>
-
+  
   <!-- Table for User Data -->
   <div class="table-container">
     <div class="table-wrapper">
       <table>
         <thead>
           <tr>
-            <th>Department</th>
-            <th>Full Name</th>
-            <th>Email</th>
-            <th>Staff Number</th>
-            <th>Role</th>
+            <th>
+              <div class="header-content">
+                <ion-icon name="business"></ion-icon>
+                <span>Department</span>
+              </div>
+            </th>
+            <th>
+              <div class="header-content">
+                <ion-icon name="person"></ion-icon>
+                <span>Full Name</span>
+              </div>
+            </th>
+            <th>
+              <div class="header-content">
+                <ion-icon name="mail"></ion-icon>
+                <span>Email</span>
+              </div>
+            </th>
+            <th>
+              <div class="header-content">
+                <ion-icon name="id-card"></ion-icon>
+                <span>Staff Number</span>
+              </div>
+            </th>
+            <th>
+              <div class="header-content">
+                <ion-icon name="briefcase"></ion-icon>
+                <span>Role</span>
+              </div>
+            </th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let user of filteredUsers" (click)="selectUser(user)"
               [class.selected-row]="selectedUser === user">
-              <td>{{ user.department }}</td>
-              <td>{{ user.fullName }}</td>
-              <td>{{ user.email }}</td>
-              <td>{{ user.staffNumber }}</td>
-              <td>{{ user.position }}</td>
+            <td>{{ user.department }}</td>
+            <td>{{ user.fullName }}</td>
+            <td>{{ user.email }}</td>
+            <td>{{ user.staffNumber }}</td>
+            <td>{{ user.position }}</td>
           </tr>
         </tbody>
       </table>
@@ -76,4 +95,3 @@
     </ion-title>
   </ion-toolbar>
 </ion-footer>
-

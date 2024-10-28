@@ -1,8 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { Observable, combineLatest } from 'rxjs';
-import { map } from 'rxjs/operators';
-import { AlertController } from '@ionic/angular';
+import { map, take } from 'rxjs/operators';
+import { ModalController } from '@ionic/angular';  // Add ModalController
+import { EachStudentComponent } from '../../components/each-student/each-student.component';  // Import modal component
+import { Marks } from 'src/app/models/marks.model'; 
 
 interface AttendanceRecord {
   id?: string;
@@ -19,8 +21,9 @@ interface Student {
   department: string;
 }
 
-interface AttendanceWithStudent extends AttendanceRecord {
+interface AttendanceWithStudentAndMarks extends AttendanceRecord {
   studentDetails?: Student;
+  marks?: Marks[];
 }
 
 @Component({
@@ -29,77 +32,33 @@ interface AttendanceWithStudent extends AttendanceRecord {
   styleUrls: ['./super-analytics.page.scss']
 })
 export class SuperAnalyticsPage implements OnInit {
-  attendanceRecords$: Observable<{ date: string; records: AttendanceWithStudent[]; }[]> | undefined;
+  attendanceRecords$: Observable<{ date: string; records: AttendanceWithStudentAndMarks[]; }[]> | undefined;
 
   constructor(
     private firestore: AngularFirestore,
-    private alertController: AlertController
+    private modalController: ModalController
   ) {}
 
   ngOnInit() {
     this.loadAttendanceData();
   }
 
-  private validateAttendanceRecord(item: any, date: string): { isValid: boolean; record?: AttendanceRecord; errors?: string[] } {
-    const errors: string[] = [];
+  async showStudentDetails(record: AttendanceWithStudentAndMarks) {
+    console.log('Showing details for student:', record.studentDetails);
+    console.log('Fetched Marks:', record.marks);
     
-    // Deep inspection of the item
-    console.log(`Validating item for date ${date}:`, JSON.stringify(item, null, 2));
-    
-    // If item is an array with one element, use that element
-    if (Array.isArray(item) && item.length === 1) {
-      item = item[0];
-    }
-    
-    // Check if item is nested in a property
-    const itemData = Object.values(item).length === 1 ? Object.values(item)[0] : item;
-    
-    const studentNumber = itemData.studentNumber || itemData.StudentNumber || itemData.studentnumber;
 
-    if (!studentNumber) {
-      errors.push(`studentNumber is missing (available fields: ${Object.keys(itemData).join(', ')})`);
-    }
-
-    if (errors.length === 0) {
-      return {
-        isValid: true,
-        record: {
-          id: date,
-          studentNumber: studentNumber
-        }
-      };
-    }
-
-    return {
-      isValid: false,
-      errors
-    };
-  }
-
-  private processAttendanceItem(item: any, date: string, records: AttendanceRecord[]) {
-    // Log the raw item structure
-    console.log(`Processing item for date ${date}:`, {
-      rawItem: item,
-      type: typeof item,
-      isArray: Array.isArray(item),
-      keys: Object.keys(item)
+    const modal = await this.modalController.create({
+      component: EachStudentComponent,
+      componentProps: {
+        studentDetails: record.studentDetails,
+        marks: record.marks // Ensure marks are passed here
+      }
     });
-
-    const validation = this.validateAttendanceRecord(item, date);
-    
-    if (validation.isValid && validation.record) {
-      records.push(validation.record);
-    } else {
-      console.warn(
-        `Invalid attendance record for date ${date}:`,
-        '\nRecord data:', JSON.stringify(item, null, 2),
-        '\nErrors:', validation.errors?.join(', ')
-      );
-    }
-  }
+    return await modal.present();
+}
 
   private loadAttendanceData() {
-    // Get all students first
     const students$ = this.firestore
       .collection<Student>('students')
       .snapshotChanges()
@@ -107,32 +66,45 @@ export class SuperAnalyticsPage implements OnInit {
         map(actions => {
           const students: { [key: string]: Student } = {};
           actions.forEach(action => {
-            const data = action.payload.doc.data() as { 
-              name: string; 
-              surname: string; 
-              email: string; 
-              course: string; 
-              year: string; 
-              department: string; 
-            };
+            const data = action.payload.doc.data() as Student;
             const id = action.payload.doc.id;
-            // Create the Student object with all required fields
             students[id] = { ...data, studentNumber: id };
           });
           return students;
-        })
+        }),
+        take(1) // Fetch only once
       );
 
-    // Get attendance records
+      const marks$ = this.firestore
+      .collection<Marks>('marks')
+      .snapshotChanges()
+      .pipe(
+        map(actions => {
+          const marks: { [studentNumber: string]: Marks[] } = {};
+          actions.forEach(action => {
+            const mark = action.payload.doc.data() as Marks;
+            const studentNumber = mark.studentNumber;
+    
+            if (!marks[studentNumber]) {
+              marks[studentNumber] = [];
+            }
+            marks[studentNumber].push(mark);
+          });
+          return marks;
+        }),
+        take(1) // Fetch only once
+      );
+    
+
     const attendance$ = this.firestore
       .collection('Attended')
       .snapshotChanges()
       .pipe(
         map(actions => {
           const records: { [date: string]: AttendanceRecord[] } = {};
-          
+
           actions.forEach(action => {
-            const data = action.payload.doc.data() as { [key: string]: any }; // Keep the existing assertion for attendance data
+            const data = action.payload.doc.data() as { [key: string]: any };
             const date = action.payload.doc.id;
 
             if (!records[date]) {
@@ -144,7 +116,6 @@ export class SuperAnalyticsPage implements OnInit {
                 this.processAttendanceItem(item, date, records[date]);
               });
             } else if (typeof data === 'object' && data !== null) {
-              // Handle nested data
               if (Object.keys(data).length === 1 && Array.isArray(Object.values(data)[0])) {
                 Object.values(data)[0].forEach((item: any) => {
                   this.processAttendanceItem(item, date, records[date]);
@@ -154,50 +125,53 @@ export class SuperAnalyticsPage implements OnInit {
                   this.processAttendanceItem(item, date, records[date]);
                 });
               }
-            } else {
-              console.error(`Invalid data structure for date ${date}:`, data);
             }
           });
 
           return records;
-        })
+        }),
+        take(1) // Fetch only once
       );
 
-    // Combine students and attendance data
-    this.attendanceRecords$ = combineLatest([attendance$, students$]).pipe(
-      map(([attendanceRecords, students]) => {
+    this.attendanceRecords$ = combineLatest([attendance$, students$, marks$]).pipe(
+      map(([attendanceRecords, students, marks]) => {
         return Object.entries(attendanceRecords)
           .map(([date, records]) => ({
             date,
             records: records.map(record => ({
               ...record,
-              studentDetails: students[record.studentNumber]
+              studentDetails: students[record.studentNumber] || { name: 'Unknown', surname: 'Unknown' },
+              marks: marks[record.studentNumber] || []
             }))
           }))
-          .sort((a, b) => b.date.localeCompare(a.date));
+          .sort((a, b) => a.date.localeCompare(b.date));
       })
     );
+
+    // Add error handling
+    this.attendanceRecords$.subscribe({
+      next: () => console.log('Attendance data loaded successfully'),
+      error: (err) => console.error('Error loading attendance data:', err)
+    });
   }
 
-  async showStudentDetails(record: AttendanceWithStudent) {
-    const studentDetails = record.studentDetails;
-    const alert = await this.alertController.create({
-      header: 'Student Details',
-      subHeader: `Attendance Code: ${record.id}`,
-      message: `
-        <div class="student-details">
-          <p><strong>Student Number:</strong> ${record.studentNumber}</p>
-          <p><strong>Name:</strong> ${studentDetails?.name || 'N/A'}</p>
-          <p><strong>Surname:</strong> ${studentDetails?.surname || 'N/A'}</p>
-          <p><strong>Email:</strong> ${studentDetails?.email || 'N/A'}</p>
-          <p><strong>Course:</strong> ${studentDetails?.course || 'N/A'}</p>
-          <p><strong>Year:</strong> ${studentDetails?.year || 'N/A'}</p>
-          <p><strong>Department:</strong> ${studentDetails?.department || 'N/A'}</p>
-        </div>
-      `,
-      buttons: ['Close']
-    });
+  processAttendanceItem(item: any, date: string, records: AttendanceRecord[]) {
+    if (item.studentNumber) {
+      records.push({ studentNumber: item.studentNumber });
+    }    
+  }
 
-    await alert.present();
+  // Helper method to calculate average marks for a student
+  getAverageMarks(marks: Marks[]): number {
+    if (!marks || marks.length === 0) return 0;
+    const sum = marks.reduce((acc, mark) => acc + Number(mark.average || 0), 0);
+    return Number((sum / marks.length).toFixed(2));
+  }
+
+  // Helper method to get the latest marks
+  getLatestMarks(marks: Marks[]): Marks[] {
+    return [...marks]
+      .sort((a, b) => (b.date || '').localeCompare(a.date || ''))
+      .slice(0, 3);
   }
 }
