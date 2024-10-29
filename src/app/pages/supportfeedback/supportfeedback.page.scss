@@ -1,0 +1,144 @@
+:host {
+    display: block;
+  }
+  
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 16px;
+  }
+  
+  .header-with-icon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 24px;
+    
+    .title-icon {
+      font-size: 48px;
+      color: var(--ion-color-primary);
+      margin-bottom: 12px;
+    }
+  
+    h1 {
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--ion-color-dark);
+      text-align: center;
+      margin: 0;
+    }
+  }
+  
+  .view-container {
+    background: var(--ion-color-background);
+    border-radius: 8px;
+    overflow: hidden;
+    max-height: 90vh;
+    overflow-y: auto;
+  
+    ion-header {
+      ion-toolbar {
+        --padding-top: 8px;
+        --padding-bottom: 8px;
+  
+        ion-title {
+          text-align: center;
+          font-weight: 600;
+          font-size: 20px;
+          padding: 0;
+          position: absolute;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 70%;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      }
+    }
+  }
+  
+  .search-box {
+    padding: 16px;
+    background: var(--ion-background-color);
+  }
+  
+  // Student List Styles
+  ion-item {
+    --padding-start: 16px;
+    --padding-end: 16px;
+    --padding-top: 12px;
+    --padding-bottom: 12px;
+  
+    h2 {
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+  
+    p {
+      color: var(--ion-color-medium);
+  
+      &.enrollment-date {
+        font-size: 12px;
+        margin-top: 4px;
+      }
+    }
+  }
+  
+  // Feedback History Styles
+  .feedback-section {
+    margin: 16px 0;
+  
+    h3 {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ion-color-medium);
+      margin-bottom: 8px;
+    }
+  
+    p {
+      font-size: 16px;
+      line-height: 1.5;
+      color: var(--ion-color-dark);
+    }
+  }
+  
+  // Attendance Badge Styles
+  ion-badge {
+    margin-bottom: 16px;
+  
+    &.attendance-excellent {
+      background: var(--ion-color-success);
+    }
+  
+    &.attendance-good {
+      background: var(--ion-color-primary);
+    }
+  
+    &.attendance-fair {
+      background: var(--ion-color-warning);
+    }
+  
+    &.attendance-poor {
+      background: var(--ion-color-danger);
+    }
+  }
+  
+  // Form Styles
+  .form-buttons {
+    margin-top: 16px;
+  }
+  
+  .no-results, .no-feedback {
+    text-align: center;
+    padding: 24px;
+    color: var(--ion-color-medium);
+  }
+  
+  .success-message {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+  }

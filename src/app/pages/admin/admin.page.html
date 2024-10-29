@@ -1,13 +1,83 @@
 <ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>admin</ion-title>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-button (click)="navigateHome()">
+        <ion-icon name="home-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <div class="header-content">
+      <ion-icon name="speedometer" size="large"></ion-icon>
+      <ion-title>Admin Dashboard</ion-title>
+    </div>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">admin</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content [fullscreen]="true" class="ion-padding">
+  <!-- Stats Cards -->
+  <ion-grid>
+    <ion-row>
+      <ion-col size="12" size-sm="6" size-md="3" *ngFor="let stat of stats">
+        <ion-card [color]="stat.color">
+          <ion-card-content>
+            <div class="stat-card">
+              <ion-icon [name]="stat.icon" size="large"></ion-icon>
+              <div class="stat-info">
+                <h2>{{ stat.count }}</h2>
+                <p>{{ stat.title }}</p>
+              </div>
+            </div>
+          </ion-card-content>
+        </ion-card>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+
+  <!-- Performance Charts -->
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>Performance Trends</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <canvas id="performanceChart"></canvas>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Academic Progress -->
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>Academic Statistics</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <ion-list>
+        <ion-item>
+          <ion-label>
+            <h2>Passing Rate</h2>
+            <ion-progress-bar [value]="academicStats.passingRate / 100" color="success"></ion-progress-bar>
+            <p class="ion-text-end">{{ academicStats.passingRate }}%</p>
+          </ion-label>
+        </ion-item>
+        <ion-item>
+          <ion-label>
+            <h2>Average GPA</h2>
+            <ion-progress-bar [value]="academicStats.averageGrade / 4" color="primary"></ion-progress-bar>
+            <p class="ion-text-end">{{ academicStats.averageGrade }}/4.0</p>
+          </ion-label>
+        </ion-item>
+        <ion-item>
+          <ion-label>
+            <h2>Course Completion Rate</h2>
+            <ion-progress-bar [value]="academicStats.completionRate / 100" color="tertiary"></ion-progress-bar>
+            <p class="ion-text-end">{{ academicStats.completionRate }}%</p>
+          </ion-label>
+        </ion-item>
+        <ion-item>
+          <ion-label>
+            <h2>Student Satisfaction</h2>
+            <ion-progress-bar [value]="academicStats.satisfactionRate / 100" color="secondary"></ion-progress-bar>
+            <p class="ion-text-end">{{ academicStats.satisfactionRate }}%</p>
+          </ion-label>
+        </ion-item>
+      </ion-list>
+    </ion-card-content>
+  </ion-card>
 </ion-content>

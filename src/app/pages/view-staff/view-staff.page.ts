@@ -70,8 +70,9 @@ export class ViewStaffPage implements OnInit {
   }
 
   // Navigate back to the home page
-  goBack() {
-    this.router.navigate(['/home']); // Adjust the route based on your app structure
+  goHome() {
+    // Navigate to home page
+    this.router.navigate(['/home']);
   }
 
 }

@@ -1,0 +1,48 @@
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    color: #fff;
+  
+    ion-icon {
+      margin-right: 0.5rem;
+    }
+  }
+  
+  .stat-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.5rem;
+  
+    ion-icon {
+      font-size: 2.5rem;
+    }
+  
+    .stat-info {
+      h2 {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin: 0;
+      }
+  
+      p {
+        margin: 0;
+        font-size: 1rem;
+        opacity: 0.8;
+      }
+    }
+  }
+  
+  ion-progress-bar {
+    margin: 0.5rem 0;
+    height: 10px;
+    border-radius: 5px;
+  }
+  
+  ion-card {
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
