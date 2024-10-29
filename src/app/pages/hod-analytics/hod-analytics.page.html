@@ -1,20 +1,4 @@
-<!-- <ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>HOD-ANALYTICS</ion-title>
-  </ion-toolbar>
-</ion-header>
 
-<ion-content>
-  <div class="chart-container">
-    <canvas id="attendanceChart"></canvas>
-  </div>
-
-
-  <canvas id="marksChart"></canvas>
-<table id="studentsTable">
-
-</table>
-</ion-content> -->
 <ion-header [translucent]="true">
   <ion-toolbar>
     <ion-title>HOD Analytics</ion-title>
@@ -22,8 +6,28 @@
 </ion-header>
 
 <ion-content>
-  <div class="chart-container">
-    <canvas id="attendanceChart"></canvas>
-    <canvas id="marksChart"></canvas>
+  <div class="analytics-container">
+    <div class="charts-grid">
+      <!-- Attendance Chart -->
+      <div class="chart-wrapper">
+        <div class="chart-content">
+          <div class="chart-container">
+            <canvas id="attendanceChart"></canvas>
+          </div>
+        </div>
+       
+      </div>
+  
+      <!-- Marks Distribution Chart -->
+      <div class="chart-wrapper">
+       
+        <div class="chart-content">
+          <div class="pie-chart">
+            <canvas id="marksChart"></canvas>
+          </div>
+        </div>
+       
+      </div>
+    </div>
   </div>
 </ion-content>
