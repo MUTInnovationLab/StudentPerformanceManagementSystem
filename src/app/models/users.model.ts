@@ -12,3 +12,12 @@ export interface User {
     password: string;
     confirmPassword: string;
 }
+
+export interface Student {
+    department: string;
+    email: string;
+    name: string;
+    studentNumber: string;
+    surname: string;
+  }
+  
