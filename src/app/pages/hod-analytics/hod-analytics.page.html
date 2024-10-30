@@ -1,13 +1,33 @@
+
 <ion-header [translucent]="true">
   <ion-toolbar>
-    <ion-title>HOD-ANALYTICS</ion-title>
+    <ion-title>HOD Analytics</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">HOD-ANALYTICS</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content>
+  <div class="analytics-container">
+    <div class="charts-grid">
+      <!-- Attendance Chart -->
+      <div class="chart-wrapper">
+        <div class="chart-content">
+          <div class="chart-container">
+            <canvas id="attendanceChart"></canvas>
+          </div>
+        </div>
+       
+      </div>
+  
+      <!-- Marks Distribution Chart -->
+      <div class="chart-wrapper">
+       
+        <div class="chart-content">
+          <div class="pie-chart">
+            <canvas id="marksChart"></canvas>
+          </div>
+        </div>
+       
+      </div>
+    </div>
+  </div>
 </ion-content>

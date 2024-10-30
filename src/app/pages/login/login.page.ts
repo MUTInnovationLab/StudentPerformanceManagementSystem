@@ -4,6 +4,8 @@ import { Router } from '@angular/router';
 import { AlertController, LoadingController } from '@ionic/angular';
 import { AuthenticationService } from 'src/app/services/auths.service';
 import { AngularFirestore } from '@angular/fire/compat/firestore'; // Import Firestore
+import { AngularFireAuth } from '@angular/fire/compat/auth';
+import firebase from 'firebase/compat/app';
 
 interface User {
   email: string;
@@ -26,7 +28,8 @@ export class LoginPage implements OnInit {
     private router: Router,
     private alertController: AlertController,
     private loadingController: LoadingController,
-    private firestore: AngularFirestore // Inject Firestore
+    private firestore: AngularFirestore ,
+    private afAuth: AngularFireAuth// Inject Firestore
   ) {
     // Initialize the form in the constructor
     this.loginForm = this.formBuilder.group({
@@ -38,7 +41,9 @@ export class LoginPage implements OnInit {
   ngOnInit() {
     // No additional initialization needed
   }
-
+  login(email: string, password: string) {
+    return this.afAuth.signInWithEmailAndPassword(email, password);
+  }
   async loginUser() {
     if (this.loginForm.valid) {
       const loading = await this.loadingController.create({
@@ -49,6 +54,12 @@ export class LoginPage implements OnInit {
       try {
         const { email, staffNumber } = this.loginForm.value;
 
+        const user = await this.authService.login(email, staffNumber);
+        
+        if(!user){
+          alert("user not fount in auth database");
+          return;
+        }
         // Fetch user data from Firestore based on the email
         const userDoc = await this.firestore
           .collection('staff') // Assuming your collection is named 'staff'
@@ -62,7 +73,7 @@ export class LoginPage implements OnInit {
           // Check if the staff number matches
           if (userData.staffNumber === staffNumber) {
             // If the credentials are correct, navigate to the admin page
-            this.router.navigate(['/admin']);
+            this.router.navigate(['/hod-analytics']);
           } else {
             // If staff number is incorrect, show an alert
             this.showAlert('Login Failed', 'Incorrect staff number');

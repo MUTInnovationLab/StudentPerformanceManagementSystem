@@ -1,0 +1,76 @@
+.analytics-container {
+  padding: 16px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.chart-wrapper {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+.chart-header {
+  background-color: #006d77;
+  color: white;
+  padding: 12px 16px;
+  font-size: 16px;
+  font-weight: 500;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+.chart-content {
+  padding: 20px;
+}
+
+/* Chart specific styles */
+.chart-container, .pie-chart {
+  position: relative;
+  width: 100%;
+  padding: 16px;
+  background-color: white;
+}
+
+.chart-container canvas, .pie-chart canvas {
+  max-height: 300px;
+  width: 100%;
+}
+
+/* Grid layout for multiple charts */
+.charts-grid {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: 1fr;
+  margin-top: 16px;
+}
+
+@media (min-width: 768px) {
+  .charts-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Legend styles */
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 12px 16px;
+  border-top: 1px solid #eee;
+  font-size: 14px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
