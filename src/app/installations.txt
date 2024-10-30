@@ -2,6 +2,8 @@ npm install @angular/fire
 npm install chart.js
 npm install jspdf
 npm install xlsx
+npm install agora-rtc-sdk-ng
+
 
 
 
