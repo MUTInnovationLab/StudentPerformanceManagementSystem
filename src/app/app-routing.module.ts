@@ -79,6 +79,10 @@ const routes: Routes = [
     path: 'live-meet',
     loadChildren: () => import('./pages/live-meet/live-meet.module').then( m => m.LiveMeetPageModule)
   },
+  {
+    path: 'student-management',
+    loadChildren: () => import('./pages/student-management/student-management.module').then( m => m.StudentManagementPageModule)
+  },
 
 
 ];

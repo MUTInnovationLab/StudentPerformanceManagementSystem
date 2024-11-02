@@ -1,5 +1,6 @@
 export const environment = {
   production: true,
+  emailjsPublicKey: 'mnYtu2o7JhKqb73XH',
   firebaseConfig : {
     apiKey: "AIzaSyD7u_jf9-wQ_Mth7uy6cRzG97urfJvtRpU",
     authDomain: "attendify-6202e.firebaseapp.com",
