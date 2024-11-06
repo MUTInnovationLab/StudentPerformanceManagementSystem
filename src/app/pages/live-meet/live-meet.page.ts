@@ -62,6 +62,8 @@ export class LiveMeetPage implements OnInit, OnDestroy {
   isScreenSharing: boolean = false;
   isInitializing: boolean = true;
   hasDevicePermissions: boolean = false;
+  minimizedVideos: Set<string> = new Set();
+  fullscreenVideo: string | null = null;
 
   constructor(
     private toastController: ToastController,
@@ -93,6 +95,46 @@ export class LiveMeetPage implements OnInit, OnDestroy {
       console.error('Failed to initialize devices:', error);
       this.hasDevicePermissions = false;
       await this.showDevicePermissionAlert();
+    }
+  }
+  async toggleMinimize(userId: string): Promise<void> {
+    if (this.minimizedVideos.has(userId)) {
+      this.minimizedVideos.delete(userId);
+      // Reattach video to main container
+      const participant = this.participants.find(p => p.userId === userId);
+      if (participant?.videoTrack) {
+        participant.videoTrack.play(`video-${userId}`);
+      }
+    } else {
+      this.minimizedVideos.add(userId);
+      // Reattach video to mini player
+      const participant = this.participants.find(p => p.userId === userId);
+      if (participant?.videoTrack) {
+        participant.videoTrack.play(`video-${userId}-mini`);
+      }
+    }
+  }
+  
+  async toggleFullscreen(userId: string): Promise<void> {
+    if (this.fullscreenVideo === userId) {
+      try {
+        if (document.fullscreenElement) {
+          await document.exitFullscreen();
+        }
+        this.fullscreenVideo = null;
+      } catch (error) {
+        console.error('Error exiting fullscreen:', error);
+      }
+    } else {
+      try {
+        const element = document.getElementById(`video-container-${userId}`);
+        if (element) {
+          await element.requestFullscreen();
+          this.fullscreenVideo = userId;
+        }
+      } catch (error) {
+        console.error('Error entering fullscreen:', error);
+      }
     }
   }
 

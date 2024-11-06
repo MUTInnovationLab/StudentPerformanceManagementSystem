@@ -35,18 +35,45 @@
   <!-- Meeting Room -->
   <div class="meeting-container" *ngIf="isJoined">
     <!-- Video Grid -->
-    <div class="video-grid" [class.with-participants]="participants.length > 0">
-      <div class="video-container" *ngFor="let participant of participants">
-        <div [id]="'video-' + participant.userId" class="video-player"></div>
-        <div class="participant-info">
-          <span class="name">{{participant.userName}}</span>
-          <div class="status-icons">
-            <ion-icon name="mic-off" *ngIf="!participant.hasAudio"></ion-icon>
-            <ion-icon name="videocam-off" *ngIf="!participant.hasVideo"></ion-icon>
-          </div>
+   <!-- Video Grid -->
+<div class="video-grid" [class.with-participants]="participants.length > 0">
+  <div class="video-container" *ngFor="let participant of participants">
+    <div [id]="'video-container-' + participant.userId" class="video-wrapper" *ngIf="!minimizedVideos.has(participant.userId)">
+      <div [id]="'video-' + participant.userId" class="video-player"></div>
+      
+      <!-- Video Controls -->
+      <div class="video-controls">
+        <ion-button fill="clear" size="small" (click)="toggleMinimize(participant.userId)">
+          <ion-icon name="remove-circle-outline"></ion-icon>
+        </ion-button>
+        <ion-button fill="clear" size="small" (click)="toggleFullscreen(participant.userId)">
+          <ion-icon [name]="fullscreenVideo === participant.userId ? 'contract' : 'expand'"></ion-icon>
+        </ion-button>
+      </div>
+
+      <div class="participant-info">
+        <span class="name">{{participant.userName}}</span>
+        <div class="status-icons">
+          <ion-icon name="mic-off" *ngIf="!participant.hasAudio"></ion-icon>
+          <ion-icon name="videocam-off" *ngIf="!participant.hasVideo"></ion-icon>
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- Minimized Videos -->
+<div class="minimized-videos">
+  <div class="mini-video" *ngFor="let participant of participants">
+    <div *ngIf="minimizedVideos.has(participant.userId)" class="mini-video-container">
+      <div [id]="'video-' + participant.userId + '-mini'" class="video-player"></div>
+      <ion-button fill="clear" size="small" (click)="toggleMinimize(participant.userId)">
+        <ion-icon name="expand"></ion-icon>
+      </ion-button>
+      <span class="mini-name">{{participant.userName}}</span>
+    </div>
+  </div>
+</div>
 
     <!-- Local Video -->
     <div id="local-container" class="local-video-container">
