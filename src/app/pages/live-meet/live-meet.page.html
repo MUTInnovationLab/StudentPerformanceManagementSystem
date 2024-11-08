@@ -1,14 +1,20 @@
 <ion-header>
   <ion-toolbar>
-    <ion-title>
-      <ion-icon name="videocam" slot="start"></ion-icon> Video Meeting
-    </ion-title>
+    <ion-title class="center-content">
+      <ion-icon name="videocam"></ion-icon>
+      <span>Video Meeting</span>
+    </ion-title>    
     <ion-buttons slot="end" *ngIf="isJoined">
       <ion-button (click)="leaveMeeting()" color="danger">
         <ion-icon name="exit-outline" slot="start"></ion-icon>
         Leave
       </ion-button>
     </ion-buttons>
+    <ion-buttons slot="start">
+  <ion-button *ngIf="isJoined" (click)="openInviteDialog()">
+    <ion-icon name="add-outline" slot="icon-only"></ion-icon>
+  </ion-button>
+</ion-buttons>
   </ion-toolbar>
 </ion-header>
 
@@ -74,6 +80,12 @@
     </div>
   </div>
 </div>
+
+<ion-buttons slot="start">
+  <ion-button *ngIf="isJoined" (click)="openInviteDialog()">
+    <ion-icon name="add-outline" slot="icon-only"></ion-icon>
+  </ion-button>
+</ion-buttons>
 
     <!-- Local Video -->
     <div id="local-container" class="local-video-container">

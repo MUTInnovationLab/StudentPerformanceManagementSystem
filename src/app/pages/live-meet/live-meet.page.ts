@@ -1,4 +1,6 @@
 import { Component, OnInit, OnDestroy, NgZone } from '@angular/core';
+import { ModalController } from '@ionic/angular';
+import { InvitationModalComponent } from 'src/app/invitation-modal/invitation-modal.component';
 import AgoraRTC, {
   IAgoraRTCClient,
   ILocalAudioTrack,
@@ -68,6 +70,7 @@ export class LiveMeetPage implements OnInit, OnDestroy {
   constructor(
     private toastController: ToastController,
     private loadingController: LoadingController,
+    private modalController: ModalController, // Add this
     private alertController: AlertController,
     private ngZone: NgZone
   ) {
@@ -484,6 +487,19 @@ export class LiveMeetPage implements OnInit, OnDestroy {
     this.participants = [];
     this.showToast('Disconnected from the meeting');
   }
+  async openInviteDialog(): Promise<void> {
+    const modal = await this.modalController.create({
+      component: InvitationModalComponent,
+      componentProps: {
+        meetingId: this.meetingId,
+        hostName: this.userName
+      },
+      cssClass: 'invitation-modal'
+    });
+
+    await modal.present();
+  }
+
 
   ngOnDestroy(): void {
     this.leaveMeeting();
