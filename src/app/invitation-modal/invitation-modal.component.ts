@@ -19,6 +19,7 @@ import { InvitationService } from 'src/app/services/invitation.service';
 
     <ion-content class="ion-padding">
       <form [formGroup]="inviteForm" (ngSubmit)="sendInvitation()">
+        <!-- Email Addresses Input -->
         <ion-item>
           <ion-label position="stacked">Email Addresses</ion-label>
           <ion-textarea
@@ -28,11 +29,26 @@ import { InvitationService } from 'src/app/services/invitation.service';
             class="ion-margin-top"
           ></ion-textarea>
         </ion-item>
-        
-        <div class="ion-margin-vertical validation-error" *ngIf="inviteForm.get('emails')?.errors?.['required'] && inviteForm.get('emails')?.touched">
-          Please enter at least one email address
-        </div>
 
+        <!-- Date Input -->
+        <ion-item>
+          <ion-label position="stacked">Select Date</ion-label>
+          <ion-input
+            type="date"
+            formControlName="inviteDate"
+          ></ion-input>
+        </ion-item>
+
+        <!-- Time Input -->
+        <ion-item>
+          <ion-label position="stacked">Select Time</ion-label>
+          <ion-input
+            type="time"
+            formControlName="inviteTime"
+          ></ion-input>
+        </ion-item>
+
+        <!-- Email Client Selector -->
         <ion-segment formControlName="emailClient" class="ion-margin-top">
           <ion-segment-button value="gmail">
             <ion-label>Gmail</ion-label>
@@ -44,6 +60,7 @@ import { InvitationService } from 'src/app/services/invitation.service';
           </ion-segment-button>
         </ion-segment>
 
+        <!-- Send Invites Button -->
         <ion-button
           expand="block"
           type="submit"
@@ -55,14 +72,7 @@ import { InvitationService } from 'src/app/services/invitation.service';
         </ion-button>
       </form>
     </ion-content>
-  `,
-  styles: [`
-    .validation-error {
-      color: var(--ion-color-danger);
-      font-size: 0.8em;
-      margin-left: 16px;
-    }
-  `]
+  `
 })
 export class InvitationModalComponent {
   @Input() meetingId!: string;
@@ -77,22 +87,41 @@ export class InvitationModalComponent {
   ) {
     this.inviteForm = this.formBuilder.group({
       emails: ['', Validators.required],
-      emailClient: ['gmail']
+      emailClient: ['gmail'],
+      inviteDate: ['', Validators.required],
+      inviteTime: ['', Validators.required]
     });
   }
 
   sendInvitation() {
     if (this.inviteForm.valid) {
-      const emails = this.inviteForm.get('emails')?.value.split(',');
+      const emails = this.inviteForm.get('emails')?.value.split(',').map((email: string) => email.trim());
       const isGmail = this.inviteForm.get('emailClient')?.value === 'gmail';
+      
+      try {
+        // Get date and time values
+        const dateValue = this.inviteForm.get('inviteDate')?.value;
+        const timeValue = this.inviteForm.get('inviteTime')?.value;
+        
+        // Create Date object
+        const scheduledDateTime = new Date(dateValue);
+        if (timeValue) {
+          const [hours, minutes] = timeValue.split(':');
+          scheduledDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+        }
 
-      this.invitationService.sendInvitation({
-        emails,
-        meetingId: this.meetingId,
-        hostName: this.hostName
-      }, isGmail);
+        // Send invitation
+        this.invitationService.sendInvitation({
+          emails,
+          meetingId: this.meetingId,
+          hostName: this.hostName,
+          scheduledDateTime
+        }, isGmail);
 
-      this.dismiss();
+        this.dismiss();
+      } catch (error) {
+        console.error('Error creating date:', error);
+      }
     }
   }
 
