@@ -1,29 +1,45 @@
 import { Component, OnInit } from '@angular/core';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { Observable, combineLatest } from 'rxjs';
-import { map, take } from 'rxjs/operators';
-import { ModalController } from '@ionic/angular';  // Add ModalController
-import { EachStudentComponent } from '../../components/each-student/each-student.component';  // Import modal component
-import { Marks } from 'src/app/models/marks.model'; 
+import { map } from 'rxjs/operators';
+import { ModalController } from '@ionic/angular';
+import { Chart, registerables } from 'chart.js';
 
-interface AttendanceRecord {
-  id?: string;
-  studentNumber: string;
-}
-
-interface Student {
-  studentNumber: string;
+interface Faculty {
+  id: string;
   name: string;
-  surname: string;
-  email: string;
-  course: string;
-  year: string;
-  department: string;
+  departments: Department[];
 }
 
-interface AttendanceWithStudentAndMarks extends AttendanceRecord {
-  studentDetails?: Student;
-  marks?: Marks[];
+interface Department {
+  name: string;
+  modules: Module[];
+}
+
+interface Module {
+  moduleCode: string;
+  moduleName: string;
+  lecturer: string;
+  department: string;
+  faculty: string;
+}
+
+interface ModulePerformance {
+  moduleCode: string;
+  averageMark: number;
+  attendanceRate: number;
+  lecturer: string;
+  atRiskCount: number;
+}
+
+interface FacultyAnalytics {
+  facultyId: string;
+  facultyName: string;
+  averagePerformance: number;
+  averageAttendance: number;
+  atRiskStudentsCount: number;
+  lowPerformingModules: ModulePerformance[];
+  performanceCategory: 'HIGH' | 'MEDIUM' | 'LOW';
 }
 
 @Component({
@@ -32,146 +48,189 @@ interface AttendanceWithStudentAndMarks extends AttendanceRecord {
   styleUrls: ['./super-analytics.page.scss']
 })
 export class SuperAnalyticsPage implements OnInit {
-  attendanceRecords$: Observable<{ date: string; records: AttendanceWithStudentAndMarks[]; }[]> | undefined;
+  facultyAnalytics$: Observable<FacultyAnalytics[]> = new Observable(); // Initialize as empty observable
+  performanceChart: Chart | null = null;
+  attendanceChart: Chart | null = null;
 
   constructor(
     private firestore: AngularFirestore,
     private modalController: ModalController
-  ) {}
+  ) {
+    Chart.register(...registerables);
+  }
 
   ngOnInit() {
-    this.loadAttendanceData();
+    this.loadFacultyAnalytics();
+    this.initializeCharts();
   }
 
-  async showStudentDetails(record: AttendanceWithStudentAndMarks) {
-    console.log('Showing details for student:', record.studentDetails);
-    console.log('Fetched Marks:', record.marks);
-    
+  private loadFacultyAnalytics() {
+    const faculties$ = this.firestore.collection<Faculty>('faculties').valueChanges();
+    const marks$ = this.firestore.collection<any>('marks').valueChanges();
+    const attendance$ = this.firestore.collection('Attended').valueChanges();
 
-    const modal = await this.modalController.create({
-      component: EachStudentComponent,
-      componentProps: {
-        studentDetails: record.studentDetails,
-        marks: record.marks // Ensure marks are passed here
+    this.facultyAnalytics$ = combineLatest([faculties$, marks$, attendance$]).pipe(
+      map(([faculties, marks, attendance]) => {
+        return faculties.map(faculty => this.analyzeFaculty(faculty, marks, attendance));
+      }),
+      map(analytics => this.categorizeFaculties(analytics))
+    );
+  }
+
+  private analyzeFaculty(faculty: Faculty, marks: any[], attendance: any[]): FacultyAnalytics {
+    let totalMarks = 0;
+    let totalStudents = 0;
+    let atRiskStudents: Set<string> = new Set();
+    let modulePerformances: ModulePerformance[] = [];
+
+    faculty.departments.forEach(dept => {
+      dept.modules.forEach(module => {
+        const moduleMarks = marks.filter(m => m.moduleCode === module.moduleCode);
+        const moduleAttendance = this.calculateModuleAttendance(attendance, module.moduleCode);
+        
+        const averageMark = this.calculateAverageMark(moduleMarks);
+        const atRiskCount = this.identifyAtRiskStudents(moduleMarks, atRiskStudents);
+        
+        modulePerformances.push({
+          moduleCode: module.moduleCode,
+          averageMark,
+          attendanceRate: moduleAttendance,
+          lecturer: module.lecturer,
+          atRiskCount
+        });
+
+        totalMarks += averageMark * moduleMarks.length;
+        totalStudents += moduleMarks.length;
+      });
+    });
+
+    const averagePerformance = totalStudents > 0 ? totalMarks / totalStudents : 0;
+    const averageAttendance = this.calculateFacultyAttendance(attendance, faculty.id);
+
+    return {
+      facultyId: faculty.id,
+      facultyName: faculty.name,
+      averagePerformance,
+      averageAttendance,
+      atRiskStudentsCount: atRiskStudents.size,
+      lowPerformingModules: modulePerformances
+        .filter(m => m.averageMark < 50)
+        .sort((a, b) => a.averageMark - b.averageMark),
+      performanceCategory: 'MEDIUM'
+    };
+  }
+
+  private categorizeFaculties(analytics: FacultyAnalytics[]): FacultyAnalytics[] {
+    const sorted = [...analytics].sort((a, b) => b.averagePerformance - a.averagePerformance);
+    const total = sorted.length;
+    
+    return sorted.map((faculty, index) => ({
+      ...faculty,
+      performanceCategory: 
+        index < total / 3 ? 'HIGH' :
+        index < (total * 2) / 3 ? 'MEDIUM' : 'LOW'
+    }));
+  }
+
+  private calculateModuleAttendance(attendance: any[], moduleCode: string): number {
+    // Placeholder logic for calculating module attendance
+    return 0;
+  }
+
+  private calculateAverageMark(marks: any[]): number {
+    if (!marks.length) return 0;
+    return marks.reduce((sum, mark) => sum + mark.average, 0) / marks.length;
+  }
+
+  private calculateFacultyAttendance(attendance: any[], facultyId: string): number {
+    // Placeholder logic for calculating faculty attendance rate
+    return 0;
+  }
+
+  private identifyAtRiskStudents(marks: any[], atRiskStudents: Set<string>): number {
+    marks.forEach(mark => {
+      if (mark.average < 50) {
+        atRiskStudents.add(mark.studentNumber);
       }
     });
-    return await modal.present();
-}
+    return atRiskStudents.size;
+  }
 
-  private loadAttendanceData() {
-    const students$ = this.firestore
-      .collection<Student>('students')
-      .snapshotChanges()
-      .pipe(
-        map(actions => {
-          const students: { [key: string]: Student } = {};
-          actions.forEach(action => {
-            const data = action.payload.doc.data() as Student;
-            const id = action.payload.doc.id;
-            students[id] = { ...data, studentNumber: id };
-          });
-          return students;
-        }),
-        take(1) // Fetch only once
-      );
+  
+  async showModuleDetails(module: ModulePerformance) {
+    // Instead of opening a modal, you could log the module details for now
+    console.log(module);
+  
+    // If you want to show the data in a different way (like a simple alert):
+    alert(`Module: ${module.moduleCode}\nLecturer: ${module.lecturer}\nPerformance: ${module.averageMark}%\nAttendance: ${module.attendanceRate}%`);
+  }
+  
+  private initializeCharts() {
+    if (this.facultyAnalytics$) {
+      this.facultyAnalytics$.subscribe(analytics => {
+        this.createPerformanceChart(analytics);
+        this.createAttendanceChart(analytics);
+      });
+    }
+  }
 
-      const marks$ = this.firestore
-      .collection<Marks>('marks')
-      .snapshotChanges()
-      .pipe(
-        map(actions => {
-          const marks: { [studentNumber: string]: Marks[] } = {};
-          actions.forEach(action => {
-            const mark = action.payload.doc.data() as Marks;
-            const studentNumber = mark.studentNumber;
-    
-            if (!marks[studentNumber]) {
-              marks[studentNumber] = [];
+  private createPerformanceChart(analytics: FacultyAnalytics[]) {
+    const ctx = document.getElementById('performanceChart') as HTMLCanvasElement;
+    if (!ctx) return;
+
+    this.performanceChart?.destroy();
+    this.performanceChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: analytics.map(a => a.facultyName),
+        datasets: [{
+          label: 'Academic Performance',
+          data: analytics.map(a => a.averagePerformance),
+          backgroundColor: analytics.map(a => {
+            switch(a.performanceCategory) {
+              case 'HIGH': return '#4CAF50';
+              case 'MEDIUM': return '#FFC107';
+              case 'LOW': return '#F44336';
             }
-            marks[studentNumber].push(mark);
-          });
-          return marks;
-        }),
-        take(1) // Fetch only once
-      );
-    
-
-    const attendance$ = this.firestore
-      .collection('Attended')
-      .snapshotChanges()
-      .pipe(
-        map(actions => {
-          const records: { [date: string]: AttendanceRecord[] } = {};
-
-          actions.forEach(action => {
-            const data = action.payload.doc.data() as { [key: string]: any };
-            const date = action.payload.doc.id;
-
-            if (!records[date]) {
-              records[date] = [];
-            }
-
-            if (Array.isArray(data)) {
-              data.forEach(item => {
-                this.processAttendanceItem(item, date, records[date]);
-              });
-            } else if (typeof data === 'object' && data !== null) {
-              if (Object.keys(data).length === 1 && Array.isArray(Object.values(data)[0])) {
-                Object.values(data)[0].forEach((item: any) => {
-                  this.processAttendanceItem(item, date, records[date]);
-                });
-              } else {
-                Object.values(data).forEach(item => {
-                  this.processAttendanceItem(item, date, records[date]);
-                });
-              }
-            }
-          });
-
-          return records;
-        }),
-        take(1) // Fetch only once
-      );
-
-    this.attendanceRecords$ = combineLatest([attendance$, students$, marks$]).pipe(
-      map(([attendanceRecords, students, marks]) => {
-        return Object.entries(attendanceRecords)
-          .map(([date, records]) => ({
-            date,
-            records: records.map(record => ({
-              ...record,
-              studentDetails: students[record.studentNumber] || { name: 'Unknown', surname: 'Unknown' },
-              marks: marks[record.studentNumber] || []
-            }))
-          }))
-          .sort((a, b) => a.date.localeCompare(b.date));
-      })
-    );
-
-    // Add error handling
-    this.attendanceRecords$.subscribe({
-      next: () => console.log('Attendance data loaded successfully'),
-      error: (err) => console.error('Error loading attendance data:', err)
+          })
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Faculty Academic Performance'
+          }
+        }
+      }
     });
   }
 
-  processAttendanceItem(item: any, date: string, records: AttendanceRecord[]) {
-    if (item.studentNumber) {
-      records.push({ studentNumber: item.studentNumber });
-    }    
-  }
+  private createAttendanceChart(analytics: FacultyAnalytics[]) {
+    const ctx = document.getElementById('attendanceChart') as HTMLCanvasElement;
+    if (!ctx) return;
 
-  // Helper method to calculate average marks for a student
-  getAverageMarks(marks: Marks[]): number {
-    if (!marks || marks.length === 0) return 0;
-    const sum = marks.reduce((acc, mark) => acc + Number(mark.average || 0), 0);
-    return Number((sum / marks.length).toFixed(2));
-  }
-
-  // Helper method to get the latest marks
-  getLatestMarks(marks: Marks[]): Marks[] {
-    return [...marks]
-      .sort((a, b) => (b.date || '').localeCompare(a.date || ''))
-      .slice(0, 3);
+    this.attendanceChart?.destroy();
+    this.attendanceChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: analytics.map(a => a.facultyName),
+        datasets: [{
+          label: 'Attendance Rates',
+          data: analytics.map(a => a.averageAttendance),
+          backgroundColor: analytics.map(a => '#2196F3')
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Faculty Attendance Rates'
+          }
+        }
+      }
+    });
   }
 }

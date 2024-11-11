@@ -1,63 +1,77 @@
 <ion-content [fullscreen]="true">
   <ion-header collapse="condense">
     <ion-toolbar>
-      <ion-title size="large">Super Analytics</ion-title>
+      <ion-title size="large">Faculty Analytics Dashboard</ion-title>
     </ion-toolbar>
   </ion-header>
 
-  <ion-grid>
+  <ion-grid *ngIf="facultyAnalytics$ | async as analytics">
+    <!-- Performance Overview -->
     <ion-row>
-      <ion-col>
+      <ion-col size="12" size-md="6">
         <ion-card>
           <ion-card-header>
-            <ion-card-title>Attendance Records</ion-card-title>
+            <ion-card-title>Academic Performance</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <canvas id="performanceChart"></canvas>
+          </ion-card-content>
+        </ion-card>
+      </ion-col>
+
+      <ion-col size="12" size-md="6">
+        <ion-card>
+          <ion-card-header>
+            <ion-card-title>Attendance Rates</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <canvas id="attendanceChart"></canvas>
+          </ion-card-content>
+        </ion-card>
+      </ion-col>
+    </ion-row>
+
+    <!-- Faculty Details -->
+    <ion-row>
+      <ion-col>
+        <ion-card *ngFor="let faculty of analytics">
+          <ion-card-header [color]="faculty.performanceCategory === 'HIGH' ? 'success' : 
+                                   faculty.performanceCategory === 'MEDIUM' ? 'warning' : 'danger'">
+            <ion-card-title>{{ faculty.facultyName }}</ion-card-title>
+            <ion-card-subtitle>
+              Performance: {{ faculty.averagePerformance | number:'1.0-1' }}% | 
+              Attendance: {{ faculty.averageAttendance | number:'1.0-1' }}%
+            </ion-card-subtitle>
           </ion-card-header>
 
           <ion-card-content>
-            <div *ngIf="!(attendanceRecords$ | async)" class="ion-text-center">
-              <ion-spinner></ion-spinner>
-              <p>Loading records...</p>
-            </div>
+            <ion-list>
+              <ion-item-divider>
+                <ion-label>Low Performing Modules</ion-label>
+              </ion-item-divider>
 
-            <div class="analytics-table" *ngIf="attendanceRecords$ | async as records">
-              <ng-container *ngFor="let recordGroup of records">
-                <ion-item-divider>
-                  <ion-label color="primary">{{ recordGroup.date }}</ion-label>
-                </ion-item-divider>
+              <ion-item *ngFor="let module of faculty.lowPerformingModules" button
+                        (click)="showModuleDetails(module)">
+                <ion-label>
+                  <h2>{{ module.moduleCode }}</h2>
+                  <p>
+                    Performance: {{ module.averageMark }}% | 
+                    Attendance: {{ module.attendanceRate }}%
+                  </p>
+                  <p>Lecturer: {{ module.lecturer }}</p>
+                </ion-label>
+                <ion-badge slot="end" color="danger">
+                  {{ module.atRiskCount }} at risk
+                </ion-badge>
+              </ion-item>
+            </ion-list>
 
-                <ion-list>
-                  <ion-item lines="full" class="header-row">
-                    <ion-col size="4" class="text-center">Department</ion-col>
-                    <ion-col size="3" class="text-center">Student No.</ion-col>
-                    <ion-col size="4" class="text-center">Name</ion-col>
-                    <ion-col size="1" class="text-center">Details</ion-col>
-                  </ion-item>
-
-                  <ion-item *ngFor="let record of recordGroup.records; let even = even"
-                            button
-                            [class.alternate]="even"
-                            class="data-row"
-                            (click)="showStudentDetails(record)">
-                    <ion-col size="4" class="text-center">{{ record.studentDetails?.department || 'N/A' }}</ion-col>
-                    <ion-col size="3" class="text-center">{{ record.studentNumber }}</ion-col>
-                    <ion-col size="4" class="text-center">
-                      {{ record.studentDetails?.name || 'Unknown' }}
-                      <span>{{ record.studentDetails?.surname || 'Unknown' }}</span>
-                    </ion-col>
-                    <ion-col size="1" class="text-center">
-                      <ion-button fill="clear" (click)="showStudentDetails(record)">
-                        View
-                      </ion-button>
-                    </ion-col>
-                  </ion-item>
-
-                  <ion-item *ngIf="recordGroup.records.length === 0">
-                    <ion-label class="ion-text-center">
-                      No attendance records found for this date
-                    </ion-label>
-                  </ion-item>
-                </ion-list>
-              </ng-container>
+            <div class="mentorship-info">
+              <ion-chip color="warning">
+                <ion-label>
+                  {{ faculty.atRiskStudentsCount }} Students Need Mentorship
+                </ion-label>
+              </ion-chip>
             </div>
           </ion-card-content>
         </ion-card>
