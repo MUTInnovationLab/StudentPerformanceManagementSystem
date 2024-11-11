@@ -63,7 +63,8 @@ const routes: Routes = [
   {
     path: 'hod-analytics',
     loadChildren: () => import('./pages/hod-analytics/hod-analytics.module').then( m => m.HODANALYTICSPageModule)
-  },  {
+  },
+  {
     path: 'supportfeedback',
     loadChildren: () => import('./pages/supportfeedback/supportfeedback.module').then( m => m.SupportfeedbackPageModule)
   },
@@ -83,7 +84,11 @@ const routes: Routes = [
     path: 'student-management',
     loadChildren: () => import('./pages/student-management/student-management.module').then( m => m.StudentManagementPageModule)
   },
-
+  {
+    path: 'facult-analytics',
+    loadChildren: () => import('./faculty-analytics/faculty-analytics.module').then(m => m.FacultyAnalyticsPageModule)
+  }
+  
 
 ];
 
