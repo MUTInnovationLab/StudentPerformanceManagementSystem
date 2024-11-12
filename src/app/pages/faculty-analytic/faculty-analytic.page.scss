@@ -1,0 +1,147 @@
+/* Global Styles */
+:host {
+    display: block;
+    --high-color: rgba(75, 192, 92, 0.7);
+    --medium-color: rgba(255, 206, 86, 0.7);
+    --low-color: rgba(255, 99, 132, 0.7);
+  }
+  
+  .card {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin: 20px auto;
+    max-width: 1200px;
+  }
+  
+  .card-header {
+    background-color: var(--ion-color-primary);
+    color: #fff;
+    padding: 1.5rem;
+    border-radius: 8px 8px 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .card-body {
+    padding: 1.5rem;
+  }
+  
+  .performance-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  
+  .performance-card {
+    padding: 1rem;
+    border-radius: 8px;
+    color: #fff;
+  
+    &.high {
+      background-color: var(--high-color);
+    }
+  
+    &.medium {
+      background-color: var(--medium-color);
+    }
+  
+    &.low {
+      background-color: var(--low-color);
+    }
+  
+    h3 {
+      margin: 0 0 1rem;
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+  
+    .stats {
+      display: grid;
+      gap: 0.5rem;
+  
+      p {
+        margin: 0;
+        font-size: 0.9rem;
+      }
+    }
+  }
+  
+  .charts-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+  }
+  
+  .chart-wrapper {
+    background-color: #fff;
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    height: 400px;
+  }
+  
+  /* Dropdown Styles */
+  .dropdown {
+    display: flex;
+    align-items: center;
+    gap: 1rem; /* Adjust the gap between the dropdowns */
+    margin-left: auto; /* Align dropdowns to the right of the toolbar */
+  }
+  
+  .dropdown-select {
+    background-color: var(--ion-color-primary-tint);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    min-width: 200px;
+    cursor: pointer;
+  
+    &:focus {
+      outline: none;
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+  }
+  
+  /* Ensure the dropdowns align horizontally in the toolbar */
+  ion-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  ion-title {
+    flex-grow: 1;
+    text-align: center;
+  }
+  
+  /* Responsive Adjustments */
+  @media (max-width: 768px) {
+    ion-toolbar {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  
+    .dropdown {
+      flex-direction: column;
+      align-items: stretch;
+      margin-left: 0;
+      margin-top: 1rem;
+    }
+  
+    .dropdown-select {
+      width: 100%;
+    }
+  
+    .charts-container {
+      grid-template-columns: 1fr;
+    }
+  }
+  

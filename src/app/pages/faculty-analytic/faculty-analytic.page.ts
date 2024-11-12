@@ -8,6 +8,7 @@ interface ModuleData {
   faculty: string;
   department: string;
   scannerOpenCount: number;
+  marks?: number[]; // Adding an optional 'marks' field for academic performance
 }
 
 interface AssignedLecture {
@@ -16,18 +17,18 @@ interface AssignedLecture {
 
 interface DepartmentPerformance {
   name: string;
-  attendanceRate: number;
+  performanceRate: number;
   performanceLevel: 'High' | 'Medium' | 'Low';
   totalModules: number;
-  totalAttendance: number;
+  totalMetric: number; // Total marks or total attendance based on selectedPerformanceType
 }
 
 @Component({
-  selector: 'app-faculty-analytics',
-  templateUrl: './faculty-analytics.page.html',
-  styleUrls: ['./faculty-analytics.page.scss'],
+  selector: 'app-faculty-analytic',
+  templateUrl: './faculty-analytic.page.html',
+  styleUrls: ['./faculty-analytic.page.scss'],
 })
-export class FacultyAnalyticsPage implements OnInit, AfterViewInit {
+export class FacultyAnalyticPage implements OnInit, AfterViewInit {
   selectedFaculty: string = '';
   selectedPerformanceType: string = 'academic';  // New property for performance type
   facultyList: string[] = [];
@@ -91,14 +92,21 @@ export class FacultyAnalyticsPage implements OnInit, AfterViewInit {
     try {
       const snapshot = await this.firestore.collection('assignedLectures').get().toPromise();
 
-      const departmentMap = new Map<string, { totalCount: number; totalModules: number }>();
+      const departmentMap = new Map<string, { totalMetric: number; totalModules: number }>();
 
       snapshot?.forEach(doc => {
         const moduleData: AssignedLecture = doc.data() as AssignedLecture;
         moduleData.modules.forEach((module: ModuleData) => {
           if (module.faculty === faculty) {
-            const dept = departmentMap.get(module.department) || { totalCount: 0, totalModules: 0 };
-            dept.totalCount += module.scannerOpenCount;
+            const dept = departmentMap.get(module.department) || { totalMetric: 0, totalModules: 0 };
+            
+            if (this.selectedPerformanceType === 'academic' && module.marks) {
+              const avgMarks = module.marks.reduce((sum, mark) => sum + mark, 0) / module.marks.length;
+              dept.totalMetric += avgMarks;
+            } else if (this.selectedPerformanceType === 'attendance') {
+              dept.totalMetric += module.scannerOpenCount;
+            }
+            
             dept.totalModules += 1;
             departmentMap.set(module.department, dept);
           }
@@ -106,13 +114,13 @@ export class FacultyAnalyticsPage implements OnInit, AfterViewInit {
       });
 
       return Array.from(departmentMap.entries()).map(([name, data]) => {
-        const attendanceRate = (data.totalCount / (data.totalModules * 100)) * 100;
+        const performanceRate = (data.totalMetric / data.totalModules);
         return {
           name,
-          attendanceRate,
-          performanceLevel: this.getPerformanceLevel(attendanceRate),
+          performanceRate,
+          performanceLevel: this.getPerformanceLevel(performanceRate),
           totalModules: data.totalModules,
-          totalAttendance: data.totalCount
+          totalMetric: data.totalMetric
         };
       });
     } catch (error) {
@@ -121,24 +129,22 @@ export class FacultyAnalyticsPage implements OnInit, AfterViewInit {
     }
   }
 
-  private getPerformanceLevel(attendanceRate: number): 'High' | 'Medium' | 'Low' {
-    if (attendanceRate >= this.HIGH_PERFORMANCE_THRESHOLD) return 'High';
-    if (attendanceRate >= this.MEDIUM_PERFORMANCE_THRESHOLD) return 'Medium';
+  private getPerformanceLevel(performanceRate: number): 'High' | 'Medium' | 'Low' {
+    if (performanceRate >= this.HIGH_PERFORMANCE_THRESHOLD) return 'High';
+    if (performanceRate >= this.MEDIUM_PERFORMANCE_THRESHOLD) return 'Medium';
     return 'Low';
   }
 
   // Update the charts based on department data
   private updateCharts(departmentData: DepartmentPerformance[]) {
-    if (this.selectedPerformanceType === 'attendance') {
-      this.createDepartmentPerformanceChart(departmentData); // Attendance-based chart
-    } else {
-      this.createDepartmentPerformanceChart(departmentData); // Academic performance-based chart (same chart logic)
-    }
+    const metricLabel = this.selectedPerformanceType === 'academic' ? 'Average Marks (%)' : 'Attendance Rate (%)';
+
+    this.createDepartmentPerformanceChart(departmentData, metricLabel);
     this.createPerformanceLevelChart(departmentData);
   }
 
   // Create the department performance chart
-  private createDepartmentPerformanceChart(departmentData: DepartmentPerformance[]) {
+  private createDepartmentPerformanceChart(departmentData: DepartmentPerformance[], metricLabel: string) {
     const canvas = document.getElementById('departmentPerformanceChart') as HTMLCanvasElement;
     if (this.departmentPerformanceChart) {
       this.departmentPerformanceChart.destroy();
@@ -149,8 +155,8 @@ export class FacultyAnalyticsPage implements OnInit, AfterViewInit {
       data: {
         labels: departmentData.map(d => d.name),
         datasets: [{
-          label: 'Attendance Rate (%)',
-          data: departmentData.map(d => d.attendanceRate),
+          label: metricLabel,
+          data: departmentData.map(d => d.performanceRate),
           backgroundColor: departmentData.map(d => {
             switch (d.performanceLevel) {
               case 'High': return '#4ade80';
@@ -177,7 +183,7 @@ export class FacultyAnalyticsPage implements OnInit, AfterViewInit {
             max: 100,
             title: {
               display: true,
-              text: 'Attendance Rate (%)'
+              text: metricLabel
             }
           }
         }

@@ -84,12 +84,11 @@ const routes: Routes = [
     path: 'student-management',
     loadChildren: () => import('./pages/student-management/student-management.module').then( m => m.StudentManagementPageModule)
   },
+ 
   {
-    path: 'facult-analytics',
-    loadChildren: () => import('./faculty-analytics/faculty-analytics.module').then(m => m.FacultyAnalyticsPageModule)
-  }
-  
-
+    path: 'faculty-analytic',
+    loadChildren: () => import('./pages/faculty-analytic/faculty-analytic.module').then(m => m.FacultyAnalyticPageModule)
+  },
 ];
 
 @NgModule({
