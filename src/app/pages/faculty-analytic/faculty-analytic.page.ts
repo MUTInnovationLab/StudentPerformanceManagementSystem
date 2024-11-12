@@ -2,13 +2,14 @@ import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { Chart, ChartConfiguration, ChartData, ChartType } from 'chart.js';
 import { registerables } from 'chart.js';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
+import { AuthenticationService } from '../../services/auths.service';
+import { Marks } from 'src/app/models/marks.model';
 
-// Define interfaces for the Firestore data structure
 interface ModuleData {
   faculty: string;
   department: string;
   scannerOpenCount: number;
-  marks?: number[]; // Adding an optional 'marks' field for academic performance
+  marks?: Marks[];
 }
 
 interface AssignedLecture {
@@ -17,10 +18,10 @@ interface AssignedLecture {
 
 interface DepartmentPerformance {
   name: string;
-  performanceRate: number;
+  academicPerformanceRate: number;
+  attendancePerformanceRate: number;
   performanceLevel: 'High' | 'Medium' | 'Low';
   totalModules: number;
-  totalMetric: number; // Total marks or total attendance based on selectedPerformanceType
 }
 
 @Component({
@@ -29,84 +30,62 @@ interface DepartmentPerformance {
   styleUrls: ['./faculty-analytic.page.scss'],
 })
 export class FacultyAnalyticPage implements OnInit, AfterViewInit {
-  selectedFaculty: string = '';
-  selectedPerformanceType: string = 'academic';  // New property for performance type
-  facultyList: string[] = [];
+  selectedPerformanceType: 'academic' | 'attendance' = 'academic';
+  faculty: string = '';
   departmentPerformanceChart: Chart | null = null;
   performanceLevelChart: Chart | null = null;
 
-  // Performance thresholds
   private readonly HIGH_PERFORMANCE_THRESHOLD = 75;
   private readonly MEDIUM_PERFORMANCE_THRESHOLD = 50;
 
-  constructor(private firestore: AngularFirestore) {
+  constructor(
+    private firestore: AngularFirestore,
+    private authService: AuthenticationService
+  ) {
     Chart.register(...registerables);
   }
 
   async ngOnInit() {
-    await this.loadFacultyList();
-    if (this.facultyList.length > 0) {
-      this.selectedFaculty = this.facultyList[0];
+    const user = await this.authService.getLoggedInStaff();
+    if (user) {
+      this.faculty = user.faculty;
       await this.onFacultyChange();
     }
   }
 
-  // Ensure the charts are created after the view is initialized
   ngAfterViewInit() {
     this.updateChartsOnViewInit();
   }
 
-  // Load the list of faculty members from Firestore
-  private async loadFacultyList() {
-    try {
-      const snapshot = await this.firestore.collection('assignedLectures').get().toPromise();
-      const modules = new Set<string>();
-
-      snapshot?.forEach(doc => {
-        const moduleData: AssignedLecture = doc.data() as AssignedLecture;
-        moduleData.modules.forEach((module: ModuleData) => {
-          modules.add(module.faculty);
-        });
-      });
-
-      this.facultyList = Array.from(modules);
-    } catch (error) {
-      console.error('Error loading faculty list:', error);
-    }
-  }
-
-  // Handle the change in selected faculty and update the charts
-  async onFacultyChange() {
-    const departmentData = await this.getDepartmentPerformance(this.selectedFaculty);
-    this.updateCharts(departmentData);
-  }
-
-  // Handle the change in selected performance type (academic or attendance)
   async onPerformanceTypeChange() {
-    const departmentData = await this.getDepartmentPerformance(this.selectedFaculty);
+    await this.onFacultyChange();
+  }
+
+  private async onFacultyChange() {
+    const departmentData = await this.getDepartmentPerformance(this.faculty);
     this.updateCharts(departmentData);
   }
 
-  // Get department performance based on the selected faculty
   private async getDepartmentPerformance(faculty: string): Promise<DepartmentPerformance[]> {
     try {
       const snapshot = await this.firestore.collection('assignedLectures').get().toPromise();
 
-      const departmentMap = new Map<string, { totalMetric: number; totalModules: number }>();
+      const departmentMap = new Map<string, { academicMetric: number; attendanceMetric: number; totalModules: number }>();
 
       snapshot?.forEach(doc => {
         const moduleData: AssignedLecture = doc.data() as AssignedLecture;
         moduleData.modules.forEach((module: ModuleData) => {
           if (module.faculty === faculty) {
-            const dept = departmentMap.get(module.department) || { totalMetric: 0, totalModules: 0 };
-            
-            if (this.selectedPerformanceType === 'academic' && module.marks) {
-              const avgMarks = module.marks.reduce((sum, mark) => sum + mark, 0) / module.marks.length;
-              dept.totalMetric += avgMarks;
-            } else if (this.selectedPerformanceType === 'attendance') {
-              dept.totalMetric += module.scannerOpenCount;
+            const dept = departmentMap.get(module.department) || { academicMetric: 0, attendanceMetric: 0, totalModules: 0 };
+
+            if (module.marks) {
+              module.marks.forEach((markData: Marks) => {
+                const avgMarks = this.calculateAverageMarks(markData);
+                dept.academicMetric += avgMarks;
+              });
             }
             
+            dept.attendanceMetric += module.scannerOpenCount;
             dept.totalModules += 1;
             departmentMap.set(module.department, dept);
           }
@@ -114,13 +93,18 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
       });
 
       return Array.from(departmentMap.entries()).map(([name, data]) => {
-        const performanceRate = (data.totalMetric / data.totalModules);
+        const academicPerformanceRate = (data.academicMetric / data.totalModules);
+        const attendancePerformanceRate = (data.attendanceMetric / data.totalModules);
+        const performanceLevel = this.getPerformanceLevel(
+          this.selectedPerformanceType === 'academic' ? academicPerformanceRate : attendancePerformanceRate
+        );
+
         return {
           name,
-          performanceRate,
-          performanceLevel: this.getPerformanceLevel(performanceRate),
-          totalModules: data.totalModules,
-          totalMetric: data.totalMetric
+          academicPerformanceRate,
+          attendancePerformanceRate,
+          performanceLevel,
+          totalModules: data.totalModules
         };
       });
     } catch (error) {
@@ -129,22 +113,41 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
     }
   }
 
+  private calculateAverageMarks(marks: Marks): number {
+    const markValues = [
+      marks.test1, marks.test2, marks.test3, marks.test4,
+      marks.test5, marks.test6, marks.test7
+    ];
+
+    const validMarks = markValues.filter((mark): mark is number => typeof mark === 'number');
+    const totalMarks = validMarks.reduce((sum, mark) => sum + mark, 0);
+
+    return validMarks.length ? totalMarks / validMarks.length : 0;
+  }
+
   private getPerformanceLevel(performanceRate: number): 'High' | 'Medium' | 'Low' {
     if (performanceRate >= this.HIGH_PERFORMANCE_THRESHOLD) return 'High';
     if (performanceRate >= this.MEDIUM_PERFORMANCE_THRESHOLD) return 'Medium';
     return 'Low';
   }
 
-  // Update the charts based on department data
   private updateCharts(departmentData: DepartmentPerformance[]) {
-    const metricLabel = this.selectedPerformanceType === 'academic' ? 'Average Marks (%)' : 'Attendance Rate (%)';
+    const academicData = departmentData.map(d => d.academicPerformanceRate);
+    const attendanceData = departmentData.map(d => d.attendancePerformanceRate);
 
-    this.createDepartmentPerformanceChart(departmentData, metricLabel);
+    this.createDepartmentPerformanceChart(
+      departmentData,
+      this.selectedPerformanceType === 'academic' ? academicData : attendanceData,
+      this.selectedPerformanceType === 'academic' ? 'Average Marks (%)' : 'Attendance Rate (%)'
+    );
     this.createPerformanceLevelChart(departmentData);
   }
 
-  // Create the department performance chart
-  private createDepartmentPerformanceChart(departmentData: DepartmentPerformance[], metricLabel: string) {
+  private createDepartmentPerformanceChart(
+    departmentData: DepartmentPerformance[],
+    performanceData: number[],
+    metricLabel: string
+  ) {
     const canvas = document.getElementById('departmentPerformanceChart') as HTMLCanvasElement;
     if (this.departmentPerformanceChart) {
       this.departmentPerformanceChart.destroy();
@@ -156,7 +159,7 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
         labels: departmentData.map(d => d.name),
         datasets: [{
           label: metricLabel,
-          data: departmentData.map(d => d.performanceRate),
+          data: performanceData,
           backgroundColor: departmentData.map(d => {
             switch (d.performanceLevel) {
               case 'High': return '#4ade80';
@@ -171,7 +174,7 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
         plugins: {
           title: {
             display: true,
-            text: `Department Performance in ${this.selectedFaculty}`
+            text: `Department ${this.selectedPerformanceType === 'academic' ? 'Academic' : 'Attendance'} Performance`
           },
           legend: {
             display: false
@@ -222,7 +225,7 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
         plugins: {
           title: {
             display: true,
-            text: 'Performance Level Distribution'
+            text: `${this.selectedPerformanceType === 'academic' ? 'Academic' : 'Attendance'} Performance Level Distribution`
           }
         },
         layout: {
@@ -243,7 +246,7 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
   }
 
   private updateChartsOnViewInit() {
-    if (this.selectedFaculty && this.selectedPerformanceType) {
+    if (this.faculty && this.selectedPerformanceType) {
       this.onFacultyChange();
     }
   }

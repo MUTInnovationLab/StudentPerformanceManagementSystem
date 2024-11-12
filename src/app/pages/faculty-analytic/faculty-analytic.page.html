@@ -4,24 +4,8 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <!-- Faculty Selection Dropdown -->
-    <div class="dropdown">
-      <label for="faculty-select">Select Faculty</label>
-      <select 
-        id="faculty-select" 
-        class="dropdown-select" 
-        [(ngModel)]="selectedFaculty"
-        (change)="onFacultyChange()">
-        <option *ngFor="let faculty of facultyList" [value]="faculty">{{ faculty }}</option>
-      </select>
-    </div>
-  </ion-toolbar>
-</ion-header>
-
-<ion-header [translucent]="true">
-  <ion-toolbar>
+<ion-content [fullscreen]="true">
+  <div class="w-full max-w-4xl">
     <!-- Performance Type Selection Dropdown -->
     <div class="dropdown">
       <label for="performance-select">Select Performance Type</label>
@@ -34,11 +18,7 @@
         <option value="attendance">Performance Attendance</option>
       </select>
     </div>
-  </ion-toolbar>
-</ion-header>
 
-<ion-content [fullscreen]="true">
-  <div class="w-full max-w-4xl">
     <!-- Display the performance charts only -->
     <div class="charts-container">
       <div class="chart-wrapper">

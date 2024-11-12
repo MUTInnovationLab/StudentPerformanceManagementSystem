@@ -625,6 +625,7 @@ export class HODANALYTICSPage implements OnInit {
       }
     }
   }
+  
   async getModuleMarksRanges() {
     for (const module of this.departmentModules) {
       const marksDoc = await this.firestore.collection('marks').doc(module.moduleCode).get().toPromise();

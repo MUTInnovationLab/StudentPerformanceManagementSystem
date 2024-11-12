@@ -68,6 +68,11 @@ export class AuthenticationService {
 
     return staffDataSnapshot.docs[0].data() as Staff; 
   }
+
+  async getLoggedInFaculty(): Promise<string> {
+    const staff = await this.getLoggedInStaff();
+    return staff.faculty; // Return the faculty of the logged-in user
+  }
 }
 
 
