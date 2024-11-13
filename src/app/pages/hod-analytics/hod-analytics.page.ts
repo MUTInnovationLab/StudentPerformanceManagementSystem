@@ -4,7 +4,6 @@ import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { AuthenticationService } from '../../services/auths.service';
 import { StudentMarks } from 'src/app/models/marks.model';
 import { ChangeDetectorRef } from '@angular/core';
-import { IonSelectCustomEvent } from '@ionic/core';
 
 interface ModuleRange {
   range: string;
@@ -53,9 +52,6 @@ interface Department {
   name: string;
   streams?: StreamMap;
   modules?: Module[];
-}
-interface AssignedLecture {
-  userEmail: string; 
 }
 
 @Component({

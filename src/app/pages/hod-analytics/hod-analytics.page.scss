@@ -56,7 +56,6 @@ ion-row:not(.table):hover {
   background-color: #999b9ca6; 
 }
 
-/* Column Styling */
 ion-col {
   display: flex;
   align-items: center;
@@ -65,7 +64,6 @@ ion-col {
   word-wrap: break-word; 
 }
 
-/* Adjust Font Sizes for Small Screens */
 @media (max-width: 768px) {
   ion-grid {
     .table, ion-row {
@@ -146,7 +144,7 @@ ion-grid:last-of-type ion-row:last-child {
 }
 
 .maximized .chart-content {
-  height: calc(100% - 60px); /* Subtract header height */
+  height: calc(100% - 60px); 
   display: flex;
   flex-direction: column;
 }
@@ -168,14 +166,14 @@ ion-grid:last-of-type ion-row:last-child {
   transition: all 0.3s ease;
 }
 
-/* Maximized Chart */
+
 .maximized .chart-container canvas,
 .maximized .pie-chart canvas {
   max-height: none;
   height: calc(100vh - 150px); 
 }
 
-/* Default (medium) size for larger screens */
+
 @media (min-width: 1024px) {
   .chart-container canvas, .pie-chart canvas {
     max-height: 400px;
