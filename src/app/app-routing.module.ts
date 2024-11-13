@@ -63,7 +63,8 @@ const routes: Routes = [
   {
     path: 'hod-analytics',
     loadChildren: () => import('./pages/hod-analytics/hod-analytics.module').then( m => m.HODANALYTICSPageModule)
-  },  {
+  },
+  {
     path: 'supportfeedback',
     loadChildren: () => import('./pages/supportfeedback/supportfeedback.module').then( m => m.SupportfeedbackPageModule)
   },
@@ -79,8 +80,15 @@ const routes: Routes = [
     path: 'live-meet',
     loadChildren: () => import('./pages/live-meet/live-meet.module').then( m => m.LiveMeetPageModule)
   },
-
-
+  {
+    path: 'student-management',
+    loadChildren: () => import('./pages/student-management/student-management.module').then( m => m.StudentManagementPageModule)
+  },
+ 
+  {
+    path: 'faculty-analytic',
+    loadChildren: () => import('./pages/faculty-analytic/faculty-analytic.module').then(m => m.FacultyAnalyticPageModule)
+  },
 ];
 
 @NgModule({

@@ -1,13 +1,145 @@
-<ion-header [translucent]="true">
+<ion-header>
   <ion-toolbar>
-    <ion-title>liveMeet</ion-title>
+    <ion-title class="center-content">
+      <ion-icon name="videocam"></ion-icon>
+      <span>Video Meeting</span>
+    </ion-title>    
+    <ion-buttons slot="end" *ngIf="isJoined">
+      <ion-button (click)="leaveMeeting()" color="danger">
+        <ion-icon name="exit-outline" slot="start"></ion-icon>
+        Leave
+      </ion-button>
+    </ion-buttons>
+    <ion-buttons slot="start">
+  <ion-button *ngIf="isJoined" (click)="openInviteDialog()">
+    <ion-icon name="add-outline" slot="icon-only"></ion-icon>
+  </ion-button>
+</ion-buttons>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">liveMeet</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content>
+  <!-- Join Meeting Form -->
+  <div class="input-container" *ngIf="!isJoined">
+    <h2>Join Meeting</h2>
+    <ion-item>
+      <ion-label position="floating">Your Name</ion-label>
+      <ion-input [(ngModel)]="userName" type="text" required></ion-input>
+    </ion-item>
+
+    <ion-item>
+      <ion-label position="floating">Meeting ID</ion-label>
+      <ion-input [(ngModel)]="meetingId" type="text" required></ion-input>
+    </ion-item>
+
+    <ion-button expand="block" (click)="joinMeeting()" [disabled]="!userName || !meetingId">
+      <ion-icon name="videocam" slot="start"></ion-icon>
+      Join Meeting
+    </ion-button>
+  </div>
+
+  
+
+  <!-- Meeting Room -->
+  <div class="meeting-container" *ngIf="isJoined">
+    <!-- Video Grid -->
+   <!-- Video Grid -->
+<div class="video-grid" [class.with-participants]="participants.length > 0">
+  <div class="video-container" *ngFor="let participant of participants">
+    <div [id]="'video-container-' + participant.userId" class="video-wrapper" *ngIf="!minimizedVideos.has(participant.userId)">
+      <div [id]="'video-' + participant.userId" class="video-player"></div>
+      
+      <!-- Video Controls -->
+      <div class="video-controls">
+        <ion-button fill="clear" size="small" (click)="toggleMinimize(participant.userId)">
+          <ion-icon name="remove-circle-outline"></ion-icon>
+        </ion-button>
+        <ion-button fill="clear" size="small" (click)="toggleFullscreen(participant.userId)">
+          <ion-icon [name]="fullscreenVideo === participant.userId ? 'contract' : 'expand'"></ion-icon>
+        </ion-button>
+      </div>
+
+      <div class="participant-info">
+        <span class="name">{{participant.userName}}</span>
+        <div class="status-icons">
+          <ion-icon name="mic-off" *ngIf="!participant.hasAudio"></ion-icon>
+          <ion-icon name="videocam-off" *ngIf="!participant.hasVideo"></ion-icon>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Minimized Videos -->
+<div class="minimized-videos">
+  <div class="mini-video" *ngFor="let participant of participants">
+    <div *ngIf="minimizedVideos.has(participant.userId)" class="mini-video-container">
+      <div [id]="'video-' + participant.userId + '-mini'" class="video-player"></div>
+      <ion-button fill="clear" size="small" (click)="toggleMinimize(participant.userId)">
+        <ion-icon name="expand"></ion-icon>
+      </ion-button>
+      <span class="mini-name">{{participant.userName}}</span>
+    </div>
+  </div>
+</div>
+
+<ion-buttons slot="start">
+  <ion-button *ngIf="isJoined" (click)="openInviteDialog()">
+    <ion-icon name="add-outline" slot="icon-only"></ion-icon>
+  </ion-button>
+</ion-buttons>
+
+    <!-- Local Video -->
+    <div id="local-container" class="local-video-container">
+      <div class="participant-info">
+        <span class="name">You</span>
+        <div class="status-icons">
+          <ion-icon name="mic-off" *ngIf="!isAudioEnabled"></ion-icon>
+          <ion-icon name="videocam-off" *ngIf="!isVideoEnabled"></ion-icon>
+        </div>
+      </div>
+    </div>
+    
+
+    <!-- Participants List -->
+    <div class="participant-container">
+      <h3>
+        <ion-icon name="people"></ion-icon>
+        Participants ({{participants.length}})
+      </h3>
+      <div class="participant-list">
+        <div class="participant-item" *ngFor="let participant of participants">
+          <div class="participant-avatar">
+            {{participant.userName.charAt(0).toUpperCase()}}
+          </div>
+          <div class="participant-details">
+            <span class="name">{{participant.userName}}</span>
+            <div class="status-icons">
+              <ion-icon name="mic" [class.active]="participant.hasAudio"></ion-icon>
+              <ion-icon name="videocam" [class.active]="participant.hasVideo"></ion-icon>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Control Buttons -->
+    <div class="control-buttons">
+      <ion-button (click)="toggleAudio()" [color]="isAudioEnabled ? 'primary' : 'medium'">
+        <ion-icon [name]="isAudioEnabled ? 'mic' : 'mic-off'"></ion-icon>
+      </ion-button>
+
+      <ion-button (click)="toggleVideo()" [color]="isVideoEnabled ? 'primary' : 'medium'">
+        <ion-icon [name]="isVideoEnabled ? 'videocam' : 'videocam-off'"></ion-icon>
+      </ion-button>
+
+      <ion-button (click)="shareScreen()" [color]="isScreenSharing ? 'warning' : 'primary'">
+        <ion-icon name="desktop-outline"></ion-icon>
+      </ion-button>
+
+      <ion-button color="danger" (click)="leaveMeeting()">
+        <ion-icon name="call"></ion-icon>
+      </ion-button>
+    </div>
+  </div>
 </ion-content>

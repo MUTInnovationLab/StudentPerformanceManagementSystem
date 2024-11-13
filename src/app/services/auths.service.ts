@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { UserCredential } from 'firebase/auth'; 
-
+import { Staff } from '../models/staff.model';
 
 // User interface for staff data
 export interface User {
@@ -20,15 +20,15 @@ export interface User {
   confirmPassword: string; // Also consider removing this
 }
 
-export interface Staff {
-  position: any;
-  staffNumber: any;
-  department: string;
-  email: string;
-  fullName: string;
-  faculty: string; 
+// export interface Staff {
+//   position: any;
+//   staffNumber: any;
+//   department: string;
+//   email: string;
+//   fullName: string;
+//   faculty: string; 
  
-}
+// }
 
 @Injectable({
   providedIn: 'root'
@@ -67,6 +67,11 @@ export class AuthenticationService {
     }
 
     return staffDataSnapshot.docs[0].data() as Staff; 
+  }
+
+  async getLoggedInFaculty(): Promise<string> {
+    const staff = await this.getLoggedInStaff();
+    return staff.faculty; // Return the faculty of the logged-in user
   }
 }
 

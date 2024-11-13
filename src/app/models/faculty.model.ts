@@ -25,6 +25,14 @@ export interface Module {
   moduleLevel: string;
 }
 
+export interface TestPercentages {
+  [key: string]: number;  // e.g., { 'test1': 0.2, 'test2': 0.3 }
+}
+
+export interface StudentMarks {
+  [key: string]: number;  // e.g., { 'test1': 75, 'test2': 80 }
+}
+
 const faculty: Faculty = {
   id: 'Faculty of Applied and Health Science',
   departments: [

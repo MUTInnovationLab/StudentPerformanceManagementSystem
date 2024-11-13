@@ -1,0 +1,32 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>Faculty Analytic</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <div class="w-full max-w-4xl">
+    <!-- Performance Type Selection Dropdown -->
+    <div class="dropdown">
+      <label for="performance-select">Select Performance Type</label>
+      <select 
+        id="performance-select" 
+        class="dropdown-select" 
+        [(ngModel)]="selectedPerformanceType"
+        (change)="onPerformanceTypeChange()">
+        <option value="academic">Performance Academically</option>
+        <option value="attendance">Performance Attendance</option>
+      </select>
+    </div>
+
+    <!-- Display the performance charts only -->
+    <div class="charts-container">
+      <div class="chart-wrapper">
+        <canvas id="departmentPerformanceChart"></canvas>
+      </div>
+      <div class="chart-wrapper">
+        <canvas id="performanceLevelChart"></canvas>
+      </div>
+    </div>
+  </div>
+</ion-content>
