@@ -1,33 +1,82 @@
 
 <ion-header [translucent]="true">
   <ion-toolbar>
-    <ion-title>HOD Analytics</ion-title>
+    <ion-title class ="t">HOD ANALYTICS</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content>
-  <div class="analytics-container">
-    <div class="charts-grid">
-      <!-- Attendance Chart -->
+   <div class="analytics-container">
+     <div class="charts-grid">
       <div class="chart-wrapper">
         <div class="chart-content">
           <div class="chart-container">
             <canvas id="attendanceChart"></canvas>
           </div>
         </div>
-       
       </div>
-  
-      <!-- Marks Distribution Chart -->
       <div class="chart-wrapper">
-       
         <div class="chart-content">
-          <div class="pie-chart">
             <canvas id="marksChart"></canvas>
-          </div>
         </div>
-       
       </div>
     </div>
-  </div>
+  </div> 
+
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title class ="t">MODULE GRADE RANGE ANALYSIS</ion-card-title>
+    </ion-card-header>
+
+    <ion-card-content>
+      <!-- Range Selector -->
+      <ion-item>
+        <ion-label>Select Grade Range</ion-label>
+        <ion-select 
+          [(ngModel)]="selectedRange" 
+          (ionChange)="onRangeChange($event)"
+          interface="action-sheet"
+          placeholder="Select range"
+        >
+          <ion-select-option value="0-49">0-49%</ion-select-option>
+          <ion-select-option value="50-59">50-59%</ion-select-option>
+          <ion-select-option value="60-69">60-69%</ion-select-option>
+          <ion-select-option value="70-79">70-79%</ion-select-option>
+          <ion-select-option value="80-89">80-89%</ion-select-option>
+          <ion-select-option value="90-100">90-100%</ion-select-option>
+        </ion-select>
+      </ion-item>
+
+      <!-- Loading Spinner -->
+      <div *ngIf="isLoading" class="ion-text-center ion-padding">
+        <ion-spinner></ion-spinner>
+        <p>Loading module data...</p>
+      </div>
+
+      <!-- No Data Message -->
+      <ion-item *ngIf="!isLoading && moduleDetailsData.length === 0" lines="none">
+        <ion-label class="ion-text-center">
+          No modules found in this range
+        </ion-label>
+      </ion-item>
+
+      <!-- Module Data Table -->
+      <ion-grid>
+        <ion-row class="table">
+          <ion-col><strong>Module Code</strong></ion-col>
+          <ion-col><strong>Module Name</strong></ion-col>
+          <ion-col><strong>Module Level</strong></ion-col>
+        </ion-row>
+        <ion-row *ngFor="let module of moduleDetailsData">
+          <ion-col>{{ module.moduleCode }}</ion-col>
+          <ion-col>{{ module.moduleName }}</ion-col>
+          <ion-col>{{ module.moduleLevel }}</ion-col>
+        </ion-row>
+      </ion-grid>
+    </ion-card-content>
+  </ion-card>
+  
 </ion-content>
+
+
+ 
