@@ -61,7 +61,7 @@ export class AuthenticationService {
       .get()
       .toPromise();
 
-
+     
     if (!staffDataSnapshot || staffDataSnapshot.empty) {
       throw new Error('No staff data found for the logged-in user.');
     }
