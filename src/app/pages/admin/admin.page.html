@@ -1,3 +1,4 @@
+<!-- Admin Dashboard Header -->
 <ion-header [translucent]="true">
   <ion-toolbar color="primary">
     <ion-buttons slot="start">
@@ -6,14 +7,13 @@
       </ion-button>
     </ion-buttons>
     <div class="header-content">
-      <ion-icon name="speedometer" size="large"></ion-icon>
-      <ion-title>Admin Dashboard</ion-title>
+      <ion-title class="ion-text-center">Admin Dashboard</ion-title>
     </div>
   </ion-toolbar>
 </ion-header>
 
 <ion-content [fullscreen]="true" class="ion-padding">
-  <!-- Stats Cards -->
+  <!-- Stats Cards Section -->
   <ion-grid>
     <ion-row>
       <ion-col size="12" size-sm="6" size-md="3" *ngFor="let stat of stats">
@@ -32,7 +32,7 @@
     </ion-row>
   </ion-grid>
 
-  <!-- Performance Charts -->
+  <!-- Performance Trends Card -->
   <ion-card>
     <ion-card-header>
       <ion-card-title>Performance Trends</ion-card-title>
@@ -42,13 +42,14 @@
     </ion-card-content>
   </ion-card>
 
-  <!-- Academic Progress -->
+  <!-- Academic Progress Section -->
   <ion-card>
     <ion-card-header>
       <ion-card-title>Academic Statistics</ion-card-title>
     </ion-card-header>
     <ion-card-content>
       <ion-list>
+        <!-- Passing Rate -->
         <ion-item>
           <ion-label>
             <h2>Passing Rate</h2>
@@ -56,6 +57,8 @@
             <p class="ion-text-end">{{ academicStats.passingRate }}%</p>
           </ion-label>
         </ion-item>
+        
+        <!-- Average GPA -->
         <ion-item>
           <ion-label>
             <h2>Average GPA</h2>
@@ -63,6 +66,8 @@
             <p class="ion-text-end">{{ academicStats.averageGrade }}/4.0</p>
           </ion-label>
         </ion-item>
+        
+        <!-- Course Completion Rate -->
         <ion-item>
           <ion-label>
             <h2>Course Completion Rate</h2>
@@ -70,6 +75,8 @@
             <p class="ion-text-end">{{ academicStats.completionRate }}%</p>
           </ion-label>
         </ion-item>
+        
+        <!-- Student Satisfaction -->
         <ion-item>
           <ion-label>
             <h2>Student Satisfaction</h2>

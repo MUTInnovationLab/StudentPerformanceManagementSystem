@@ -1,9 +1,10 @@
 .header-content {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px; /* Adds space between icon and title */
+  width: 100%; /* Ensures centering */
+  color: #fff;
   
     ion-icon {
       margin-right: 0.5rem;
@@ -45,4 +46,72 @@
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   }
+  /* admin.page.scss */
+.stat-card {
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out;
+
+  &:hover {
+    transform: translateY(-5px);
+  }
+
+  .stat-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px;
+
+    ion-icon {
+      font-size: 2.5rem;
+    }
+
+    .stat-info {
+      text-align: right;
+
+      h2 {
+        font-size: 1.8rem;
+        font-weight: bold;
+        margin: 0;
+      }
+
+      p {
+        margin: 0;
+        font-size: 1rem;
+        opacity: 0.9;
+      }
+    }
+  }
+}
+
+.detail-item {
+  .field-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+
+    .field-label {
+      font-weight: 500;
+      color: var(--ion-color-medium);
+    }
+
+    .field-value {
+      text-align: right;
+    }
+  }
+}
+
+ion-modal {
+  --height: 80%;
+  --border-radius: 16px;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+ion-progress-bar {
+  margin: 8px 0;
+}
   
