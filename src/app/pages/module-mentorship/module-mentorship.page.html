@@ -1,0 +1,61 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button></ion-back-button>
+    </ion-buttons>
+    <ion-title>Module Mentorship Analytics</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <div class="container">
+    <!-- Summary Cards -->
+    <div class="summary-cards">
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>Low Performing Modules</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <h2 class="metric">{{lowPerformingModules.length}}</h2>
+        </ion-card-content>
+      </ion-card>
+
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>Students Needing Mentorship</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <h2 class="metric">{{totalStudentsNeedingMentorship}}</h2>
+        </ion-card-content>
+      </ion-card>
+    </div>
+
+    <!-- Search Bar for Department -->
+    <ion-searchbar [(ngModel)]="searchQuery" placeholder="Search by Department" (ionInput)="filterModules()"></ion-searchbar>
+
+    <!-- Module List -->
+    <ion-list>
+      <ion-item *ngFor="let module of filteredModules" button>
+        <ion-label>
+          <h2>{{module.moduleCode}} - {{module.moduleName}}</h2>
+          <p>Lecturer: {{module.lecturer}}</p>
+          <p>Department: {{module.department}}</p>
+        </ion-label>
+        <ion-note slot="end">
+          <div>Marks: {{module.averageMarks.toFixed(1)}}%</div>
+          <div>Attendance: {{module.averageAttendance.toFixed(1)}}%</div>
+        </ion-note>
+      </ion-item>
+    </ion-list>
+  </div>
+
+  <div class="charts">
+    <!-- Add chart canvas elements -->
+    <div style="position: relative; height: 40vh; margin-bottom: 20px;">
+      <canvas id="moduleComparisonChart"></canvas>
+    </div>
+    <div style="position: relative; height: 40vh;">
+      <canvas id="departmentMentorshipChart"></canvas>
+    </div>
+  </div>
+</ion-content>

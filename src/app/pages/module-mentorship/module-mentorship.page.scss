@@ -1,0 +1,84 @@
+
+// module-mentorship.page.scss
+:host {
+    display: block;
+  }
+  
+  .container {
+    padding: 1rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  .summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  
+    ion-card {
+      margin: 0;
+      
+      .metric {
+        font-size: 2rem;
+        font-weight: bold;
+        color: var(--ion-color-primary);
+        margin: 0;
+        text-align: center;
+      }
+    }
+  }
+  
+  .charts-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  
+  .chart-card {
+    height: 400px;
+    padding: 1rem;
+    margin: 0;
+  
+    canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+  }
+  
+  ion-item {
+    --padding-start: 1rem;
+    --padding-end: 1rem;
+    --padding-top: 0.5rem;
+    --padding-bottom: 0.5rem;
+  
+    h2 {
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+  
+    p {
+      margin: 0.25rem 0;
+      color: var(--ion-color-medium);
+    }
+  
+    ion-note {
+      font-size: 0.9rem;
+      
+      div {
+        text-align: right;
+        margin: 0.25rem 0;
+      }
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .charts-container {
+      grid-template-columns: 1fr;
+    }
+  
+    .chart-card {
+      height: 300px;
+    }
+  }
