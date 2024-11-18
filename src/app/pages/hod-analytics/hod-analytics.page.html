@@ -27,7 +27,6 @@
     <ion-card-header>
       <ion-card-title class ="t">MODULE GRADE RANGE ANALYSIS</ion-card-title>
     </ion-card-header>
-
     <ion-card-content>
       <!-- Range Selector -->
       <ion-item>
@@ -53,30 +52,91 @@
         <p>Loading module data...</p>
       </div>
 
-      <!-- No Data Message -->
       <ion-item *ngIf="!isLoading && moduleDetailsData.length === 0" lines="none">
         <ion-label class="ion-text-center">
           No modules found in this range
         </ion-label>
       </ion-item>
-
-      <!-- Module Data Table -->
+   
       <ion-grid>
         <ion-row class="table">
-          <ion-col><strong>Module Code</strong></ion-col>
-          <ion-col><strong>Module Name</strong></ion-col>
-          <ion-col><strong>Module Level</strong></ion-col>
+          <ion-col size="2"><strong>Module Code</strong></ion-col>
+          <ion-col  size="4"><strong>Module Name</strong></ion-col>
+          <ion-col  size="3"><strong>Module Level</strong></ion-col>
+          <ion-col  size="3"><strong>Action</strong></ion-col>
         </ion-row>
-        <ion-row *ngFor="let module of moduleDetailsData">
-          <ion-col>{{ module.moduleCode }}</ion-col>
-          <ion-col>{{ module.moduleName }}</ion-col>
-          <ion-col>{{ module.moduleLevel }}</ion-col>
-        </ion-row>
+        <ng-container *ngFor="let module of moduleDetailsData; let i = index">
+          <ion-row (click)="toggleRow(i)" button>
+            <ion-col  size="2">{{ module.moduleCode }}</ion-col>
+            <ion-col  size="4">{{ module.moduleName }}</ion-col>
+            <ion-col  size="3">{{ module.moduleLevel }}</ion-col>
+            <ion-col  size="3">
+              <ion-button 
+                fill="clear" 
+                color="primary" 
+                (click)="showFailingStudents(module)">
+                <ion-icon name="warning-outline" slot="start" class="btn"></ion-icon>
+                At Risk
+              </ion-button>
+            </ion-col>
+            <ion-col>
+              <ion-icon
+                [name]="expandedRowIndex === i ? 'chevron-down' : 'chevron-forward'"
+                slot="end">
+              </ion-icon>
+            </ion-col>
+          </ion-row>
+      
+          <!-- Lecturer Details Row -->
+          <ion-row *ngIf="expandedRowIndex === i" class="table lecturer-row">
+            <ion-col colspan="4">
+              <div *ngIf="module.lecturerDetails">
+                <strong>Lecturer Name:</strong> {{ module.lecturerDetails.fullName }}<br>
+                <strong> Lecturer Email:</strong> {{ module.lecturerDetails.email }}
+              </div>
+              <div *ngIf="!module.lecturerDetails">Loading lecturer details...</div>
+            </ion-col>
+          </ion-row>
+        </ng-container>
       </ion-grid>
     </ion-card-content>
   </ion-card>
-  
+<ion-card>
+  <ion-list>
+    <ion-item-group>
+      <ion-item-divider>
+        <ion-label>
+          Students at Academic Risk
+          </ion-label>
+        </ion-item-divider>
+      </ion-item-group>
+    
+      <ion-list>
+        <ion-item *ngFor="let student of failingStudentsDetails">
+          <ion-avatar slot="start">
+            <ion-icon name="person-outline" class="student-icon"></ion-icon>
+          </ion-avatar>
+          <ion-label>
+            <h2>{{ student.name }} {{ student.surname }}</h2>
+            <p>
+              <ion-text color="medium">
+                Student Number: {{ student.studentNumber }}
+              </ion-text>
+            </p>
+            <p>
+              <ion-text color="danger">
+                Average: {{ student.average }}%
+              </ion-text>
+            </p>
+            <p>
+              <ion-text color="medium">
+                Email: {{ student.email }}
+              </ion-text>
+            </p>
+          </ion-label>
+        </ion-item>
+      </ion-list>
+    </ion-list>
+  </ion-card>
 </ion-content>
 
-
- 

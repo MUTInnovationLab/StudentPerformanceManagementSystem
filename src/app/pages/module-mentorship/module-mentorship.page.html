@@ -1,0 +1,87 @@
+<!-- module-mentorship.page.html -->
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button></ion-back-button>
+    </ion-buttons>
+    <ion-title>Module Mentorship Analytics</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <div class="container" *ngIf="!isLoading">
+    <!-- Summary Cards -->
+    <div class="summary-cards">
+      <ion-card (click)="showLowPerformingModules()" [class.active]="selectedView === 'lowPerforming'" style="cursor: pointer;">
+        <ion-card-header>
+          <ion-card-title>Low Performing Modules</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <h2 class="metric">{{lowPerformingModules.length}}</h2>
+        </ion-card-content>
+      </ion-card>
+
+      <ion-card (click)="showStudentsNeedingMentorship()" [class.active]="selectedView === 'needingMentorship'" style="cursor: pointer;">
+        <ion-card-header>
+          <ion-card-title>Students Needing Mentorship</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <h2 class="metric">{{totalStudentsNeedingMentorship}}</h2>
+        </ion-card-content>
+      </ion-card>
+    </div>
+
+    <!-- Reset View Button -->
+    <ion-button expand="block" (click)="resetView()" *ngIf="selectedView !== 'all'" class="ion-margin">
+      Reset View
+    </ion-button>
+
+    <!-- Search Bar for Department -->
+    <ion-searchbar [(ngModel)]="searchQuery" placeholder="Search by Department" (ionInput)="filterModules()"></ion-searchbar>
+
+    <!-- Module List -->
+    <ion-list *ngIf="filteredModules.length > 0">
+      <ion-item *ngFor="let module of filteredModules" button>
+        <ion-label>
+          <h2>{{module.moduleCode}} - {{module.moduleName}}</h2>
+          <div class="lecturer-details" *ngIf="module.lecturerDetails; else noLecturerDetails">
+            <p><strong>Lecturer:</strong> {{module.lecturerDetails.fullName}}</p>
+            <p><strong>Staff Number:</strong> {{module.lecturerDetails.staffNumber}}</p>
+            <p><strong>Department:</strong> {{module.lecturerDetails.department}}</p>
+            <p><strong>Email:</strong> {{module.lecturerEmail}}</p>
+          </div>
+          <ng-template #noLecturerDetails>
+            <p>Lecturer Email: {{module.lecturerEmail}}</p>
+            <p>Department: {{module.department}}</p>
+          </ng-template>
+          <p *ngIf="selectedView === 'needingMentorship'">
+            Students Needing Mentorship: {{module.studentsNeedingMentorship}}
+          </p>
+        </ion-label>
+        <ion-note slot="end">
+          <div>Marks: {{module.averageMarks.toFixed(1)}}%</div>
+          <div>Attendance: {{module.averageAttendance.toFixed(1)}}%</div>
+        </ion-note>
+      </ion-item>
+    </ion-list>
+
+
+    <div *ngIf="filteredModules.length === 0" class="ion-text-center ion-padding">
+      <p>No modules found matching your search criteria.</p>
+    </div>
+  </div>
+
+  <div *ngIf="isLoading" class="ion-text-center ion-padding">
+    <ion-spinner></ion-spinner>
+    <p>Loading module data...</p>
+  </div>
+
+  <div class="charts" *ngIf="!isLoading && filteredModules.length > 0">
+    <div style="position: relative; height: 40vh; margin-bottom: 20px;">
+      <canvas id="moduleComparisonChart"></canvas>
+    </div>
+    <div style="position: relative; height: 40vh;">
+      <canvas id="departmentMentorshipChart"></canvas>
+    </div>
+  </div>
+</ion-content>

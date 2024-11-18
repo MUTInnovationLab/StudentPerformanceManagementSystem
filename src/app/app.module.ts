@@ -12,6 +12,7 @@ import { AngularFirestoreModule } from '@angular/fire/compat/firestore';
 import { environment } from '../environments/environment';
 import { FirestoreModule } from '@angular/fire/firestore'; 
 import { FirestoreService } from 'src/app/services/firestore.service';
+import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 
 @NgModule({
   declarations: [AppComponent],
@@ -20,10 +21,11 @@ import { FirestoreService } from 'src/app/services/firestore.service';
     IonicModule.forRoot(), 
     AppRoutingModule,
     AngularFireModule.initializeApp(environment.firebaseConfig),
-    AngularFireAuthModule,
+    AngularFireAuthModule
     
-  
+    
   ],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA]  ,
   providers: 
   [ FirestoreService, 
     { 
