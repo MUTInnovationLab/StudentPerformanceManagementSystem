@@ -4,13 +4,37 @@ import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
+// Add these interfaces to your existing interfaces
+interface Module {
+  code: string;
+  name: string;
+  department: string;
+  credits: number;
+  moduleName: string;
+}
 
+interface FacultyDocument {
+  name?: string;
+  modules?: Module[]; // Modules might be directly in faculty
+  departments?: {
+    name: string;
+    modules?: Module[];
+  }[];
+}
+
+interface HOD {
+  name: string;
+  email: string;
+  department: string;
+  phone: string;
+}
 interface Department {
   name: string;
   streams?: any; // We only care about the name field for counting
 }
 interface Faculty {
   departments: Department[];
+  modules: Module[];
 }
 interface StudentMark {
   average: string;
@@ -75,10 +99,14 @@ export class AdminPage implements OnInit {
   Array = Array;
   // Stat cards with initial count values
   stats: StatCard[] = [
-    { title: 'Lecturers', count: 0, icon: 'school', color: 'primary' }, // Updated dynamically
-    { title: 'Mentors', count: 0, icon: 'people', color: 'secondary' }, // Updated dynamically
-    { title: 'Students', count: 0, icon: 'person', color: 'tertiary' }, // Updated dynamically
-    { title: 'Courses', count: 0, icon: 'book', color: 'success' } // Updated dynamically
+    { title: 'Lecturers', count: 0, icon: 'school', color: 'primary' },
+    { title: 'Mentors', count: 0, icon: 'people', color: 'secondary' },
+    { title: 'Students', count: 0, icon: 'person', color: 'tertiary' },
+    { title: 'Courses', count: 0, icon: 'book', color: 'success' },
+    { title: 'Modules', count: 0, icon: 'library', color: 'warning' },
+    { title: 'Departments', count: 0, icon: 'business', color: 'medium' },
+    { title: 'HODs', count: 0, icon: 'person-circle', color: 'dark' },
+    { title: 'Faculties', count: 0, icon: 'school-outline', color: 'primary' } // New Faculties card
   ];
 
   // Sample performance data
@@ -91,6 +119,10 @@ export class AdminPage implements OnInit {
   ];
   selectedCard: StatCard | null = null;
   showDetails = false;
+  modules: Module[] = [];
+  departments: Department[] = [];
+  hods: HOD[] = [];
+
   // Academic statistics
   academicStats = {
     passingRate: 0,
@@ -103,19 +135,35 @@ export class AdminPage implements OnInit {
 
   // Lifecycle method to initialize data
   ngOnInit() {
-    this.fetchMentorsCount(); // Fetch mentors count on component load
-    this.fetchStudentsCount(); // Fetch students count on component load
-    this.fetchLecturersCount(); // Fetch lecturers count on component load
+    this.fetchMentorsCount();
+    this.fetchStudentsCount();
+    this.fetchLecturersCount();
     this.fetchDepartmentNamesCount();
     this.fetchPassingRate();
     this.loadAllData();
-
+    this.fetchDepartments();
+    this.fetchHODs();
+    this.fetchFacultiesData(); // Load faculties data
+    this.debugFirestoreStructure();
   }
+  debugFirestoreStructure() {
+    this.firestore.collection('faculties').get().subscribe(snapshot => {
+      snapshot.docs.forEach(doc => {
+        console.log('Faculty Document ID:', doc.id);
+        console.log('Faculty Data:', doc.data());
+      });
+    });
+  }
+
+
   loadAllData() {
     this.fetchLecturersData();
     this.fetchMentorsData();
     this.fetchStudentsData();
     this.fetchCoursesData();
+    this.fetchModules();
+    
+
   }
   
 
@@ -123,6 +171,139 @@ export class AdminPage implements OnInit {
   navigateHome() {
     this.router.navigate(['/home']);
   }
+
+  fetchFacultiesData() {
+    const facultiesStat = this.stats.find(stat => stat.title === 'Faculties');
+    this.firestore.collection('faculties')
+      .snapshotChanges()
+      .pipe(
+        map(actions => actions.map(a => ({
+          id: a.payload.doc.id,
+          ...a.payload.doc.data() as FacultyDocument
+        })))
+      )
+      .subscribe(faculties => {
+        facultiesStat!.count = faculties.length;
+        facultiesStat!.details = faculties.map(faculty => ({
+          id: faculty.id,
+          name: faculty.name || 'Unnamed Faculty',
+          departmentsCount: faculty.departments?.length || 0,
+          modulesCount: faculty.modules?.length || 0
+        }));
+      });
+  }
+  
+  fetchModules() {
+    const modulesStat = this.stats.find(stat => stat.title === 'Modules');
+    
+    this.firestore.collection('faculties')
+      .get()
+      .subscribe({
+        next: (snapshot) => {
+          const allModules: Module[] = [];
+          
+          snapshot.docs.forEach(doc => {
+            const facultyData = doc.data() as FacultyDocument;
+            
+            // Check modules directly in faculty
+            if (facultyData.modules && Array.isArray(facultyData.modules)) {
+              const modulesWithDepartment = facultyData.modules.map(module => ({
+                ...module,
+                department: facultyData.name || 'Unknown Department'
+              }));
+              allModules.push(...modulesWithDepartment);
+            }
+            
+            // Check modules in departments
+            if (facultyData.departments && Array.isArray(facultyData.departments)) {
+              facultyData.departments.forEach(department => {
+                if (department.modules && Array.isArray(department.modules)) {
+                  const modulesWithDepartment = department.modules.map(module => ({
+                    ...module,
+                    department: department.name
+                  }));
+                  allModules.push(...modulesWithDepartment);
+                }
+              });
+            }
+          });
+          
+          this.modules = allModules;
+          if (modulesStat) {
+            modulesStat.count = allModules.length;
+            modulesStat.details = allModules.map(module => ({
+              name: module.moduleName || module.name,
+              code: module.code,
+              department: module.department,
+              credits: module.credits
+            }));
+          }
+          
+          console.log('Total modules found:', allModules.length);
+          console.log('All modules:', allModules);
+        },
+        error: (error) => {
+          console.error('Error fetching modules:', error);
+        }
+      });
+  }
+  fetchDepartments() {
+    const departmentsStat = this.stats.find(stat => stat.title === 'Departments');
+  
+    this.firestore.collection('faculties')
+      .get()
+      .subscribe({
+        next: (snapshot) => {
+          let departmentCount = 0;
+          const allDepartments: Department[] = [];
+  
+          snapshot.docs.forEach(doc => {
+            const facultyData = doc.data() as FacultyDocument;
+  
+            // Check if the faculty has departments
+            if (facultyData.departments && Array.isArray(facultyData.departments)) {
+              departmentCount += facultyData.departments.length; // Add the number of departments
+              allDepartments.push(...facultyData.departments); // Collect departments
+            }
+          });
+  
+          // Update the departments count on the stat card
+          if (departmentsStat) {
+            departmentsStat.count = departmentCount;
+            departmentsStat.details = allDepartments.map(department => ({
+              name: department.name,
+              streams: department.streams || []
+            }));
+          }
+  
+          console.log('Total departments found:', departmentCount);
+          console.log('All departments:', allDepartments);
+        },
+        error: (error) => {
+          console.error('Error fetching departments:', error);
+        }
+      });
+  }
+  
+  fetchHODs() {
+    const hodsStat = this.stats.find(stat => stat.title === 'HODs');
+    this.firestore.collection('staff', ref => ref.where('position', '==', 'HOD'))
+      .snapshotChanges()
+      .pipe(
+        map(actions => actions.map(a => {
+          const data = a.payload.doc.data() as HOD;
+          return { id: a.payload.doc.id, ...data };
+        }))
+      )
+      .subscribe(hods => {
+        this.hods = hods;
+        if (hodsStat) {
+          hodsStat.count = hods.length;
+          hodsStat.details = hods;
+        }
+      });
+  }
+
  
   fetchLecturersData() {
     const lecturerStat = this.stats.find(stat => stat.title === 'Lecturers');
@@ -197,10 +378,11 @@ export class AdminPage implements OnInit {
   }
   
   showCardDetails(card: StatCard) {
+    console.log('Selected Card Details:', card.details); // Check if details are populated
     this.selectedCard = card;
     this.showDetails = true;
   }
-
+  
   closeDetails() {
     this.showDetails = false;
     this.selectedCard = null;

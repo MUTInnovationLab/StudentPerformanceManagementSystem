@@ -17,7 +17,7 @@
   <ion-grid>
     <ion-row>
       <ion-col size="12" size-sm="6" size-md="3" *ngFor="let stat of stats">
-        <ion-card [color]="stat.color">
+        <ion-card [color]="stat.color" (click)="showCardDetails(stat)">
           <ion-card-content>
             <div class="stat-card">
               <ion-icon [name]="stat.icon" size="large"></ion-icon>
@@ -31,6 +31,51 @@
       </ion-col>
     </ion-row>
   </ion-grid>
+  
+  <!-- Admin Page HTML -->
+<ng-container *ngIf="selectedCard && showDetails">
+  <h2>{{ selectedCard.title }} Details</h2>
+  <ion-list *ngIf="selectedCard.details && selectedCard.details.length > 0">
+    <ion-item *ngFor="let detail of selectedCard.details">
+      <ion-label>
+        <h3>{{ detail.name }}</h3>
+        <p>Departments: {{ detail.departments }}</p>
+        <p>Modules: {{ detail.modules }}</p>
+      </ion-label>
+    </ion-item>
+  </ion-list>
+  <p *ngIf="selectedCard.details && selectedCard.details.length === 0">No details available</p>
+</ng-container>
+
+
+  <!-- Details Modal -->
+  <ion-modal [isOpen]="showDetails" (didDismiss)="closeDetails()">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>{{ selectedCard?.title }} Details</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="closeDetails()">Close</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content class="ion-padding">
+        <ion-list>
+          <ion-item *ngFor="let item of selectedCard?.details">
+            <ion-label>
+              <h2 *ngIf="item.name">{{ item.name }}</h2>
+              <p *ngIf="item.department">Department: {{ item.department }}</p>
+              <p *ngIf="item.email">Email: {{ item.email }}</p>
+              <p *ngIf="item.phone">Phone: {{ item.phone }}</p>
+              <p *ngIf="item.code">Code: {{ item.code }}</p>
+              <p *ngIf="item.credits">Credits: {{ item.credits }}</p>
+            </ion-label>
+          </ion-item>
+        </ion-list>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
 
   <!-- Performance Trends Card -->
   <ion-card>
