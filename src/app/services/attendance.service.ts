@@ -2,15 +2,7 @@ import { Injectable } from '@angular/core';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { Module } from '../models/faculty.model';
 
-export interface AttendanceRecord {
-  studentNumber: string;
-  scanTime: string;
-}
-
-export interface DailyAttendance {
-  [date: string]: AttendanceRecord[];
-}
-
+import { AttendanceRecord, DailyAttendance } from '../models/attendancePerfomance.model';
 export interface ModuleAttendancePerformance {
   moduleCode: string;
   moduleName: string;

@@ -1,3 +1,4 @@
+// module-mentorship.page.ts
 import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { Chart, ChartConfiguration, ChartData } from 'chart.js';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
@@ -5,14 +6,24 @@ import { AuthenticationService } from '../../services/auths.service';
 import { AttendanceService } from '../../services/attendance.service';
 import { AcademicService } from '../../services/academic.service';
 import { Faculty, Department } from 'src/app/models/faculty.model';
+import { ModalController } from '@ionic/angular';
 
-// Update the Module interface to include lecturer and moduleLevel
 interface Module {
   moduleCode: string;
   moduleName: string;
-  lecturer?: string;  // Made optional since it might not always be present
-  moduleLevel: string; // Include the moduleLevel property
+  lecturer?: string;
+  moduleLevel: string;
 }
+
+interface StaffDetails {
+  fullName: string;
+  department: string;
+  staffNumber: string;
+  email: string;
+  faculty: string;
+  position: string;
+}
+
 
 interface ModuleMentorshipData {
   moduleCode: string;
@@ -23,9 +34,18 @@ interface ModuleMentorshipData {
   totalStudents: number;
   studentsNeedingMentorship: number;
   department: string;
+  lecturerEmail: string;
+  lecturerDetails?: StaffDetails;
 }
-interface LecturerData {
+
+interface AssignedModule {
+  moduleCode: string;
   userEmail: string;
+  department: string;
+  faculty: string;
+  moduleLevel: string;
+  moduleName: string;
+  scannerOpenCount: number;
 }
 
 @Component({
@@ -41,52 +61,141 @@ export class ModuleMentorshipPage implements OnInit, AfterViewInit {
   departmentMentorshipChart: Chart | null = null;
   isLoading: boolean = true;
   faculty: string = '';
-  searchQuery: string = ''; // Search query for department filter
+  searchQuery: string = '';
+  lecturerEmails: Map<string, string> = new Map();
+  selectedView: 'all' | 'lowPerforming' | 'needingMentorship' = 'all';
+  staffDetails: Map<string, StaffDetails> = new Map();
 
   private readonly LOW_PERFORMANCE_THRESHOLD = 50;
   private readonly CHART_COLORS = {
-    MARKS: '#ef4444',      // Red for marks
-    ATTENDANCE: '#3b82f6', // Blue for attendance
-    BACKGROUND: '#f3f4f6'  // Light gray background
+    MARKS: '#ef4444',
+    ATTENDANCE: '#3b82f6',
+    BACKGROUND: '#f3f4f6'
   };
 
   constructor(
     private firestore: AngularFirestore,
     private authService: AuthenticationService,
     private attendanceService: AttendanceService,
-    private academicService: AcademicService
+    private academicService: AcademicService,
+    private modalController: ModalController
   ) {}
 
   async ngOnInit() {
-    const user = await this.authService.getLoggedInStaff();
-    if (user) {
-      this.faculty = user.faculty;
-      await this.loadModuleData();
+    try {
+      const user = await this.authService.getLoggedInStaff();
+      if (user) {
+        this.faculty = user.faculty;
+        await this.loadLecturerEmails();
+        await this.loadStaffDetails(); // Add this line
+        await this.loadModuleData();
+      }
+    } catch (error) {
+      console.error('Error in ngOnInit:', error);
     }
   }
 
+  // Add new method to load staff details
+  private async loadStaffDetails() {
+    try {
+      const staffSnapshot = await this.firestore
+        .collection('staff')
+        .get()
+        .toPromise();
+
+      if (staffSnapshot) {
+        staffSnapshot.docs.forEach(doc => {
+          const staffData = doc.data() as StaffDetails;
+          if (staffData.email) {
+            this.staffDetails.set(staffData.email.toLowerCase(), staffData);
+          }
+        });
+      }
+      console.log('Loaded staff details:', this.staffDetails);
+    } catch (error) {
+      console.error('Error loading staff details:', error);
+    }
+  }
+
+  private async processModuleData(faculty: Faculty) {
+    const departments = faculty.departments || [];
+    const moduleData: ModuleMentorshipData[] = [];
+
+    for (const dept of departments) {
+      const modules = this.getAllModulesFromDepartment(dept);
+      const [academicPerformance, attendancePerformance] = await Promise.all([
+        this.academicService.getModuleAcademicPerformance(modules),
+        this.attendanceService.getModuleAttendancePerformance(modules)
+      ]);
+
+      for (let i = 0; i < modules.length; i++) {
+        const academic = academicPerformance.find(ap => ap.moduleCode === modules[i].moduleCode);
+        const attendance = attendancePerformance.find(ap => ap.moduleCode === modules[i].moduleCode);
+
+        if (academic && academic.averageMarks < this.LOW_PERFORMANCE_THRESHOLD) {
+          const studentsNeedingMentorship = Math.round((academic.totalStudents *
+            (this.LOW_PERFORMANCE_THRESHOLD - academic.averageMarks)) / 100);
+
+          const lecturerEmail = this.getLecturerEmail(modules[i].moduleCode);
+          const lecturerDetails = this.staffDetails.get(lecturerEmail.toLowerCase());
+
+          moduleData.push({
+            moduleCode: modules[i].moduleCode,
+            moduleName: modules[i].moduleName,
+            lecturer: modules[i].lecturer || 'Not Assigned',
+            lecturerEmail: lecturerEmail,
+            lecturerDetails: lecturerDetails, // Add lecturer details
+            averageMarks: academic.averageMarks,
+            averageAttendance: attendance?.averageAttendance || 0,
+            totalStudents: academic.totalStudents,
+            studentsNeedingMentorship,
+            department: dept.name
+          });
+        }
+      }
+    }
+
+    this.lowPerformingModules = moduleData.filter(module => module.averageMarks < 50);
+    this.filteredModules = [...this.lowPerformingModules];
+    this.totalStudentsNeedingMentorship = this.lowPerformingModules.reduce(
+      (sum, module) => sum + module.studentsNeedingMentorship, 0
+    );
+
+    setTimeout(() => {
+      this.updateCharts();
+    }, 0);
+  }
   ngAfterViewInit() {
     if (this.lowPerformingModules.length > 0) {
       this.updateCharts();
     }
   }
 
-  private async getLecturerEmail(moduleCode: string): Promise<string | null> {
+  private async loadLecturerEmails() {
     try {
-      const lecturerDoc = await this.firestore.collection('assignedLectures', ref => 
-        ref.where('modules.moduleCode', '==', moduleCode)
-      ).get().toPromise();
-      
-      // Check if lecturerDoc is not empty
-      if (lecturerDoc && !lecturerDoc.empty) {
-        // Cast to the correct type using the interface
-        const lecturerData = lecturerDoc.docs[0].data() as LecturerData;
-        return lecturerData.userEmail || null;
+      const assignedLecturesSnapshot = await this.firestore
+        .collection('assignedLectures')
+        .get()
+        .toPromise();
+
+      if (assignedLecturesSnapshot) {
+        assignedLecturesSnapshot.docs.forEach(doc => {
+          const data = doc.data() as { modules: AssignedModule[] };
+          if (data && data.modules) {
+            data.modules.forEach(module => {
+              this.lecturerEmails.set(module.moduleCode.trim(), module.userEmail);
+            });
+          }
+        });
       }
+      console.log('Loaded lecturer emails:', this.lecturerEmails);
     } catch (error) {
-      console.error('Error fetching lecturer email:', error);
+      console.error('Error loading lecturer emails:', error);
     }
-    return null;
+  }
+
+  private getLecturerEmail(moduleCode: string): string {
+    return this.lecturerEmails.get(moduleCode.trim()) || 'Not Assigned';
   }
 
   private async loadModuleData() {
@@ -103,14 +212,14 @@ export class ModuleMentorshipPage implements OnInit, AfterViewInit {
       this.isLoading = false;
     }
   }
-
+/*
   private async processModuleData(faculty: Faculty) {
     const departments = faculty.departments || [];
     const moduleData: ModuleMentorshipData[] = [];
 
     for (const dept of departments) {
       const modules = this.getAllModulesFromDepartment(dept);
-      const [academicPerformance, attendancePerformance] = await Promise.all([ 
+      const [academicPerformance, attendancePerformance] = await Promise.all([
         this.academicService.getModuleAcademicPerformance(modules),
         this.attendanceService.getModuleAttendancePerformance(modules)
       ]);
@@ -120,13 +229,16 @@ export class ModuleMentorshipPage implements OnInit, AfterViewInit {
         const attendance = attendancePerformance.find(ap => ap.moduleCode === modules[i].moduleCode);
 
         if (academic && academic.averageMarks < this.LOW_PERFORMANCE_THRESHOLD) {
-          const studentsNeedingMentorship = Math.round((academic.totalStudents * 
+          const studentsNeedingMentorship = Math.round((academic.totalStudents *
             (this.LOW_PERFORMANCE_THRESHOLD - academic.averageMarks)) / 100);
+
+          const lecturerEmail = this.getLecturerEmail(modules[i].moduleCode);
 
           moduleData.push({
             moduleCode: modules[i].moduleCode,
             moduleName: modules[i].moduleName,
             lecturer: modules[i].lecturer || 'Not Assigned',
+            lecturerEmail: lecturerEmail,
             averageMarks: academic.averageMarks,
             averageAttendance: attendance?.averageAttendance || 0,
             totalStudents: academic.totalStudents,
@@ -137,16 +249,17 @@ export class ModuleMentorshipPage implements OnInit, AfterViewInit {
       }
     }
 
-    // Filter the modules with average marks < 50% (pass rate less than 50%)
     this.lowPerformingModules = moduleData.filter(module => module.averageMarks < 50);
-    this.filteredModules = this.lowPerformingModules;
-
-    // Calculate total students needing mentorship from the low performing modules
+    this.filteredModules = [...this.lowPerformingModules];
     this.totalStudentsNeedingMentorship = this.lowPerformingModules.reduce(
       (sum, module) => sum + module.studentsNeedingMentorship, 0
     );
-  }
 
+    setTimeout(() => {
+      this.updateCharts();
+    }, 0);
+  }
+*/
   private getAllModulesFromDepartment(department: Department): Module[] {
     const modules: Module[] = [...(department.modules || [])];
     
@@ -232,10 +345,45 @@ export class ModuleMentorshipPage implements OnInit, AfterViewInit {
     this.departmentMentorshipChart = new Chart(canvas, config);
   }
 
-  // Function to filter modules based on search query
+  showLowPerformingModules() {
+    this.selectedView = 'lowPerforming';
+    this.filteredModules = [...this.lowPerformingModules];
+    this.updateCharts();
+  }
+
+  showStudentsNeedingMentorship() {
+    this.selectedView = 'needingMentorship';
+    this.filteredModules = this.lowPerformingModules
+      .filter(module => module.studentsNeedingMentorship > 0)
+      .sort((a, b) => b.studentsNeedingMentorship - a.studentsNeedingMentorship);
+    this.updateCharts();
+  }
+
+  resetView() {
+    this.selectedView = 'all';
+    this.filteredModules = [...this.lowPerformingModules];
+    this.searchQuery = '';
+    this.updateCharts();
+  }
+
   filterModules() {
-    this.filteredModules = this.lowPerformingModules.filter(module => 
-      module.department.toLowerCase().includes(this.searchQuery.toLowerCase())
-    );
+    let baseModules = [...this.lowPerformingModules];
+    
+    if (this.selectedView === 'lowPerforming') {
+      baseModules = this.lowPerformingModules;
+    } else if (this.selectedView === 'needingMentorship') {
+      baseModules = this.lowPerformingModules.filter(
+        module => module.studentsNeedingMentorship > 0
+      );
+    }
+
+    if (!this.searchQuery.trim()) {
+      this.filteredModules = baseModules;
+    } else {
+      this.filteredModules = baseModules.filter(module => 
+        module.department.toLowerCase().includes(this.searchQuery.toLowerCase())
+      );
+    }
+    this.updateCharts();
   }
 }

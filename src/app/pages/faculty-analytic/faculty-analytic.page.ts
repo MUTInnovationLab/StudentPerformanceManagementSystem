@@ -5,27 +5,9 @@ import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { AuthenticationService } from '../../services/auths.service';
 import { Faculty, Department, Module } from 'src/app/models/faculty.model';
 import { AttendanceService, ModuleAttendancePerformance } from '../../services/attendance.service';
-import { AcademicService, ModuleAcademicPerformance } from '../../services/academic.service';
+import { AcademicService,  } from '../../services/academic.service';
 
-interface DepartmentPerformance {
-  name: string;
-  academicPerformanceRate: number;
-  academicPerformanceLevel: 'High' | 'Medium' | 'Low';
-  attendancePerformanceRate: number;
-  attendancePerformanceLevel: 'High' | 'Medium' | 'Low';
-  totalStudents: number;
-  averageMarks: number;
-  averageAttendance: number;
-  modules: {
-    moduleCode: string;
-    moduleName: string;
-    averageMarks: number;
-    averageAttendance: number;
-    totalStudents: number;
-    totalAttendanceDays?: number;
-    totalAttendedStudents?: number;
-  }[];
-}
+import{DepartmentPerformance, ModuleAcademicPerformance}from '../../models/departmentPerfomance.model';
 
 @Component({
   selector: 'app-faculty-analytic',

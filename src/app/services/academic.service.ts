@@ -1,13 +1,7 @@
 import { Injectable } from '@angular/core';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { Module, StudentMarks, TestPercentages } from '../models/faculty.model';
-
-export interface ModuleAcademicPerformance {
-  moduleCode: string;
-  moduleName: string;
-  averageMarks: number;
-  totalStudents: number;
-}
+import{ModuleAcademicPerformance}from '../models/departmentPerfomance.model';
 
 @Injectable({
   providedIn: 'root'
