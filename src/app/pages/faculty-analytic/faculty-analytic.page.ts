@@ -3,6 +3,7 @@ import { Chart, ChartConfiguration, ChartData } from 'chart.js';
 import { registerables } from 'chart.js';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { AuthenticationService } from '../../services/auths.service';
+import { ToastController } from '@ionic/angular';
 import { Faculty, Department, Module } from 'src/app/models/faculty.model';
 import { AttendanceService, ModuleAttendancePerformance } from '../../services/attendance.service';
 import { AcademicService,  } from '../../services/academic.service';
@@ -38,6 +39,7 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
     private firestore: AngularFirestore,
     private authService: AuthenticationService,
     private attendanceService: AttendanceService,
+    private toastController: ToastController, // Inject ToastController
     private academicService: AcademicService
   ) {
     Chart.register(...registerables);
@@ -199,6 +201,7 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
     this.createDepartmentPerformanceChart(this.departmentStats, performanceData, metricLabel);
   }
 
+  
   private updatePerformanceLevelChart() {
     if (!this.departmentStats.length) return;
 
@@ -229,6 +232,9 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
 
     this.createPerformanceLevelChart(data);
   }
+
+
+
 
   private createDepartmentPerformanceChart(
     departmentData: DepartmentPerformance[],
@@ -287,91 +293,107 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
     });
   }
 
+
+  private async presentToast(message: string) {
+    const toast = await this.toastController.create({
+      message,
+      duration: 3000,
+      position: 'top',
+      color: 'primary'
+    });
+    await toast.present();
+  }
+
+
   private createPerformanceLevelChart(data: ChartData) {
-    const canvas = document.getElementById('performanceLevelChart') as HTMLCanvasElement;
-    if (!canvas) return;
+  const canvas = document.getElementById('performanceLevelChart') as HTMLCanvasElement;
+  if (!canvas) return;
 
-    if (this.performanceLevelChart) {
-      this.performanceLevelChart.destroy();
-    }
+  if (this.performanceLevelChart) {
+    this.performanceLevelChart.destroy();
+  }
 
-    // Track departments by performance level
-    const highPerformanceDepartments = this.departmentStats
-      .filter(dept => (this.selectedPerformanceType === 'academic' ? dept.academicPerformanceLevel : dept.attendancePerformanceLevel) === 'High')
-      .map(dept => dept.name);
-    const mediumPerformanceDepartments = this.departmentStats
-      .filter(dept => (this.selectedPerformanceType === 'academic' ? dept.academicPerformanceLevel : dept.attendancePerformanceLevel) === 'Medium')
-      .map(dept => dept.name);
-    const lowPerformanceDepartments = this.departmentStats
-      .filter(dept => (this.selectedPerformanceType === 'academic' ? dept.academicPerformanceLevel : dept.attendancePerformanceLevel) === 'Low')
-      .map(dept => dept.name);
+  // Track departments by performance level
+  const highPerformanceDepartments = this.departmentStats
+    .filter(dept => (this.selectedPerformanceType === 'academic' ? dept.academicPerformanceLevel : dept.attendancePerformanceLevel) === 'High')
+    .map(dept => dept.name);
+  const mediumPerformanceDepartments = this.departmentStats
+    .filter(dept => (this.selectedPerformanceType === 'academic' ? dept.academicPerformanceLevel : dept.attendancePerformanceLevel) === 'Medium')
+    .map(dept => dept.name);
+  const lowPerformanceDepartments = this.departmentStats
+    .filter(dept => (this.selectedPerformanceType === 'academic' ? dept.academicPerformanceLevel : dept.attendancePerformanceLevel) === 'Low')
+    .map(dept => dept.name);
 
-    // Create pie chart
-    this.performanceLevelChart = new Chart(canvas, {
-      type: 'pie',
-      data: data,
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: 'bottom',
-            labels: {
-              padding: 20,
-              font: {
-                size: 12
-              }
-            }
-          },
-          title: {
-            display: true,
-            text: `${this.selectedPerformanceType === 'academic' ? 'Academic' : 'Attendance'} Performance Distribution`,
+  // Create pie chart
+  this.performanceLevelChart = new Chart(canvas, {
+    type: 'pie',
+    data: data,
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            padding: 20,
             font: {
-              size: 16,
-              weight: 'bold'
-            },
-            padding: {
-              top: 10,
-              bottom: 30
-            }
-          },
-          tooltip: {
-            callbacks: {
-              label: (context: any) => {
-                const value = context.raw;
-                const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
-                const percentage = ((value / total) * 100).toFixed(1);
-                return `${context.label}: ${value} (${percentage}%)`;
-              }
+              size: 12
             }
           }
         },
-        onClick: (event, elements) => {
-          if (elements.length > 0) {
-            const index = elements[0].index;
-            let departments: string[] = [];
-            let performanceLevel = '';
-
-            switch (index) {
-              case 0:
-                departments = highPerformanceDepartments;
-                performanceLevel = 'High';
-                break;
-              case 1:
-                departments = mediumPerformanceDepartments;
-                performanceLevel = 'Medium';
-                break;
-              case 2:
-                departments = lowPerformanceDepartments;
-                performanceLevel = 'Low';
-                break;
+        title: {
+          display: true,
+          text: `${this.selectedPerformanceType === 'academic' ? 'Academic' : 'Attendance'} Performance Distribution`,
+          font: {
+            size: 16,
+            weight: 'bold'
+          },
+          padding: {
+            top: 10,
+            bottom: 30
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: (context: any) => {
+              const value = context.raw;
+              const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
+              const percentage = ((value / total) * 100).toFixed(1);
+              return `${context.label}: ${value} (${percentage}%)`;
             }
-
-            alert(`${performanceLevel} Performance Departments:\n${departments.join(', ')}`);
           }
         }
-      }
-    });
-  }
+      },
+      onClick: async (event, elements) => {
+        if (elements.length > 0) {
+          const index = elements[0].index;
+          let departments: string[] = [];
+          let performanceLevel = '';
 
+          switch (index) {
+            case 0:
+              departments = highPerformanceDepartments;
+              performanceLevel = 'High';
+              break;
+            case 1:
+              departments = mediumPerformanceDepartments;
+              performanceLevel = 'Medium';
+              break;
+            case 2:
+              departments = lowPerformanceDepartments;
+              performanceLevel = 'Low';
+              break;
+          }
+
+          const message = departments.length
+            ? `${performanceLevel} Performance Departments:\n${departments.join(', ')}`
+            : `No departments with ${performanceLevel} performance.`;
+
+          // Show toast
+          await this.presentToast(message);
+         }
+       }
+     }
+   });
+ }
 }
