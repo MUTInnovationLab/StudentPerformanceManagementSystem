@@ -122,6 +122,7 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
     return modules;
   }
 
+
   private processDepartmentData(
     department: Department,
     academicPerformances: ModuleAcademicPerformance[],
@@ -151,6 +152,8 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
     };
   }
 
+
+  
   private combineModuleData(
     modules: Module[],
     academicData: ModuleAcademicPerformance[],
