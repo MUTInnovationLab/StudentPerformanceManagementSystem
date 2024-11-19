@@ -3,6 +3,11 @@ import { AngularFirestore, QuerySnapshot, DocumentData } from '@angular/fire/com
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { PopoverController } from '@ionic/angular'; // Add this import
+import { ProfileComponent } from '../../components/profile/profile.component';
+import { AngularFireAuth } from '@angular/fire/compat/auth';
+
+
 
 // Add these interfaces to your existing interfaces
 interface Module {
@@ -14,16 +19,21 @@ interface Module {
 }
 
 interface FacultyDocument {
-  name?: string;
-  modules?: Module[]; // Modules might be directly in faculty
-  departments?: {
-    name: string;
-    modules?: Module[];
-  }[];
+  id: string;
+  name: string;
+  departments?: any[];
+  modules?: any[];
+}
+interface FacultyStat {
+  id: string;
+  name: string;
+  departmentsCount: number;
+  modulesCount: number;
 }
 
 interface HOD {
   name: string;
+  fullName: string;
   email: string;
   department: string;
   phone: string;
@@ -95,6 +105,8 @@ interface PerformanceData {
   styleUrls: ['./admin.page.scss'],
 })
 export class AdminPage implements OnInit {
+  isLoggedIn: boolean = false;
+
   objectKeys = Object.keys;
   Array = Array;
   // Stat cards with initial count values
@@ -131,7 +143,17 @@ export class AdminPage implements OnInit {
     satisfactionRate: 88
   };
 
-  constructor(private router: Router, private firestore: AngularFirestore) {}
+  constructor(private router: Router, private firestore: AngularFirestore,private popoverController: PopoverController,    private auth: AngularFireAuth,
+  // Add this injection
+  ) {this.auth.authState.subscribe(user => {
+    console.log('Admin page auth state:', user);
+    this.isLoggedIn = !!user;
+    if (!user) {
+      console.log('No user logged in, redirecting to login');
+      this.router.navigate(['/login']);
+    }
+  });
+}
 
   // Lifecycle method to initialize data
   ngOnInit() {
@@ -171,25 +193,64 @@ export class AdminPage implements OnInit {
   navigateHome() {
     this.router.navigate(['/home']);
   }
+  async presentProfilePopover(event: any) {
+    console.log('Profile popover triggered', event);
+    
+    try {
+      const popover = await this.popoverController.create({
+        component: ProfileComponent,
+        event: event,
+        translucent: true,
+        cssClass: 'profile-popover'
+      });
+
+      await popover.present();
+      console.log('Popover presented successfully');
+
+      const { data } = await popover.onDidDismiss();
+      console.log('Popover dismissed with data:', data);
+      
+      if (data === 'logout') {
+        this.router.navigate(['/login']);
+      } else if (data === 'login') {
+        this.router.navigate(['/login']);
+      } else if (data === 'edit') {
+        // Handle edit profile
+        console.log('Edit profile selected');
+      } else if (data === 'password') {
+        // Handle password change
+        console.log('Change password selected');
+      }
+    } catch (error) {
+      console.error('Error presenting popover:', error);
+    }
+  }
+
+
 
   fetchFacultiesData() {
     const facultiesStat = this.stats.find(stat => stat.title === 'Faculties');
+    
     this.firestore.collection('faculties')
       .snapshotChanges()
       .pipe(
         map(actions => actions.map(a => ({
-          id: a.payload.doc.id,
-          ...a.payload.doc.data() as FacultyDocument
+          ...a.payload.doc.data() as FacultyDocument, // Spread data first
+          id: a.payload.doc.id, // Add `id` after
         })))
       )
       .subscribe(faculties => {
         facultiesStat!.count = faculties.length;
-        facultiesStat!.details = faculties.map(faculty => ({
-          id: faculty.id,
-          name: faculty.name || 'Unnamed Faculty',
-          departmentsCount: faculty.departments?.length || 0,
-          modulesCount: faculty.modules?.length || 0
-        }));
+        facultiesStat!.details = faculties.map(faculty => {
+          const displayName = faculty.name?.trim() || faculty.id;
+          
+          return {
+            id: faculty.id,
+            name: displayName,
+            departmentsCount: faculty.departments?.length || 0,
+            modulesCount: faculty.modules?.length || 0
+          };
+        });
       });
   }
   
@@ -218,7 +279,7 @@ export class AdminPage implements OnInit {
             if (facultyData.departments && Array.isArray(facultyData.departments)) {
               facultyData.departments.forEach(department => {
                 if (department.modules && Array.isArray(department.modules)) {
-                  const modulesWithDepartment = department.modules.map(module => ({
+                  const modulesWithDepartment = department.modules.map((module: any) => ({
                     ...module,
                     department: department.name
                   }));
@@ -304,7 +365,6 @@ export class AdminPage implements OnInit {
       });
   }
 
- 
   fetchLecturersData() {
     const lecturerStat = this.stats.find(stat => stat.title === 'Lecturers');
     this.firestore.collection('staff', ref => ref.where('position', '==', 'Lecturer'))

@@ -113,6 +113,32 @@ ion-modal {
 
 ion-progress-bar {
   margin: 8px 0;
+}.profile-popover {
+  --width: 300px;
+  --max-width: 90%;
+  --max-height: 400px;
+  
+  .popover-content {
+    border-radius: 8px;
+  }
+  
+  ion-item {
+    --padding-start: 16px;
+    --padding-end: 16px;
+    --min-height: 50px;
+    
+    &:last-child {
+      --border-width: 0;
+    }
+  }
+  
+  ion-avatar {
+    margin-right: 16px;
+  }
+  
+  ion-icon {
+    font-size: 20px;
+  }
 }
 
   

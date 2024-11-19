@@ -42,44 +42,46 @@ export class LoginPage implements OnInit {
     // No additional initialization needed
   }
 
-  login(email: string, password: string) {
-    return this.afAuth.signInWithEmailAndPassword(email, password);
-  }
-
   async loginUser() {
     if (this.loginForm.valid) {
       const loading = await this.loadingController.create({
         message: 'Please wait...',
       });
       await loading.present();
-
+  
       try {
         const { email, staffNumber } = this.loginForm.value;
-
+  
+        // Authenticate user using email and staff number
         const user = await this.authService.login(email, staffNumber);
-
+  
         if (!user) {
           alert("User not found in auth database");
           return;
         }
-
+  
         // Fetch user data from Firestore based on the email
         const userDoc = await this.firestore
-          .collection('staff') // Assuming your collection is named 'staff'
+          .collection('staff') // Ensure your collection name matches
           .ref.where('email', '==', email)
           .limit(1)
           .get();
-
+  
         if (!userDoc.empty) {
           const userData = userDoc.docs[0].data() as User; // Cast to User interface
-
+  
           // Check if the staff number matches
           if (userData.staffNumber === staffNumber) {
-            // If the credentials are correct, navigate based on position
-            if (userData.position === 'Dean') {
-              this.router.navigate(['/faculty-analytic']); // Navigate to faculty-analytics page
-            } else {
-              this.router.navigate(['/hod-analytics']); // Navigate to HOD's analytics
+            // Navigate based on the user's position
+            switch (userData.position) {
+              case 'Dean':
+                this.router.navigate(['/faculty-analytic']); // Navigate to faculty-analytics page
+                break;
+              case 'dept-admin':
+                this.router.navigate(['/admin']); // Navigate to AdminPage
+                break;
+              default:
+                this.router.navigate(['/hod-analytics']); // Navigate to HOD's analytics
             }
           } else {
             // If staff number is incorrect, show an alert
@@ -89,7 +91,7 @@ export class LoginPage implements OnInit {
           // If no user found, show an alert
           this.showAlert('Login Failed', 'No user found with this email');
         }
-
+  
         await loading.dismiss();
       } catch (error) {
         await loading.dismiss();

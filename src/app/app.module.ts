@@ -13,9 +13,15 @@ import { environment } from '../environments/environment';
 import { FirestoreModule } from '@angular/fire/firestore'; 
 import { FirestoreService } from 'src/app/services/firestore.service';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { ProfileComponent } from './components/profile/profile.component';
+
+const firebaseConfig = {
+
+};
 
 @NgModule({
-  declarations: [AppComponent],
+  declarations: [AppComponent,ProfileComponent
+  ],
   imports: [
     BrowserModule, 
     IonicModule.forRoot(), 
@@ -25,6 +31,7 @@ import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
     
     
   ],
+  
   schemas: [CUSTOM_ELEMENTS_SCHEMA]  ,
   providers: 
   [ FirestoreService, 
