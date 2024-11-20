@@ -1,4 +1,3 @@
-
 <ion-header [translucent]="true">
   <ion-toolbar>
     <ion-title>Faculty Analytic</ion-title>
@@ -19,12 +18,13 @@
       </select>
 
       <ng-container *ngIf="selectedPerformanceType === 'attendance'">
-        <label for="month-select">Select Month</label>
+        <label for="time-select">Select Time Period</label>
         <select
-          id="month-select"
+          id="time-select"
           class="dropdown-select"
-          [(ngModel)]="selectedMonth"
-          (change)="onMonthChange()">
+          [(ngModel)]="selectedTime"
+          (change)="onTimeChange()">
+          <option value="all">All Time</option>
           <option *ngFor="let month of availableMonths" [value]="month">
             {{month | date:'MMMM yyyy'}}
           </option>

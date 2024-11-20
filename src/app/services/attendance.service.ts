@@ -7,8 +7,8 @@ export interface ModuleAttendancePerformance {
   moduleCode: string;
   moduleName: string;
   averageAttendance: number;
-  totalStudents: number; // Keep original property for backward compatibility
-  totalEnrolledStudents: number; // New property
+  totalStudents: number;
+  totalEnrolledStudents: number;
   totalAttendanceDays: number;
   totalAttendedStudents: number;
 }
@@ -21,14 +21,13 @@ export class AttendanceService {
 
   async getModuleAttendancePerformance(
     modules: Module[],
-    selectedMonth?: string
+    selectedMonth?: string,
+    timeframe: 'month' | 'all' = 'month'
   ): Promise<ModuleAttendancePerformance[]> {
-    // Fetch enrolled students for all modules first
     const enrolledStudentsMap = await this.getEnrolledStudentsForModules(modules);
 
     return await Promise.all(
       modules.map(async (module) => {
-        // Get attendance records
         const attendanceDoc = await this.firestore
           .collection('Attended')
           .doc(module.moduleCode.trim())
@@ -39,7 +38,6 @@ export class AttendanceService {
           ? attendanceDoc.data() as DailyAttendance 
           : null;
 
-        // Get total enrolled students for this module
         const totalEnrolledStudents = enrolledStudentsMap.get(module.moduleCode.trim()) || 0;
 
         if (!attendance) {
@@ -50,7 +48,8 @@ export class AttendanceService {
           module, 
           attendance, 
           totalEnrolledStudents, 
-          selectedMonth
+          selectedMonth,
+          timeframe
         );
       })
     );
@@ -106,20 +105,20 @@ export class AttendanceService {
     };
   }
 
-
   private calculateModuleAttendanceStats(
     module: Module,
     attendance: DailyAttendance,
     totalEnrolledStudents: number,
-    selectedMonth?: string
+    selectedMonth?: string,
+    timeframe: 'month' | 'all' = 'month'
   ): ModuleAttendancePerformance {
-   
     let dates = Object.keys(attendance);
 
-    // Filter dates by selected month if provided
-    if (selectedMonth) {
+    // Filter dates based on timeframe
+    if (timeframe === 'month' && selectedMonth) {
       dates = dates.filter(date => date.startsWith(selectedMonth));
     }
+    // When timeframe is 'all', we use all dates
 
     const totalAttendanceDays = dates.length;
 
@@ -136,20 +135,20 @@ export class AttendanceService {
     }, 0);
 
     // Calculate average attendance rate
-    // Use total enrolled students as the denominator
     const averageAttendance = totalAttendanceDays > 0 && totalEnrolledStudents > 0
       ? (totalAttendedStudents / (totalAttendanceDays * totalEnrolledStudents)) * 100
       : 0;
-      return {
-        moduleCode: module.moduleCode,
-        moduleName: module.moduleName,
-        averageAttendance,
-        totalStudents: totalEnrolledStudents, // Directly set to totalEnrolledStudents
-        totalEnrolledStudents,
-        totalAttendanceDays,
-        totalAttendedStudents: attendedStudents.size
-      };
-    }
+
+    return {
+      moduleCode: module.moduleCode,
+      moduleName: module.moduleName,
+      averageAttendance,
+      totalStudents: totalEnrolledStudents,
+      totalEnrolledStudents,
+      totalAttendanceDays,
+      totalAttendedStudents: attendedStudents.size
+    };
+  }
 
   async getAvailableMonths(moduleCode: string): Promise<string[]> {
     const attendanceDoc = await this.firestore

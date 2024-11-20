@@ -165,6 +165,11 @@ export class ModuleMentorshipPage implements OnInit, AfterViewInit {
       this.updateCharts();
     }, 0);
   }
+
+
+
+
+  
   ngAfterViewInit() {
     if (this.lowPerformingModules.length > 0) {
       this.updateCharts();
@@ -212,54 +217,7 @@ export class ModuleMentorshipPage implements OnInit, AfterViewInit {
       this.isLoading = false;
     }
   }
-/*
-  private async processModuleData(faculty: Faculty) {
-    const departments = faculty.departments || [];
-    const moduleData: ModuleMentorshipData[] = [];
 
-    for (const dept of departments) {
-      const modules = this.getAllModulesFromDepartment(dept);
-      const [academicPerformance, attendancePerformance] = await Promise.all([
-        this.academicService.getModuleAcademicPerformance(modules),
-        this.attendanceService.getModuleAttendancePerformance(modules)
-      ]);
-
-      for (let i = 0; i < modules.length; i++) {
-        const academic = academicPerformance.find(ap => ap.moduleCode === modules[i].moduleCode);
-        const attendance = attendancePerformance.find(ap => ap.moduleCode === modules[i].moduleCode);
-
-        if (academic && academic.averageMarks < this.LOW_PERFORMANCE_THRESHOLD) {
-          const studentsNeedingMentorship = Math.round((academic.totalStudents *
-            (this.LOW_PERFORMANCE_THRESHOLD - academic.averageMarks)) / 100);
-
-          const lecturerEmail = this.getLecturerEmail(modules[i].moduleCode);
-
-          moduleData.push({
-            moduleCode: modules[i].moduleCode,
-            moduleName: modules[i].moduleName,
-            lecturer: modules[i].lecturer || 'Not Assigned',
-            lecturerEmail: lecturerEmail,
-            averageMarks: academic.averageMarks,
-            averageAttendance: attendance?.averageAttendance || 0,
-            totalStudents: academic.totalStudents,
-            studentsNeedingMentorship,
-            department: dept.name
-          });
-        }
-      }
-    }
-
-    this.lowPerformingModules = moduleData.filter(module => module.averageMarks < 50);
-    this.filteredModules = [...this.lowPerformingModules];
-    this.totalStudentsNeedingMentorship = this.lowPerformingModules.reduce(
-      (sum, module) => sum + module.studentsNeedingMentorship, 0
-    );
-
-    setTimeout(() => {
-      this.updateCharts();
-    }, 0);
-  }
-*/
   private getAllModulesFromDepartment(department: Department): Module[] {
     const modules: Module[] = [...(department.modules || [])];
     

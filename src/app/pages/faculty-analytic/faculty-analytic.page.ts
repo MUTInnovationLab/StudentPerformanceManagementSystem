@@ -15,15 +15,17 @@ import{DepartmentPerformance, ModuleAcademicPerformance}from '../../models/depar
   templateUrl: './faculty-analytic.page.html',
   styleUrls: ['./faculty-analytic.page.scss']
 })
+
 export class FacultyAnalyticPage implements OnInit, AfterViewInit {
   selectedPerformanceType: 'academic' | 'attendance' = 'academic';
+  selectedTime: string = 'all'; // Default to 'all'
   faculty: string = '';
   departmentPerformanceChart: Chart | null = null;
   performanceLevelChart: Chart | null = null;
   isLoading: boolean = true;
   departmentStats: DepartmentPerformance[] = [];
-  selectedMonth: string = '';
   availableMonths: string[] = [];
+
 
   private readonly HIGH_PERFORMANCE_THRESHOLD = 75;
   private readonly MEDIUM_PERFORMANCE_THRESHOLD = 50;
@@ -127,7 +129,6 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
     }
   }
 
-  
   async loadAvailableMonths() {
     if (!this.faculty) return;
     
@@ -138,37 +139,26 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
 
     if (facultyDoc?.exists) {
       const faculty = facultyDoc.data() as Faculty;
-      
-      // Use reduce instead of flatMap for better compatibility
-      const allModules: Module[] = faculty.departments.reduce((modules: Module[], dept: Department) => {
+      const allModules = faculty.departments.reduce((modules: Module[], dept: Department) => {
         const deptModules = this.getAllModulesFromDepartment(dept);
         return [...modules, ...deptModules];
       }, []);
 
-      // Get unique months across all modules
       const monthsPromises = allModules.map((module: Module) => 
         this.attendanceService.getAvailableMonths(module.moduleCode)
       );
       
       const allMonthsArrays = await Promise.all(monthsPromises);
-      
-      // Replace flat() with reduce for better compatibility
       const allMonths = allMonthsArrays.reduce((acc: string[], curr: string[]) => {
         return [...acc, ...curr];
       }, []);
       
       const uniqueMonths = new Set<string>(allMonths);
-      this.availableMonths = Array.from(uniqueMonths).sort();
-
-      // Set default to most recent month
-      if (this.availableMonths.length > 0) {
-        this.selectedMonth = this.availableMonths[this.availableMonths.length - 1];
-      }
+      this.availableMonths = Array.from(uniqueMonths).sort().reverse(); // Sort in reverse to show newest first
     }
   }
 
-
-  async onMonthChange(): Promise<void> {
+  async onTimeChange() {
     await this.onFacultyChange();
   }
 
@@ -179,7 +169,8 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
         this.academicService.getModuleAcademicPerformance(modules),
         this.attendanceService.getModuleAttendancePerformance(
           modules,
-          this.selectedPerformanceType === 'attendance' ? this.selectedMonth : undefined
+          this.selectedTime === 'all' ? undefined : this.selectedTime,
+          this.selectedTime === 'all' ? 'all' : 'month'
         )
       ]);
 
@@ -192,6 +183,7 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
 
     return await Promise.all(departmentPromises);
   }
+
 
   private getAllModulesFromDepartment(department: Department): Module[] {
     const modules: Module[] = [...(department.modules || [])];
