@@ -1,4 +1,3 @@
-<!-- profile.component.html -->
 <ion-content>
   <div class="profile-header ion-padding">
     <div class="header-content" *ngIf="userProfile$ | async as user">
@@ -16,77 +15,86 @@
   </div>
 
   <div class="profile-content ion-padding">
-    <div class="info-section" *ngIf="userProfile$ | async as user">
-      <h2 class="section-title">Profile Information</h2>
-      <ion-list lines="full">
-        <ion-item>
-          <ion-icon name="person-outline" slot="start" color="primary"></ion-icon>
-          <ion-label>
-            <p class="label-text">Full Name</p>
-            <h3>{{ user.fullName || 'Not set' }}</h3>
-          </ion-label>
-        </ion-item>
+    <ng-container *ngIf="userProfile$ | async as user">
+      <!-- View Mode -->
+      <div *ngIf="!isEditing" class="info-section">
+        <div class="section-header">
+          <h2 class="section-title">Profile Information</h2>
+          <ion-button fill="clear" color="primary" (click)="toggleEditMode()">
+            <ion-icon name="create-outline" slot="start"></ion-icon>
+            Edit
+          </ion-button>
+        </div>
+        <ion-list lines="full">
+          <ion-item>
+            <ion-icon name="person-outline" slot="start" color="primary"></ion-icon>
+            <ion-label>
+              <p class="label-text">Full Name</p>
+              <h3>{{ user.fullName || 'Not set' }}</h3>
+            </ion-label>
+          </ion-item>
+          <ion-item>
+            <ion-icon name="mail-outline" slot="start" color="primary"></ion-icon>
+            <ion-label>
+              <p class="label-text">Email</p>
+              <h3>{{ user.email || 'No email available' }}</h3>
+            </ion-label>
+          </ion-item>
+          <ion-item>
+            <ion-icon name="business-outline" slot="start" color="primary"></ion-icon>
+            <ion-label>
+              <p class="label-text">Position</p>
+              <h3>{{ user.position || 'Not set' }}</h3>
+            </ion-label>
+          </ion-item>
+          <ion-item>
+            <ion-icon name="id-card-outline" slot="start" color="primary"></ion-icon>
+            <ion-label>
+              <p class="label-text">Staff Number</p>
+              <h3>{{ user.staffNumber || 'Not set' }}</h3>
+            </ion-label>
+          </ion-item>
+        </ion-list>
+        <ion-button fill="clear" color="danger" (click)="logout()">
+          <ion-icon name="log-out-outline" slot="start"></ion-icon>
+          Logout
+        </ion-button>
 
-        <ion-item>
-          <ion-icon name="mail-outline" slot="start" color="primary"></ion-icon>
-          <ion-label>
-            <p class="label-text">Email</p>
-            <h3>{{ user.email || 'No email available' }}</h3>
-          </ion-label>
-        </ion-item>
-
-        <ion-item>
-          <ion-icon name="business-outline" slot="start" color="primary"></ion-icon>
-          <ion-label>
-            <p class="label-text">Position</p>
-            <h3>{{ user.position || 'Not set' }}</h3>
-          </ion-label>
-        </ion-item>
-
-        <ion-item>
-          <ion-icon name="id-card-outline" slot="start" color="primary"></ion-icon>
-          <ion-label>
-            <p class="label-text">Staff Number</p>
-            <h3>{{ user.staffNumber || 'Not set' }}</h3>
-          </ion-label>
-        </ion-item>
-      </ion-list>
-
-      <div *ngIf="!user.fullName || !user.position || !user.staffNumber" class="incomplete-profile-warning">
-        <ion-note color="warning">
-          <ion-icon name="warning-outline"></ion-icon>
-          Please complete your profile information
-        </ion-note>
+        <div *ngIf="!user.fullName || !user.position || !user.staffNumber" class="incomplete-profile-warning">
+          <ion-note color="warning">
+            <ion-icon name="warning-outline"></ion-icon>
+            Please complete your profile information
+          </ion-note>
+        </div>
       </div>
-    </div>
+      
 
-    <div class="actions-section">
-      <h2 class="section-title">Account Settings</h2>
-      <ion-list lines="full">
-        <ion-item button (click)="editProfile()" detail="true">
-          <ion-icon name="create-outline" slot="start" color="primary"></ion-icon>
-          <ion-label>
-            <h3>Edit Profile</h3>
-            <p>Update your profile information</p>
-          </ion-label>
-        </ion-item>
+      <!-- Edit Mode -->
+      <div *ngIf="isEditing" class="edit-section">
+        <h2 class="section-title">Edit Profile</h2>
+        <form [formGroup]="editProfileForm" (ngSubmit)="updateProfile()">
+          <ion-list lines="full">
+            <ion-item>
+              <ion-label position="stacked">Full Name</ion-label>
+              <ion-input formControlName="fullName" placeholder="Enter full name"></ion-input>
+            </ion-item>
+            <ion-item>
+              <ion-label position="stacked">Position</ion-label>
+              <ion-input formControlName="position" placeholder="Enter your position"></ion-input>
+            </ion-item>
+            <ion-item>
+              <ion-label position="stacked">Staff Number</ion-label>
+              <ion-input formControlName="staffNumber" placeholder="Enter staff number"></ion-input>
+            </ion-item>
+          </ion-list>
+          
 
-        <ion-item button (click)="changePassword()" detail="true">
-          <ion-icon name="key-outline" slot="start" color="primary"></ion-icon>
-          <ion-label>
-            <h3>Change Password</h3>
-            <p>Update your password</p>
-          </ion-label>
-        </ion-item>
-
-        <ion-item button (click)="logout()" detail="true" lines="none">
-          <ion-icon name="log-out-outline" slot="start" color="danger"></ion-icon>
-          <ion-label color="danger">
-            <h3>Logout</h3>
-            <p>Sign out of your account</p>
-          </ion-label>
-        </ion-item>
-      </ion-list>
-    </div>
+          <div class="ion-padding">
+            <ion-button expand="block" type="submit" color="primary">Save Changes</ion-button>
+            <ion-button expand="block" fill="clear" color="medium" (click)="toggleEditMode()">Cancel</ion-button>
+          </div>
+        </form>
+      </div>
+    </ng-container>
   </div>
 </ion-content>
