@@ -118,7 +118,6 @@ export class HODANALYTICSPage implements OnInit {
     await Promise.all(attendancePromises);
     this.cdr.detectChanges();
   }
-
   async getModuleAverages() {
     const modulePromises = this.departmentModules.map(async (module) => {
       const moduleCode = module.moduleCode;
@@ -127,21 +126,26 @@ export class HODANALYTICSPage implements OnInit {
         .doc(moduleCode)
         .get()
         .toPromise();
+  
       if (marksDoc?.exists) {
-        const marksData = marksDoc.data() as { marks: StudentMark[] };
+        const marksData = marksDoc.data() as { marks: any[] }; // Ensure proper structure
         if (marksData?.marks && marksData.marks.length > 0) {
           let totalAverage = 0;
           let studentCount = 0;
-
+  
+          // Process each student's data
           marksData.marks.forEach((studentMark) => {
-            if (studentMark.average) {
-              totalAverage += (studentMark.average);
+            const studentAverage = parseFloat(studentMark.average); // Parse average as a number
+            if (!isNaN(studentAverage)) {
+              totalAverage += studentAverage;
               studentCount++;
             }
           });
-
+  
           if (studentCount > 0) {
             const moduleAverage = totalAverage / studentCount;
+  
+            // Group the module based on its average range
             if (moduleAverage < 50) {
               this.moduleRanges['0-49'].modules.push({ code: moduleCode, average: moduleAverage });
             } else if (moduleAverage < 60) {
@@ -157,7 +161,7 @@ export class HODANALYTICSPage implements OnInit {
         }
       }
     });
-
+  
     await Promise.all(modulePromises);
     this.cdr.detectChanges();
   }

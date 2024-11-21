@@ -1,10 +1,11 @@
-.t{
+/* Styling for text alignment and color */
+.t {
   text-align: center;
   color: #fff;
- 
 }
-.btn{
-  color:red;
+
+.btn {
+  color: red;
 }
 
 .student-icon {
@@ -12,6 +13,7 @@
   color: var(--ion-color-medium);
   margin: 0 auto;
 }
+
 .analytics-container {
   padding: 16px;
   max-width: 1400px;
@@ -24,33 +26,110 @@
   border-radius: 12px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
   margin-bottom: 24px;
-  overflow: hidden;
-  transition: all 0.3s ease;
   position: relative;
+  transition: all 0.3s ease;
 }
 
-/* Table Container */
+.chart-header {
+  background-color: #006d77;
+  color: white;
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 12px 12px 0 0;
+}
+
+.maximize-btn {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 4px 8px;
+  transition: background-color 0.2s;
+}
+
+.maximize-btn:hover {
+  background-color: rgba(255, 255, 255, 0.897);
+}
+
+.chart-content {
+  padding: 20px;
+  transition: all 0.3s ease;
+}
+
+.chart-container canvas {
+  width: 100%;
+  height: auto;
+  max-height: 450px;
+  transition: all 0.3s ease;
+}
+
+.maximized .chart-container canvas {
+  height: calc(100vh - 160px);
+}
+
+@media (max-width: 768px) {
+  .chart-container canvas {
+    max-height: 300px;
+  }
+
+  .maximized .chart-container canvas {
+    height: calc(100vh - 100px);
+  }
+
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .table, ion-row {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 576px) {
+  .chart-container canvas {
+    max-height: 250px;
+  }
+
+  .maximized .chart-container canvas {
+    height: calc(100vh - 80px);
+  }
+
+  .table, ion-row {
+    font-size: 12px;
+  }
+
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.charts-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: 1fr 1fr; /* Ensure 2 columns on medium and above screens */
+}
+
 ion-grid {
   padding: 16px;
   background-color: #ffffff;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
   width: 100%;
 }
 
-/* Header Row */
 .table {
   background-color: #f7f7f7;
   font-weight: bold;
-  color: #005f73; 
+  color: #005f73;
   font-size: 16px;
   border-bottom: 2px solid #e0e0e0;
-  padding: 12px 0;
   text-align: center;
+  padding: 12px 0;
 }
 
-/* Data Rows */
 ion-row:not(.table) {
   padding: 10px 0;
   border-bottom: 1px solid #e0e0e0;
@@ -60,36 +139,35 @@ ion-row:not(.table) {
   transition: background-color 0.3s ease;
 }
 
+ion-row:nth-child(odd):not(.table) {
+  background-color: #d1cbcb;
+}
+
 ion-row:not(.table):hover {
-  background-color: #999b9ca6; 
+  background-color: #999b9ca6;
 }
 
 ion-col {
-  
   align-items: center;
   justify-content: center;
   padding: 8px 12px;
-  word-wrap: break-word; 
+  word-wrap: break-word;
 }
 
-@media (max-width: 768px) {
-  ion-grid {
-    .table, ion-row {
-      font-size: 16px;
-    }
-  }
+.header-row {
+  font-weight: bold;
+  background: var(--ion-color-light);
+  padding: 10px 0;
+  border-bottom: 1px solid var(--ion-color-medium);
 }
 
-@media (max-width: 576px) {
-  ion-grid {
-    .table, ion-row {
-      font-size: 12px;
-    }
-  }
+.data-row:last-child {
+  border-bottom: none;
 }
 
-ion-row:nth-child(odd):not(.table) {
-  background-color: #d1cbcb;
+ion-grid {
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 ion-grid:first-of-type ion-row:first-child {
@@ -100,308 +178,4 @@ ion-grid:first-of-type ion-row:first-child {
 ion-grid:last-of-type ion-row:last-child {
   border-bottom-left-radius: 12px;
   border-bottom-right-radius: 12px;
-}
-
-
-.chart-wrapper.maximized {
-  position: fixed;
-  top: 20px;
-  left: 20px;
-  right: 20px;
-  bottom: 20px;
-  z-index: 1000;
-  margin: 0;
-  max-width: none;
-}
-
-.chart-header {
-  background-color: #006d77;
-  color: white;
-  padding: 12px 16px;
-  font-size: 16px;
-  font-weight: 500;
-  border-top-left-radius: 12px;
-  border-top-right-radius: 12px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.maximize-btn {
-  background: none;
-  border: none;
-  color: white;
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 4px;
-  transition: background-color 0.2s;
-}
-
-.maximize-btn:hover {
-  background-color: rgba(255, 255, 255, 0.897);
-}
-
-.maximize-btn svg {
-  width: 16px;
-  height: 16px;
-}
-
-.chart-content {
-  padding: 20px;
-  transition: all 0.3s ease;
-}
-
-.maximized .chart-content {
-  height: calc(100% - 60px); 
-  display: flex;
-  flex-direction: column;
-}
-
-/* Chart specific styles */
-.chart-container, .pie-chart {
-  position: relative;
-  width: 100%;
-  padding: 16px;
-  background-color: white;
-  transition: all 0.3s ease;
-}
-
-.chart-container canvas,
-.pie-chart canvas {
-  width: 100% !important;
-  height: auto;
-  max-height: 450px;
-  transition: all 0.3s ease;
-}
-
-
-.maximized .chart-container canvas,
-.maximized .pie-chart canvas {
-  max-height: none;
-  height: calc(100vh - 150px); 
-}
-
-
-@media (min-width: 1024px) {
-  .chart-container canvas, .pie-chart canvas {
-    max-height: 500px;
-  }
-  
-  .maximized .chart-container canvas,
-  .maximized .pie-chart canvas {
-    max-height: none;
-    height: calc(100vh - 160px);
-  }
-}
-
-
-.charts-grid {
-  display: grid;
-  gap: 20px;
-  grid-template-columns: 1fr;
-  margin-top: 16px;
-}
-
-
-@media (min-width: 768px) {
-  .charts-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (min-width: 1200px) {
-  .charts-grid:not(.maximized) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-
-.chart-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  padding: 12px 16px;
-  border-top: 1px solid #eee;
-  font-size: 14px;
-  margin-top: auto; 
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.legend-color {
-  width: 12px;
-  height: 12px;
-  border-radius: 3px;
-}
-
-.chart-overlay {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-
-  z-index: 999;
-}
-
-.chart-overlay.active {
-  display: block;
-}
-
-.header-row {
-  font-weight: bold;
-  background: var(--ion-color-light);
-  padding: 10px 0;
-  border-bottom: 1px solid var(--ion-color-medium);
-}
-
-.data-row {
-  padding: 10px 0;
-  border-bottom: 1px solid var(--ion-color-light);
-  
-  &:last-child {
-    border-bottom: none;
-  }
-}
-
-ion-grid {
-  padding: 0;
-}
-
-ion-col {
-  display: flex;
-  align-items: center;
-}
-
-@media (max-width: 768px) {
-  ion-grid {
-    .header-row, .data-row {
-      ion-col {
-        font-size: 14px;
-      }
-    }
-  }
-}
-
-@media (max-width: 576px) {
-  ion-grid {
-    .header-row, .data-row {
-      ion-col {
-        font-size: 12px;
-      }
-    }
-  }
-}
-/* General chart container styles */
-.chart-container, .pie-chart {
-  position: relative;
-  width: 100%;
-  padding: 16px;
-  background-color: white;
-  transition: all 0.3s ease;
-}
-
-/* Ensure that the charts scale properly and have a max height for better responsiveness */
-.chart-container canvas, .pie-chart canvas {
-  width: 100% !important; /* Ensure full width */
-  height: auto; /* Allow height to adjust based on aspect ratio */
-  max-height: 450px; /* Default max height for larger screens */
-  transition: all 0.3s ease;
-}
-
-/* Adjust the maximized chart height dynamically based on the screen size */
-.maximized .chart-container canvas,
-.maximized .pie-chart canvas {
-  max-height: none; /* Remove the fixed max-height in maximized mode */
-  height: calc(100vh - 160px); /* Full screen height with some padding */
-}
-
-/* Media Query for screens smaller than 1024px */
-@media (max-width: 1024px) {
-  .chart-container canvas, .pie-chart canvas {
-    /* For medium screens (tablets), set max-height to a reasonable value */
-    max-height: 350px; /* Adjust to fit tablets */
-  }
-
-  /* In maximized mode, make sure the chart is responsive and doesn't overflow */
-  .maximized .chart-container canvas,
-  .maximized .pie-chart canvas {
-    height: calc(100vh - 120px); /* Adjust full screen for tablets */
-  }
-}
-
-/* Media Query for screens smaller than 768px */
-@media (max-width: 768px) {
-  .chart-container canvas, .pie-chart canvas {
-    /* Reduce the size of the chart further for smaller screens like phones */
-    max-height: 300px; /* Smaller max-height for mobile devices */
-  }
-
-  /* In maximized mode, allow the chart to scale to the full screen */
-  .maximized .chart-container canvas,
-  .maximized .pie-chart canvas {
-    height: calc(100vh - 100px); /* Adjust to fit the mobile screen height */
-  }
-}
-
-/* Media Query for screens smaller than 576px */
-@media (max-width: 576px) {
-  .chart-container canvas, .pie-chart canvas {
-    /* Further reduce chart size for very small phones */
-    max-height: 250px; /* Max-height smaller for small phones */
-  }
-
-  /* In maximized mode, adjust height accordingly */
-  .maximized .chart-container canvas,
-  .maximized .pie-chart canvas {
-    height: calc(100vh - 80px); /* Adjust full screen for very small screens */
-  }
-}
-
-/* Responsive grid layout for charts (if you are displaying multiple charts in a grid) */
-.charts-grid {
-  display: grid;
-  gap: 20px;
-  grid-template-columns: 1fr; /* One chart per row by default */
-  margin-top: 16px;
-}
-
-@media (min-width: 768px) {
-  .charts-grid {
-    grid-template-columns: repeat(2, 1fr); /* Two charts per row on tablets */
-  }
-}
-
-@media (min-width: 1200px) {
-  .charts-grid {
-    grid-template-columns: repeat(2, 1fr); /* Two charts per row on larger screens */
-  }
-}
-
-/* For charts with legends, adjust legend styling */
-.chart-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  padding: 12px 16px;
-  border-top: 1px solid #eee;
-  font-size: 14px;
-  margin-top: auto;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.legend-color {
-  width: 12px;
-  height: 12px;
-  border-radius: 3px;
 }

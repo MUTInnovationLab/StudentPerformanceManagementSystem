@@ -74,6 +74,11 @@ export interface Student {
   surname: string;
   average: number;
 }
+export interface Staff {
+  fullName: string;
+  email: string;
+}
+
 
 export interface ModuleDetail {
   moduleCode: string;
@@ -85,3 +90,4 @@ export interface ModuleDetail {
     email: string;
   };
 }
+
