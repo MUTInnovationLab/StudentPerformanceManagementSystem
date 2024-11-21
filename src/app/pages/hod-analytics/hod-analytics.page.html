@@ -1,13 +1,12 @@
-
 <ion-header [translucent]="true">
   <ion-toolbar>
-    <ion-title class ="t">HOD ANALYTICS</ion-title>
+    <ion-title class="t">HOD ANALYTICS</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content>
-   <div class="analytics-container">
-     <div class="charts-grid">
+  <div class="analytics-container">
+    <div class="charts-grid">
       <div class="chart-wrapper">
         <div class="chart-content">
           <div class="chart-container">
@@ -15,128 +14,102 @@
           </div>
         </div>
       </div>
+      
       <div class="chart-wrapper">
         <div class="chart-content">
+          <div class="chart-container">
             <canvas id="marksChart"></canvas>
+          </div>
         </div>
       </div>
     </div>
-  </div> 
 
-  <ion-card>
-    <ion-card-header>
-      <ion-card-title class ="t">MODULE GRADE RANGE ANALYSIS</ion-card-title>
-    </ion-card-header>
-    <ion-card-content>
-      <!-- Range Selector -->
-      <ion-item>
-        <ion-label>Select Grade Range</ion-label>
-        <ion-select 
-          [(ngModel)]="selectedRange" 
-          (ionChange)="onRangeChange($event)"
-          interface="action-sheet"
-          placeholder="Select range"
-        >
-          <ion-select-option value="0-49">0-49%</ion-select-option>
-          <ion-select-option value="50-59">50-59%</ion-select-option>
-          <ion-select-option value="60-69">60-69%</ion-select-option>
-          <ion-select-option value="70-79">70-79%</ion-select-option>
-          <ion-select-option value="80-89">80-89%</ion-select-option>
-          <ion-select-option value="90-100">90-100%</ion-select-option>
-        </ion-select>
-      </ion-item>
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title class="t">MODULE GRADE RANGE ANALYSIS</ion-card-title>
+      </ion-card-header>
 
-      <!-- Loading Spinner -->
-      <div *ngIf="isLoading" class="ion-text-center ion-padding">
-        <ion-spinner></ion-spinner>
-        <p>Loading module data...</p>
-      </div>
-
-      <ion-item *ngIf="!isLoading && moduleDetailsData.length === 0" lines="none">
-        <ion-label class="ion-text-center">
-          No modules found in this range
-        </ion-label>
-      </ion-item>
-   
-      <ion-grid>
-        <ion-row class="table">
-          <ion-col size="2"><strong>Module Code</strong></ion-col>
-          <ion-col  size="4"><strong>Module Name</strong></ion-col>
-          <ion-col  size="3"><strong>Module Level</strong></ion-col>
-          <ion-col  size="3"><strong>Action</strong></ion-col>
-        </ion-row>
-        <ng-container *ngFor="let module of moduleDetailsData; let i = index">
-          <ion-row (click)="toggleRow(i)" button>
-            <ion-col  size="2">{{ module.moduleCode }}</ion-col>
-            <ion-col  size="4">{{ module.moduleName }}</ion-col>
-            <ion-col  size="3">{{ module.moduleLevel }}</ion-col>
-            <ion-col  size="3">
-              <ion-button 
-                fill="clear" 
-                color="primary" 
-                (click)="showFailingStudents(module)">
-                <ion-icon name="warning-outline" slot="start" class="btn"></ion-icon>
-                At Risk
-              </ion-button>
-            </ion-col>
-            <ion-col>
-              <ion-icon
-                [name]="expandedRowIndex === i ? 'chevron-down' : 'chevron-forward'"
-                slot="end">
-              </ion-icon>
-            </ion-col>
-          </ion-row>
-      
-          <!-- Lecturer Details Row -->
-          <ion-row *ngIf="expandedRowIndex === i" class="table lecturer-row">
-            <ion-col colspan="4">
-              <div *ngIf="module.lecturerDetails">
-                <strong>Lecturer Name:</strong> {{ module.lecturerDetails.fullName }}<br>
-                <strong> Lecturer Email:</strong> {{ module.lecturerDetails.email }}
-              </div>
-              <div *ngIf="!module.lecturerDetails">Loading lecturer details...</div>
-            </ion-col>
-          </ion-row>
-        </ng-container>
-      </ion-grid>
-    </ion-card-content>
-  </ion-card>
-<ion-card>
-  <ion-list>
-    <ion-item-group>
-      <ion-item-divider>
-        <ion-label>
-          Students at Academic Risk
-          </ion-label>
-        </ion-item-divider>
-      </ion-item-group>
-    
-      <ion-list>
-        <ion-item *ngFor="let student of failingStudentsDetails">
-          <ion-avatar slot="start">
-            <ion-icon name="person-outline" class="student-icon"></ion-icon>
-          </ion-avatar>
-          <ion-label>
-            <h2>{{ student.name }} {{ student.surname }}</h2>
-            <p>
-              <ion-text color="medium">
-                Student Number: {{ student.studentNumber }}
-              </ion-text>
-            </p>
-            <p>
-              <ion-text color="danger">
-                Average: {{ student.average }}%
-              </ion-text>
-            </p>
-            <p>
-              <ion-text color="medium">
-                Email: {{ student.email }}
-              </ion-text>
-            </p>
-          </ion-label>
+      <ion-card-content>
+        <ion-item>
+          <ion-label>Select Grade Range</ion-label>
+          <ion-select [(ngModel)]="selectedRange" (ionChange)="onRangeChange($event)" interface="action-sheet" placeholder="Select range">
+            <ion-select-option value="0-49">0-49%</ion-select-option>
+            <ion-select-option value="50-59">50-59%</ion-select-option>
+            <ion-select-option value="60-69">60-69%</ion-select-option>
+            <ion-select-option value="70-79">70-79%</ion-select-option>
+            <ion-select-option value="80-89">80-89%</ion-select-option>
+            <ion-select-option value="90-100">90-100%</ion-select-option>
+          </ion-select>
         </ion-item>
-      </ion-list>
-    </ion-list>
-  </ion-card>
-</ion-content>
 
+        <div *ngIf="isLoading" class="ion-text-center ion-padding">
+          <ion-spinner></ion-spinner>
+          <p>Loading module data...</p>
+        </div>
+
+        <ion-item *ngIf="!isLoading && moduleDetailsData.length === 0" lines="none">
+          <ion-label class="ion-text-center">No modules found in this range</ion-label>
+        </ion-item>
+
+        <ion-grid>
+          <ion-row class="table-header">
+            <ion-col size="2"><strong>Module Code</strong></ion-col>
+            <ion-col size="4"><strong>Module Name</strong></ion-col>
+            <ion-col size="3"><strong>Module Level</strong></ion-col>
+            <ion-col size="3"><strong>Action</strong></ion-col>
+          </ion-row>
+          <ng-container *ngFor="let module of moduleDetailsData; let i = index">
+            <ion-row (click)="toggleRow(i)" button>
+              <ion-col size="2">{{ module.moduleCode }}</ion-col>
+              <ion-col size="4">{{ module.moduleName }}</ion-col>
+              <ion-col size="3">{{ module.moduleLevel }}</ion-col>
+              <ion-col size="3">
+                <ion-button fill="clear" color="primary" (click)="showFailingStudents(module)">
+                  <ion-icon name="warning-outline" slot="start" class="btn"></ion-icon>At Risk
+                </ion-button>
+              </ion-col>
+            </ion-row>
+
+            <ion-row *ngIf="expandedRowIndex === i" class="table">
+              <ion-col colspan="4">
+                <ion-card class="lecturer-student-card">
+                  <ion-card-header>
+                    <ion-card-title class="t">Lecturer and Students Details</ion-card-title>
+                  </ion-card-header>
+                  <ion-card-content>
+                    <ion-grid>
+                      <ion-row class="table-header">
+                       
+                      </ion-row>
+                      <ion-row *ngIf="module.lecturerDetails">
+                        <ion-col>{{ module.lecturerDetails.fullName }}</ion-col>
+                        <ion-col>{{ module.lecturerDetails.email }}</ion-col>
+                      </ion-row>
+                      <ion-row *ngIf="!module.lecturerDetails">
+                        <ion-col colspan="2">Loading lecturer details...</ion-col>
+                      </ion-row>
+                    
+                      <ion-row class="table-header" *ngIf="failingStudentsDetails.length > 0">
+                        <ion-col>Student Name</ion-col>
+                        <ion-col>Student Number</ion-col>
+                        <ion-col>Average</ion-col>
+                        <ion-col>Email</ion-col>
+                      </ion-row>
+                      <ion-row *ngFor="let student of failingStudentsDetails">
+                        <ion-col>{{ student.name }} {{ student.surname }}</ion-col>
+                        <ion-col>{{ student.studentNumber }}</ion-col>
+                        <ion-col color="danger">{{ student.average }}%</ion-col>
+                        <ion-col>{{ student.email }}</ion-col>
+                      </ion-row>
+                
+                    </ion-grid>
+                  </ion-card-content>
+                </ion-card>
+              </ion-col>
+            </ion-row>
+          </ng-container>
+        </ion-grid>
+      </ion-card-content>
+    </ion-card>
+  </div>
+</ion-content>

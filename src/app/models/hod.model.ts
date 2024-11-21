@@ -36,12 +36,13 @@ export interface ModuleRange {
     [key: string]: Stream[];
   }
 
-  export interface Student {
-    name: string;
-    surname: string;
-    email: string;
-    studentNumber: string;
-  }
+ export interface Student {
+  studentNumber: string;
+  average: number;
+  name: string;
+  surname: string;
+  email: string;
+}
   
   export  interface ModuleMarks {
     [studentNumber: string]: number; 
@@ -60,3 +61,27 @@ export interface ModuleRange {
     marks: StudentMark[];
   }
   
+export interface ModuleData {
+  id?: string;
+  moduleCode?: string;
+  staffNumber?: string;
+  lecturerDetails?: any;
+  [key: string]: any;
+}
+export interface Student {
+  studentNumber: string;
+  name: string;
+  surname: string;
+  average: number;
+}
+
+export interface ModuleDetail {
+  moduleCode: string;
+  moduleName: string;
+  moduleLevel: string;
+  staffNumber: string | null;
+  lecturerDetails?: {
+    fullName: string;
+    email: string;
+  };
+}

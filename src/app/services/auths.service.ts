@@ -9,26 +9,16 @@ export interface User {
   position: any;
   staffNumber: any;
   role: any;
-  id: string; // You may want to adjust how you're storing the ID
+  id: string; 
   department: string;
   email: string;
   fullName: string;
-  module: string; // Single module, if applicable
-  modules: string[]; // Array of module names
+  module: string; 
+  modules: string[];
   phoneNumber: string;
-  password: string; // Consider removing this for security reasons
-  confirmPassword: string; // Also consider removing this
+  password: string; 
+  confirmPassword: string; 
 }
-
-// export interface Staff {
-//   position: any;
-//   staffNumber: any;
-//   department: string;
-//   email: string;
-//   fullName: string;
-//   faculty: string; 
- 
-// }
 
 @Injectable({
   providedIn: 'root'
@@ -45,33 +35,29 @@ export class AuthenticationService {
     return this.afAuth.signInWithEmailAndPassword(email, password);
   }
 
-  async signInWithEmailAndPassword(email: string, staffNumber: string){
-     this.afAuth.signInWithEmailAndPassword(email, staffNumber);
-  }
-
-
   async getLoggedInStaff(): Promise<Staff> {
-    const user = await this.afAuth.currentUser; 
+    const user = await this.afAuth.currentUser;
 
     if (!user) {
       throw new Error('User not logged in.');
     }
+
     const staffDataSnapshot = await this.firestore
-      .collection<Staff>('staff', ref => ref.where('email', '==', user.email))
+      .collection<Staff>('staff', (ref) => ref.where('email', '==', user.email))
       .get()
       .toPromise();
 
-     
     if (!staffDataSnapshot || staffDataSnapshot.empty) {
       throw new Error('No staff data found for the logged-in user.');
     }
 
-    return staffDataSnapshot.docs[0].data() as Staff; 
+    return staffDataSnapshot.docs[0].data() as Staff;
   }
 
+  // Get the faculty of the logged-in staff
   async getLoggedInFaculty(): Promise<string> {
     const staff = await this.getLoggedInStaff();
-    return staff.faculty; // Return the faculty of the logged-in user
+    return staff.faculty;
   }
 }
 

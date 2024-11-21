@@ -184,7 +184,7 @@ ion-grid:last-of-type ion-row:last-child {
 
 @media (min-width: 1024px) {
   .chart-container canvas, .pie-chart canvas {
-    max-height: 400px;
+    max-height: 500px;
   }
   
   .maximized .chart-container canvas,
@@ -296,4 +296,112 @@ ion-col {
       }
     }
   }
+}
+/* General chart container styles */
+.chart-container, .pie-chart {
+  position: relative;
+  width: 100%;
+  padding: 16px;
+  background-color: white;
+  transition: all 0.3s ease;
+}
+
+/* Ensure that the charts scale properly and have a max height for better responsiveness */
+.chart-container canvas, .pie-chart canvas {
+  width: 100% !important; /* Ensure full width */
+  height: auto; /* Allow height to adjust based on aspect ratio */
+  max-height: 450px; /* Default max height for larger screens */
+  transition: all 0.3s ease;
+}
+
+/* Adjust the maximized chart height dynamically based on the screen size */
+.maximized .chart-container canvas,
+.maximized .pie-chart canvas {
+  max-height: none; /* Remove the fixed max-height in maximized mode */
+  height: calc(100vh - 160px); /* Full screen height with some padding */
+}
+
+/* Media Query for screens smaller than 1024px */
+@media (max-width: 1024px) {
+  .chart-container canvas, .pie-chart canvas {
+    /* For medium screens (tablets), set max-height to a reasonable value */
+    max-height: 350px; /* Adjust to fit tablets */
+  }
+
+  /* In maximized mode, make sure the chart is responsive and doesn't overflow */
+  .maximized .chart-container canvas,
+  .maximized .pie-chart canvas {
+    height: calc(100vh - 120px); /* Adjust full screen for tablets */
+  }
+}
+
+/* Media Query for screens smaller than 768px */
+@media (max-width: 768px) {
+  .chart-container canvas, .pie-chart canvas {
+    /* Reduce the size of the chart further for smaller screens like phones */
+    max-height: 300px; /* Smaller max-height for mobile devices */
+  }
+
+  /* In maximized mode, allow the chart to scale to the full screen */
+  .maximized .chart-container canvas,
+  .maximized .pie-chart canvas {
+    height: calc(100vh - 100px); /* Adjust to fit the mobile screen height */
+  }
+}
+
+/* Media Query for screens smaller than 576px */
+@media (max-width: 576px) {
+  .chart-container canvas, .pie-chart canvas {
+    /* Further reduce chart size for very small phones */
+    max-height: 250px; /* Max-height smaller for small phones */
+  }
+
+  /* In maximized mode, adjust height accordingly */
+  .maximized .chart-container canvas,
+  .maximized .pie-chart canvas {
+    height: calc(100vh - 80px); /* Adjust full screen for very small screens */
+  }
+}
+
+/* Responsive grid layout for charts (if you are displaying multiple charts in a grid) */
+.charts-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: 1fr; /* One chart per row by default */
+  margin-top: 16px;
+}
+
+@media (min-width: 768px) {
+  .charts-grid {
+    grid-template-columns: repeat(2, 1fr); /* Two charts per row on tablets */
+  }
+}
+
+@media (min-width: 1200px) {
+  .charts-grid {
+    grid-template-columns: repeat(2, 1fr); /* Two charts per row on larger screens */
+  }
+}
+
+/* For charts with legends, adjust legend styling */
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 12px 16px;
+  border-top: 1px solid #eee;
+  font-size: 14px;
+  margin-top: auto;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
 }
