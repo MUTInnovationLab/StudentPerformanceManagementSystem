@@ -155,26 +155,42 @@ export class ProfileComponent implements OnInit {
     await alert.present();
   }
 
-async logout() {
-  try {
-    await this.auth.signOut();
-    // Navigate to login page
-    this.router.navigate(['/login']);
-    
-    const toast = await this.toastController.create({
-      message: 'Logged out successfully',
-      duration: 2000,
-      color: 'success'
-    });
-    await toast.present();
-  } catch (error) {
-    console.error('Logout error', error);
-    const toast = await this.toastController.create({
-      message: 'Failed to log out. Please try again.',
-      duration: 2000,
-      color: 'danger'
-    });
-    await toast.present();
+  async logout() {
+    try {
+      await this.auth.signOut();
+      
+      // Explicitly reset the userProfile$ observable
+      this.userProfile$ = of({
+        email: '',
+        displayName: '',
+        photoURL: '',
+        fullName: '',
+        position: '',
+        staffNumber: ''
+      });
+      
+      // Reset the editing state
+      this.isEditing = false;
+      
+      // Navigate to login page
+      this.router.navigate(['/login'], { 
+        replaceUrl: true 
+      });
+      
+      const toast = await this.toastController.create({
+        message: 'Logged out successfully',
+        duration: 2000,
+        color: 'success'
+      });
+      await toast.present();
+    } catch (error) {
+      console.error('Logout error', error);
+      const toast = await this.toastController.create({
+        message: 'Failed to log out. Please try again.',
+        duration: 2000,
+        color: 'danger'
+      });
+      await toast.present();
+    }
   }
-}
 }

@@ -35,59 +35,55 @@
       </ion-col>
     </ion-row>
   </ion-grid>
-  
-  <!-- Admin Page HTML -->
-<ng-container *ngIf="selectedCard && showDetails">
-  <h2>{{ selectedCard.title }} Details</h2>
-  <ion-list *ngIf="selectedCard.details && selectedCard.details.length > 0">
-    <ion-item *ngFor="let detail of selectedCard.details">
-      <ion-label>
-        <h3>{{ detail.name }}</h3>
-        <p>Departments: {{ detail.departments }}</p>
-        <p>Modules: {{ detail.modules }}</p>
-      </ion-label>
-    </ion-item>
-  </ion-list>
-  <p *ngIf="selectedCard.details && selectedCard.details.length === 0">No details available</p>
-</ng-container>
-
 
   <!-- Details Modal -->
- <!-- Update the modal template in admin.page.html -->
-<ion-modal [isOpen]="showDetails" (didDismiss)="closeDetails()">
-  <ng-template>
-    <ion-header>
-      <ion-toolbar>
-        <ion-title>{{ selectedCard?.title }} Details</ion-title>
-        <ion-buttons slot="end">
-          <ion-button (click)="closeDetails()">Close</ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
-    <ion-content class="ion-padding">
-      <ion-list>
-        <ion-item *ngFor="let item of selectedCard?.details">
-          <ion-label>
-            <h2 *ngIf="item.name">{{ item.name }}</h2>
-            <p *ngIf="item.department">Department: {{ item.department }}</p>
-            <p *ngIf="item.email">Email: {{ item.email }}</p>
-            <p *ngIf="item.phone">Phone: {{ item.phone }}</p>
-            <p *ngIf="item.code">Code: {{ item.code }}</p>
-            <p *ngIf="item.credits">Credits: {{ item.credits }}</p>
-          </ion-label>
+  <ion-modal [isOpen]="showDetails" (didDismiss)="closeDetails()">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>{{ selectedCard?.title }} Details</ion-title>
           <ion-buttons slot="end">
-            <ion-button (click)="editItem(getCollectionPathForCard(selectedCard?.title ?? ''), item)">
-              <ion-icon name="create-outline" slot="icon-only"></ion-icon>
-            </ion-button>
-            <ion-button (click)="deleteItem(getCollectionPathForCard(selectedCard?.title ?? ''), item?.id ?? '')" color="danger">
-              <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
-            </ion-button>
+            <ion-button (click)="closeDetails()">Close</ion-button>
           </ion-buttons>
-        </ion-item>
-      </ion-list>
-    </ion-content>
-  </ng-template>
-</ion-modal>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content class="ion-padding">
+        <ng-container *ngIf="selectedCard">
+          <ion-list *ngIf="selectedCard.details && selectedCard.details.length > 0; else noDetails">
+            <ion-item *ngFor="let item of selectedCard.details">
+              <ion-label>
+                <h2>{{ item.name }}</h2>
+                <!-- Conditionally render email based on card title -->
+                <p *ngIf="!isFacultyModuleCourseOrDepartment(selectedCard?.title)">Email: {{ item.email }}</p>
+                <p *ngIf="item.phone">Phone: {{ item.phone }}</p>
+                <p *ngIf="item.role">Role: {{ item.role }}</p>
+                <p *ngIf="item.department">Department: {{ item.department }}</p>
+                <p *ngIf="item.position">Position: {{ item.position }}</p>
+              </ion-label>
+              <ion-buttons slot="end">
+                <ion-button 
+                  (click)="editItem(getCollectionPathForCard(selectedCard.title ?? ''), item)"
+                >
+                  <ion-icon name="create-outline" slot="icon-only"></ion-icon>
+                </ion-button>
+                <ion-button 
+                  (click)="deleteItem(getCollectionPathForCard(selectedCard.title ?? ''), item?.id ?? '')" 
+                  color="danger"
+                >
+                  <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+                </ion-button>
+              </ion-buttons>
+            </ion-item>
+          </ion-list>
+          <ng-template #noDetails>
+            <ion-item>
+              <ion-label class="ion-text-center">No details available</ion-label>
+            </ion-item>
+          </ng-template>
+        </ng-container>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
 
   <!-- Performance Trends Card -->
   <ion-card>
@@ -106,7 +102,6 @@
     </ion-card-header>
     <ion-card-content>
       <ion-list>
-        <!-- Passing Rate -->
         <ion-item>
           <ion-label>
             <h2>Passing Rate</h2>
@@ -114,8 +109,6 @@
             <p class="ion-text-end">{{ academicStats.passingRate }}%</p>
           </ion-label>
         </ion-item>
-        
-        <!-- Average GPA -->
         <ion-item>
           <ion-label>
             <h2>Average GPA</h2>
@@ -123,8 +116,6 @@
             <p class="ion-text-end">{{ academicStats.averageGrade }}/4.0</p>
           </ion-label>
         </ion-item>
-        
-        <!-- Course Completion Rate -->
         <ion-item>
           <ion-label>
             <h2>Course Completion Rate</h2>
@@ -132,8 +123,6 @@
             <p class="ion-text-end">{{ academicStats.completionRate }}%</p>
           </ion-label>
         </ion-item>
-        
-        <!-- Student Satisfaction -->
         <ion-item>
           <ion-label>
             <h2>Student Satisfaction</h2>

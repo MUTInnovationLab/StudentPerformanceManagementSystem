@@ -9,7 +9,6 @@ import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { AlertController, AlertInput } from '@ionic/angular';
 import { LoadingController } from '@ionic/angular';
 
-
 type ValidInputTypes = 'text' | 'number' | 'email' | 'tel' | 'password' | 'date' | 'textarea' | 'checkbox' | 'radio';
 
 interface BaseItem {
@@ -29,10 +28,11 @@ interface UpdatedData {
 // Add these interfaces to your existing interfaces
 interface Module {
   moduleCode: string;
-  moduleLevel: string;
   moduleName: string;
-  department?: string;
+  moduleLevel: string;
+  department: string;
 }
+
 
 interface FacultyModule {
   modules: Module[];
@@ -141,7 +141,7 @@ interface PerformanceData {
 })
 export class AdminPage implements OnInit {
   isLoggedIn: boolean = false;
-  private readonly validCollections = ['staff', 'mentors', 'students', 'faculties'];
+  private readonly validCollections = ['staff', 'mentors', 'students', 'faculties', 'courses', 'modules', 'departments'];
 
 
   objectKeys = Object.keys;
@@ -288,6 +288,7 @@ export class AdminPage implements OnInit {
     });
     await alert.present();
   }
+  
   async updateItem(item: Partial<BaseItem>, collectionPath?: string) {
     if (!item?.id) {
       await this.showAlert('Error', 'Item ID is missing or undefined');
@@ -302,6 +303,7 @@ export class AdminPage implements OnInit {
       return false;
     }
 
+
     try {
       // Clean the data by removing undefined and null values
       const cleanData = Object.entries(item).reduce((acc, [key, value]) => {
@@ -310,10 +312,53 @@ export class AdminPage implements OnInit {
         }
         return acc;
       }, {} as Record<string, any>);
-
+  
       if (Object.keys(cleanData).length === 0) {
         throw new Error('No valid data to update');
       }
+      if (collection === 'faculties') {
+        // Find the faculty document containing the item
+        const facultySnapshot = await this.firestore.collection('faculties')
+          .get()
+          .toPromise();
+  
+        for (const doc of facultySnapshot!.docs) {
+          const facultyData = doc.data() as FacultyDocument;
+          
+          // Check modules
+          if (cleanData['moduleCode']) {
+            const moduleIndex = facultyData.modules?.findIndex(
+              m => m.moduleCode === item.id
+            );
+            
+            if (moduleIndex !== -1) {
+              const updatePath = `modules.${moduleIndex}`;
+              await this.firestore.collection('faculties').doc(doc.id).update({
+                [updatePath]: cleanData
+              });
+              return true;
+            }
+          }
+          
+          // Check departments
+          if (cleanData['streams'] !== undefined) {
+            const departmentIndex = facultyData.departments?.findIndex(
+              d => d.name === item.id
+            );
+            
+            if (departmentIndex !== -1) {
+              const updatePath = `departments.${departmentIndex}`;
+              await this.firestore.collection('faculties').doc(doc.id).update({
+                [updatePath]: cleanData
+              });
+              return true;
+            }
+          }
+        }
+        
+        throw new Error('Item not found in any faculty');
+      }
+  
 
       // Get reference to the document in the correct collection
       const docRef = this.firestore.collection(collection).doc(item.id);
@@ -352,8 +397,16 @@ export class AdminPage implements OnInit {
     if (item.position?.toLowerCase().includes('faculty')) {
       return 'faculties';
     }
+    if (item['moduleCode']) {
+      return 'faculties';  // Modules are nested in faculties
+    }
+    if (item['streams']) {
+      return 'faculties';  // Departments are nested in faculties
+    }
+    
     return null;
   }
+  
   
   async editItem(collectionPath: string, item: BaseItem) {
     if (!item?.id) {
@@ -436,7 +489,10 @@ export class AdminPage implements OnInit {
       'Mentors': 'mentors',
       'Students': 'students',
       'HODs': 'staff',
-      'Faculties': 'faculties'
+      'Faculties': 'faculties',
+      'Courses': 'faculties', // Courses are nested in faculties
+      'Modules': 'faculties', // Modules are nested in faculties
+      'Departments': 'faculties' // Departments are nested in faculties
     };
     return pathMap[cardTitle] || '';
   }
@@ -499,109 +555,128 @@ export class AdminPage implements OnInit {
       });
   }
   
-  fetchModules() {
-    const modulesStat = this.stats.find(stat => stat.title === 'Modules');
-    
-    this.firestore.collection('faculties')
-      .get()
-      .subscribe({
-        next: (snapshot) => {
-          const allModules: Module[] = [];
-          
-          snapshot.docs.forEach(doc => {
-            const facultyData = doc.data() as FacultyDocument;
-  
-            // Extract modules directly under faculty
-            if (Array.isArray(facultyData.modules)) {
-              facultyData.modules.forEach(module => {
-                allModules.push({
-                  moduleCode: module.moduleCode,
-                  moduleLevel: module.moduleLevel,
-                  moduleName: module.moduleName,
-                  department: facultyData.name || 'Unknown Department'
-                });
-              });
-            }
-  
-            // Extract modules from departments
-            if (Array.isArray(facultyData.departments)) {
-              facultyData.departments.forEach(department => {
-                if (Array.isArray(department.modules)) {
-                  department.modules.forEach(module => {
-                    allModules.push({
-                      moduleCode: module.moduleCode,
-                      moduleLevel: module.moduleLevel,
-                      moduleName: module.moduleName,
-                      department: department.name
+  // In your admin.page.ts file
+
+// Update the fetchModules method to be more robust
+fetchModules() {
+  const modulesStat = this.stats.find(stat => stat.title === 'Modules');
+
+  this.firestore.collection('faculties')
+    .get()
+    .subscribe({
+      next: (snapshot) => {
+        const uniqueModulesMap = new Map<string, Module>();
+
+        snapshot.docs.forEach(doc => {
+          const facultyData = doc.data() as any;
+
+          if (facultyData.departments && Array.isArray(facultyData.departments)) {
+            facultyData.departments.forEach((department: any) => {
+              if (department.modules && Array.isArray(department.modules)) {
+                this.addModulesToMap(department.modules, uniqueModulesMap, department.name);
+              }
+
+              if (department.streams && typeof department.streams === 'object') {
+                Object.values(department.streams).forEach((streamArray: any) => {
+                  if (Array.isArray(streamArray)) {
+                    streamArray.forEach((stream: any) => {
+                      if (stream.modules && Array.isArray(stream.modules)) {
+                        this.addModulesToMap(stream.modules, uniqueModulesMap, stream.name);
+                      }
                     });
-                  });
-                }
-              });
-            }
-          });
-  
-          // Update the modules array
-          this.modules = allModules;
-  
-          // Update statistics
-          if (modulesStat) {
-            modulesStat.count = allModules.length;
-            modulesStat.details = allModules.map(module => ({
-              name: module.moduleName,
-              code: module.moduleCode,
-              department: module.department || 'Unknown Department',
-              level: module.moduleLevel
-            }));
+                  }
+                });
+              }
+            });
           }
-  
-          // Log the results for debugging
-          console.log('Total modules found:', allModules.length);
-          console.log('All modules:', allModules);
-        },
-        error: (error) => {
-          console.error('Error fetching modules:', error);
+        });
+
+        // Convert unique modules to a sorted array
+        this.modules = Array.from(uniqueModulesMap.values()).sort((a, b) =>
+          a.moduleCode.localeCompare(b.moduleCode)
+        );
+
+        // Update module statistics
+        if (modulesStat) {
+          modulesStat.count = this.modules.length; // Total unique modules
+          modulesStat.details = this.modules.map(module => ({
+            name: module.moduleName,
+            code: module.moduleCode,
+            department: module.department,
+            level: module.moduleLevel
+          }));
         }
+
+        console.log('Total unique modules found:', this.modules.length);
+        console.log('Unique modules:', this.modules);
+      },
+      error: (error) => {
+        console.error('Error fetching modules from faculties collection:', error);
+      }
+    });
+}
+
+
+private addModulesToMap(modules: any[], map: Map<string, Module>, departmentName: string) {
+  modules.forEach(moduleData => {
+    if (moduleData.moduleCode && !map.has(moduleData.moduleCode)) {
+      map.set(moduleData.moduleCode, {
+        moduleCode: moduleData.moduleCode,
+        moduleName: moduleData.moduleName || 'Unknown Module Name',
+        moduleLevel: moduleData.moduleLevel || 'Unknown Level',
+        department: departmentName || 'Unknown Department'
       });
-  }
-  
-  fetchDepartments() {
-    const departmentsStat = this.stats.find(stat => stat.title === 'Departments');
-  
-    this.firestore.collection('faculties')
-      .get()
-      .subscribe({
-        next: (snapshot) => {
-          let departmentCount = 0;
-          const allDepartments: Department[] = [];
-  
-          snapshot.docs.forEach(doc => {
-            const facultyData = doc.data() as FacultyDocument;
-  
-            // Check if the faculty has departments
-            if (facultyData.departments && Array.isArray(facultyData.departments)) {
-              departmentCount += facultyData.departments.length; // Add the number of departments
-              allDepartments.push(...facultyData.departments); // Collect departments
-            }
-          });
-  
-          // Update the departments count on the stat card
-          if (departmentsStat) {
-            departmentsStat.count = departmentCount;
-            departmentsStat.details = allDepartments.map(department => ({
+    }
+  });
+}
+
+fetchDepartments() {
+  const departmentsStat = this.stats.find(stat => stat.title === 'Departments');
+
+  this.firestore.collection('faculties')
+    .get()
+    .subscribe({
+      next: (snapshot) => {
+        let departmentCount = 0;
+        const allDepartments: Department[] = [];
+
+        snapshot.docs.forEach(doc => {
+          const facultyData = doc.data() as FacultyDocument;
+
+          // Check if the faculty has departments
+          if (facultyData.departments && Array.isArray(facultyData.departments)) {
+            departmentCount += facultyData.departments.length; // Add the number of departments
+            
+            // Map departments and ensure streams are captured
+            const departmentsWithStreams = facultyData.departments.map(department => ({
               name: department.name,
-              streams: department.streams || []
+              streams: department.streams || [], // Ensure streams are always an array
+              modules: department.modules || [] // Optional: include modules if needed
             }));
+
+            allDepartments.push(...departmentsWithStreams);
           }
-  
-          console.log('Total departments found:', departmentCount);
-          console.log('All departments:', allDepartments);
-        },
-        error: (error) => {
-          console.error('Error fetching departments:', error);
+        });
+
+        // Update the departments count on the stat card
+        if (departmentsStat) {
+          departmentsStat.count = departmentCount;
+          departmentsStat.details = allDepartments.map(department => ({
+            name: department.name,
+            streams: department.streams || []
+          }));
         }
-      });
-  }
-  
+
+        this.departments = allDepartments; // Store departments for potential further use
+
+        console.log('Total departments found:', departmentCount);
+        console.log('All departments:', allDepartments);
+      },
+      error: (error) => {
+        console.error('Error fetching departments:', error);
+      }
+    });
+}
   fetchHODs() {
     const hodsStat = this.stats.find(stat => stat.title === 'HODs');
     this.firestore.collection('staff', ref => ref.where('position', '==', 'HOD'))
@@ -678,20 +753,50 @@ export class AdminPage implements OnInit {
     this.firestore.collection('faculties')
       .get()
       .subscribe(snapshot => {
-        const departments: DetailItem[] = [];
+        const courses: DetailItem[] = [];
+        const moduleSet = new Set<string>();
+  
         snapshot.docs.forEach(doc => {
-          const faculty = doc.data() as any;
+          const faculty = doc.data() as Faculty;
+          
+          // Collect modules from faculty-level modules
+          if (faculty.modules && Array.isArray(faculty.modules)) {
+            faculty.modules.forEach(module => {
+              moduleSet.add(module.moduleName);
+            });
+          }
+  
+          // Check if faculty has departments
           if (faculty.departments && Array.isArray(faculty.departments)) {
-            departments.push(...faculty.departments);
+            faculty.departments.forEach(department => {
+              // Collect modules from department-level modules
+              const departmentModules = department.modules?.map(module => module.moduleName) || [];
+              departmentModules.forEach(moduleName => moduleSet.add(moduleName));
+  
+              // Create a course entry with modules
+              const courseEntry: DetailItem = {
+                name: department.name,
+                modules: Array.from(moduleSet)
+              };
+              courses.push(courseEntry);
+            });
           }
         });
         
         if (coursesStat) {
-          coursesStat.count = departments.length;
-          coursesStat.details = departments;
+          coursesStat.count = courses.length;
+          coursesStat.details = courses;
         }
+  
+        console.log('Total unique modules found:', moduleSet.size);
+        console.log('Modules:', Array.from(moduleSet));
       });
   }
+  isFacultyModuleCourseOrDepartment(title: string | undefined): boolean {
+  const excludedTitles = ['Faculties', 'Modules', 'Courses', 'Departments'];
+  return title ? excludedTitles.includes(title) : false;
+}
+
   
   showCardDetails(card: StatCard) {
     console.log('Selected Card Details:', card.details); // Check if details are populated
