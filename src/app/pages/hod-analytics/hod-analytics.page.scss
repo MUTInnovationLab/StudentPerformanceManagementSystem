@@ -1,19 +1,15 @@
-/* Styling for text alignment and color */
 .t {
   text-align: center;
   color: #fff;
 }
-
 .btn {
   color: red;
 }
-
 .student-icon {
   font-size: 32px;
   color: var(--ion-color-medium);
   margin: 0 auto;
 }
-
 .analytics-container {
   padding: 16px;
   max-width: 1400px;
@@ -29,7 +25,6 @@
   position: relative;
   transition: all 0.3s ease;
 }
-
 .chart-header {
   background-color: #006d77;
   color: white;
@@ -39,7 +34,6 @@
   align-items: center;
   border-radius: 12px 12px 0 0;
 }
-
 .maximize-btn {
   background: none;
   border: none;
@@ -49,42 +43,32 @@
   padding: 4px 8px;
   transition: background-color 0.2s;
 }
-
 .maximize-btn:hover {
   background-color: rgba(255, 255, 255, 0.897);
 }
-
 .chart-content {
   padding: 20px;
   transition: all 0.3s ease;
 }
-
 .chart-container canvas {
-  width: 100%;
-  height: auto;
-  max-height: 450px;
+  width: 100% !important;
+  height: auto !important;
+  max-width: 100%;
+  max-height: calc(100vh - 50px);
+  display: block;
+  margin: 0 auto;
   transition: all 0.3s ease;
-}
-
-.maximized .chart-container canvas {
-  height: calc(100vh - 160px);
 }
 
 @media (max-width: 768px) {
   .chart-container canvas {
-    max-height: 300px;
+    max-height: 80vh; /* Adjust height for mobile view */
   }
+}
 
-  .maximized .chart-container canvas {
-    height: calc(100vh - 100px);
-  }
-
-  .charts-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .table, ion-row {
-    font-size: 14px;
+@media (max-width: 576px) {
+  .chart-container canvas {
+    max-height: 70vh; /* Smaller adjustments for very small screens */
   }
 }
 
@@ -92,26 +76,20 @@
   .chart-container canvas {
     max-height: 250px;
   }
-
   .maximized .chart-container canvas {
     height: calc(100vh - 80px);
   }
-
-  .table, ion-row {
-    font-size: 12px;
-  }
-
-  .charts-grid {
-    grid-template-columns: 1fr;
-  }
 }
-
 .charts-grid {
   display: grid;
   gap: 20px;
-  grid-template-columns: 1fr 1fr; /* Ensure 2 columns on medium and above screens */
+  grid-template-columns: 1fr;
 }
-
+@media (min-width: 768px) {
+  .charts-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
 ion-grid {
   padding: 16px;
   background-color: #ffffff;
@@ -119,7 +97,6 @@ ion-grid {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   width: 100%;
 }
-
 .table {
   background-color: #f7f7f7;
   font-weight: bold;
@@ -129,7 +106,6 @@ ion-grid {
   text-align: center;
   padding: 12px 0;
 }
-
 ion-row:not(.table) {
   padding: 10px 0;
   border-bottom: 1px solid #e0e0e0;
@@ -138,29 +114,24 @@ ion-row:not(.table) {
   text-align: center;
   transition: background-color 0.3s ease;
 }
-
 ion-row:nth-child(odd):not(.table) {
   background-color: #d1cbcb;
 }
-
 ion-row:not(.table):hover {
   background-color: #999b9ca6;
 }
-
 ion-col {
   align-items: center;
   justify-content: center;
   padding: 8px 12px;
   word-wrap: break-word;
 }
-
 .header-row {
   font-weight: bold;
   background: var(--ion-color-light);
   padding: 10px 0;
   border-bottom: 1px solid var(--ion-color-medium);
 }
-
 .data-row:last-child {
   border-bottom: none;
 }
@@ -169,13 +140,21 @@ ion-grid {
   max-width: 1200px;
   margin: 0 auto;
 }
-
 ion-grid:first-of-type ion-row:first-child {
   border-top-left-radius: 12px;
   border-top-right-radius: 12px;
 }
-
 ion-grid:last-of-type ion-row:last-child {
   border-bottom-left-radius: 12px;
   border-bottom-right-radius: 12px;
+}
+@media (max-width: 768px) {
+  .table, ion-row {
+    font-size: 14px;
+  }
+}
+@media (max-width: 576px) {
+  .table, ion-row {
+    font-size: 12px;
+  }
 }
