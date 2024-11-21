@@ -6,20 +6,32 @@
 
 <ion-content [fullscreen]="true">
   <div class="w-full max-w-4xl">
-    <!-- Performance Type Selection Dropdown -->
     <div class="dropdown">
       <label for="performance-select">Select Performance Type</label>
-      <select 
-        id="performance-select" 
-        class="dropdown-select" 
+      <select
+        id="performance-select"
+        class="dropdown-select"
         [(ngModel)]="selectedPerformanceType"
         (change)="onPerformanceTypeChange()">
         <option value="academic">Performance Academically</option>
         <option value="attendance">Performance Attendance</option>
       </select>
+
+      <ng-container *ngIf="selectedPerformanceType === 'attendance'">
+        <label for="time-select">Select Time Period</label>
+        <select
+          id="time-select"
+          class="dropdown-select"
+          [(ngModel)]="selectedTime"
+          (change)="onTimeChange()">
+          <option value="all">All Time</option>
+          <option *ngFor="let month of availableMonths" [value]="month">
+            {{month | date:'MMMM yyyy'}}
+          </option>
+        </select>
+      </ng-container>
     </div>
 
-    <!-- Display the performance charts only -->
     <div class="charts-container">
       <div class="chart-wrapper">
         <canvas id="departmentPerformanceChart"></canvas>
@@ -29,7 +41,6 @@
       </div>
     </div>
 
-    <!-- Add button to navigate to the module-mentorship page -->
     <ion-button expand="block" [routerLink]="['/module-mentorship']">
       Go to Module Mentorship
     </ion-button>

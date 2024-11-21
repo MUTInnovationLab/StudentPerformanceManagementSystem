@@ -1,0 +1,129 @@
+/* profile.component.scss */
+:host {
+    display: block;
+  }
+  
+  .incomplete-profile-warning {
+    margin-top: 1rem;
+    padding: 0.5rem;
+    border-radius: 8px;
+    background: var(--ion-color-warning-tint);
+    color: var(--ion-color-warning-shade);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .incomplete-profile-warning ion-icon {
+    font-size: 1.2rem;
+  }
+  
+  .profile-header {
+    background: var(--ion-color-primary);
+    color: white;
+    padding-bottom: 2rem;
+  }
+  
+  .header-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .user-avatar {
+    position: relative;
+    margin-bottom: 1rem;
+  }
+  
+  .user-avatar ion-avatar {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto;
+    border: 4px solid white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .edit-avatar-btn {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    --padding-start: 8px;
+    --padding-end: 8px;
+    --background: var(--ion-color-light);
+    --border-radius: 50%;
+  }
+  
+  .user-name {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+  }
+  
+  .user-position {
+    margin: 0.5rem 0 0;
+    opacity: 0.9;
+    font-size: 1rem;
+  }
+  
+  .profile-content {
+    background: var(--ion-background-color);
+    border-radius: 20px 20px 0 0;
+    margin-top: -20px;
+  }
+  
+  .section-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 1rem 0;
+    color: var(--ion-color-dark);
+    padding-left: 8px;
+  }
+  
+  .info-section {
+    margin-bottom: 2rem;
+  }
+  
+  .label-text {
+    color: var(--ion-color-medium);
+    font-size: 0.9rem;
+    margin-bottom: 4px;
+  }
+  
+  ion-item {
+    --padding-start: 0;
+    --inner-padding-end: 0;
+    --background: transparent;
+  }
+  
+  ion-item ion-icon {
+    font-size: 1.4rem;
+    margin-right: 1rem;
+  }
+  
+  ion-list {
+    background: transparent;
+    padding: 0;
+  }
+  
+  .actions-section ion-item {
+    --background: var(--ion-color-light);
+    margin-bottom: 8px;
+    border-radius: 8px;
+    --padding-start: 16px;
+    --padding-end: 16px;
+  }
+  
+  .actions-section ion-item:last-child {
+    margin-bottom: 0;
+  }
+  
+  .actions-section h3 {
+    font-weight: 500;
+  }
+  
+  .actions-section p {
+    font-size: 0.9rem;
+    color: var(--ion-color-medium);
+  }
+  

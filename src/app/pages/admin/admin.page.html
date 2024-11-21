@@ -1,4 +1,3 @@
-<!-- Admin Dashboard Header -->
 <ion-header [translucent]="true">
   <ion-toolbar color="primary">
     <ion-buttons slot="start">
@@ -9,6 +8,11 @@
     <div class="header-content">
       <ion-title class="ion-text-center">Admin Dashboard</ion-title>
     </div>
+    <ion-buttons slot="end">
+      <ion-button (click)="presentProfilePopover($event)">
+        <ion-icon name="person-circle-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
@@ -49,33 +53,41 @@
 
 
   <!-- Details Modal -->
-  <ion-modal [isOpen]="showDetails" (didDismiss)="closeDetails()">
-    <ng-template>
-      <ion-header>
-        <ion-toolbar>
-          <ion-title>{{ selectedCard?.title }} Details</ion-title>
+ <!-- Update the modal template in admin.page.html -->
+<ion-modal [isOpen]="showDetails" (didDismiss)="closeDetails()">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>{{ selectedCard?.title }} Details</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="closeDetails()">Close</ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <ion-list>
+        <ion-item *ngFor="let item of selectedCard?.details">
+          <ion-label>
+            <h2 *ngIf="item.name">{{ item.name }}</h2>
+            <p *ngIf="item.department">Department: {{ item.department }}</p>
+            <p *ngIf="item.email">Email: {{ item.email }}</p>
+            <p *ngIf="item.phone">Phone: {{ item.phone }}</p>
+            <p *ngIf="item.code">Code: {{ item.code }}</p>
+            <p *ngIf="item.credits">Credits: {{ item.credits }}</p>
+          </ion-label>
           <ion-buttons slot="end">
-            <ion-button (click)="closeDetails()">Close</ion-button>
+            <ion-button (click)="editItem(getCollectionPathForCard(selectedCard?.title ?? ''), item)">
+              <ion-icon name="create-outline" slot="icon-only"></ion-icon>
+            </ion-button>
+            <ion-button (click)="deleteItem(getCollectionPathForCard(selectedCard?.title ?? ''), item?.id ?? '')" color="danger">
+              <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+            </ion-button>
           </ion-buttons>
-        </ion-toolbar>
-      </ion-header>
-      <ion-content class="ion-padding">
-        <ion-list>
-          <ion-item *ngFor="let item of selectedCard?.details">
-            <ion-label>
-              <h2 *ngIf="item.name">{{ item.name }}</h2>
-              <p *ngIf="item.department">Department: {{ item.department }}</p>
-              <p *ngIf="item.email">Email: {{ item.email }}</p>
-              <p *ngIf="item.phone">Phone: {{ item.phone }}</p>
-              <p *ngIf="item.code">Code: {{ item.code }}</p>
-              <p *ngIf="item.credits">Credits: {{ item.credits }}</p>
-            </ion-label>
-          </ion-item>
-        </ion-list>
-      </ion-content>
-    </ng-template>
-  </ion-modal>
-
+        </ion-item>
+      </ion-list>
+    </ion-content>
+  </ng-template>
+</ion-modal>
 
   <!-- Performance Trends Card -->
   <ion-card>

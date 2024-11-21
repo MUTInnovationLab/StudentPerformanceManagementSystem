@@ -3,35 +3,80 @@ import { AngularFirestore, QuerySnapshot, DocumentData } from '@angular/fire/com
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { PopoverController } from '@ionic/angular';
+import { ProfileComponent } from '../../components/profile/profile.component';
+import { AngularFireAuth } from '@angular/fire/compat/auth';
+import { AlertController, AlertInput } from '@ionic/angular';
+import { LoadingController } from '@ionic/angular';
 
+
+type ValidInputTypes = 'text' | 'number' | 'email' | 'tel' | 'password' | 'date' | 'textarea' | 'checkbox' | 'radio';
+
+interface BaseItem {
+  id: string;
+  name: string;
+  email: string;
+  position?: string;
+  collection?: string; // Added to track which collection the item belongs to
+  [key: string]: any;
+}
+
+interface UpdatedData {
+  id?: string;
+  collection?: string;
+  [key: string]: any;
+}
 // Add these interfaces to your existing interfaces
 interface Module {
-  code: string;
-  name: string;
-  department: string;
-  credits: number;
+  moduleCode: string;
+  moduleLevel: string;
   moduleName: string;
+  department?: string;
+}
+
+interface FacultyModule {
+  modules: Module[];
+}
+
+interface ModuleDetail {
+  name: string;
+  code: string;
+  department: string;
+  level: string;
+}
+
+interface Stat {
+  title: string;
+  count: number;
+  details?: ModuleDetail[];
 }
 
 interface FacultyDocument {
-  name?: string;
-  modules?: Module[]; // Modules might be directly in faculty
-  departments?: {
-    name: string;
-    modules?: Module[];
-  }[];
+  name: string;
+  modules: Module[];
+  departments?: Department[];
+}
+interface FacultyStat {
+  id: string;
+  name: string;
+  departmentsCount: number;
+  modulesCount: number;
 }
 
 interface HOD {
   name: string;
+  fullName: string;
   email: string;
   department: string;
   phone: string;
 }
 interface Department {
   name: string;
-  streams?: any; // We only care about the name field for counting
+  modules?: Module[];
+    streams?: string[];  // Add the streams property
+
 }
+
 interface Faculty {
   departments: Department[];
   modules: Module[];
@@ -95,6 +140,10 @@ interface PerformanceData {
   styleUrls: ['./admin.page.scss'],
 })
 export class AdminPage implements OnInit {
+  isLoggedIn: boolean = false;
+  private readonly validCollections = ['staff', 'mentors', 'students', 'faculties'];
+
+
   objectKeys = Object.keys;
   Array = Array;
   // Stat cards with initial count values
@@ -131,7 +180,19 @@ export class AdminPage implements OnInit {
     satisfactionRate: 88
   };
 
-  constructor(private router: Router, private firestore: AngularFirestore) {}
+  constructor(private router: Router, private firestore: AngularFirestore,private popoverController: PopoverController,private auth: AngularFireAuth,    private alertController: AlertController,
+  private loadingController: LoadingController,
+
+  // Add this injection
+  ) {this.auth.authState.subscribe(user => {
+    console.log('Admin page auth state:', user);
+    this.isLoggedIn = !!user;
+    if (!user) {
+      console.log('No user logged in, redirecting to login');
+      this.router.navigate(['/login']);
+    }
+  });
+}
 
   // Lifecycle method to initialize data
   ngOnInit() {
@@ -166,30 +227,275 @@ export class AdminPage implements OnInit {
 
   }
   
-
   // Navigate to home
   navigateHome() {
     this.router.navigate(['/home']);
   }
+  async presentProfilePopover(event: any) {
+    console.log('Profile popover triggered', event);
+    
+    try {
+      const popover = await this.popoverController.create({
+        component: ProfileComponent,
+        event: event,
+        translucent: true,
+        cssClass: 'profile-popover',
+        size: 'auto',
+        dismissOnSelect: false,
+        alignment: 'end',
+        arrow: true,
+        backdropDismiss: true
+      });
+  
+      await popover.present();
+      console.log('Popover presented successfully');
+  
+      const { data } = await popover.onWillDismiss();
+      console.log('Popover dismissed with data:', data);
+    } catch (error) {
+      console.error('Error presenting popover:', error);
+    }
+  }
+  async deleteItem(collectionPath: string, itemId: string) {
+    const alert = await this.alertController.create({
+      header: 'Confirm Delete',
+      message: 'Are you sure you want to delete this item?',
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel'
+        },
+        {
+          text: 'Delete',
+          handler: async () => {
+            const loading = await this.loadingController.create({
+              message: 'Deleting...'
+            });
+            await loading.present();
+
+            try {
+              await this.firestore.collection(collectionPath).doc(itemId).delete();
+              this.loadAllData(); // Refresh the data
+              await loading.dismiss();
+            } catch (error) {
+              console.error('Error deleting item:', error);
+              await loading.dismiss();
+              await this.showAlert('Error', 'Failed to delete item');
+            }
+          }
+        }
+      ]
+    });
+    await alert.present();
+  }
+  async updateItem(item: Partial<BaseItem>, collectionPath?: string) {
+    if (!item?.id) {
+      await this.showAlert('Error', 'Item ID is missing or undefined');
+      return false;
+    }
+
+    // Determine the collection path
+    const collection = collectionPath || item.collection || this.determineCollection(item);
+    
+    if (!collection || !this.validCollections.includes(collection)) {
+      await this.showAlert('Error', 'Invalid or missing collection path');
+      return false;
+    }
+
+    try {
+      // Clean the data by removing undefined and null values
+      const cleanData = Object.entries(item).reduce((acc, [key, value]) => {
+        if (value !== undefined && value !== null && key !== 'collection') {
+          acc[key] = value === '' ? null : value;
+        }
+        return acc;
+      }, {} as Record<string, any>);
+
+      if (Object.keys(cleanData).length === 0) {
+        throw new Error('No valid data to update');
+      }
+
+      // Get reference to the document in the correct collection
+      const docRef = this.firestore.collection(collection).doc(item.id);
+      const docSnapshot = await docRef.get().toPromise();
+
+      if (!docSnapshot?.exists) {
+        // Document doesn't exist, create it
+        console.log(`Creating new document in ${collection} collection...`);
+        await docRef.set(cleanData);
+        console.log('Document created successfully');
+      } else {
+        // Document exists, update it
+        await docRef.update(cleanData);
+        console.log(`Document updated successfully in ${collection} collection`);
+      }
+
+      return true;
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      console.error('Error updating item:', error);
+      await this.showAlert('Error', `Failed to update item: ${errorMessage}`);
+      return false;
+    }
+  }
+  private determineCollection(item: Partial<BaseItem>): string | null {
+    if (item.position?.toLowerCase().includes('lecturer') || 
+        item.position?.toLowerCase().includes('hod')) {
+      return 'staff';
+    }
+    if (item.position?.toLowerCase().includes('mentor')) {
+      return 'mentors';
+    }
+    if (item.position?.toLowerCase().includes('student')) {
+      return 'students';
+    }
+    if (item.position?.toLowerCase().includes('faculty')) {
+      return 'faculties';
+    }
+    return null;
+  }
+  
+  async editItem(collectionPath: string, item: BaseItem) {
+    if (!item?.id) {
+      await this.showAlert('Error', 'Cannot edit item: Missing ID');
+      return;
+    }
+
+    try {
+      // Verify the collection path and document existence
+      const docRef = this.firestore.collection(collectionPath).doc(item.id);
+      const docSnapshot = await docRef.get().toPromise();
+
+      if (!docSnapshot?.exists) {
+        console.log(`Document ${item.id} does not exist in ${collectionPath}`);
+        await this.showAlert('Warning', 'Creating new record as it does not exist');
+      }
+
+      const excludedFields = ['id', 'createdAt', 'updatedAt', 'collection'];
+      const inputs = Object.entries(item)
+        .filter(([key]) => !excludedFields.includes(key))
+        .map(([key, value]) => ({
+          name: key,
+          type: this.getInputType(key),
+          placeholder: this.formatLabel(key),
+          value: value?.toString() ?? '',
+          label: this.formatLabel(key)
+        } as AlertInput));
+
+      const alert = await this.alertController.create({
+        header: docSnapshot?.exists ? 'Edit Item' : 'Create Item',
+        inputs,
+        buttons: [
+          {
+            text: 'Cancel',
+            role: 'cancel'
+          },
+          {
+            text: 'Save',
+            handler: async (formData) => {
+              const loading = await this.loadingController.create({
+                message: 'Saving changes...'
+              });
+              await loading.present();
+
+              try {
+                const updatedData: UpdatedData = {};
+                inputs.forEach((input) => {
+                  if (input.name && formData[input.name] !== undefined) {
+                    updatedData[input.name] = formData[input.name].trim();
+                  }
+                });
+
+                updatedData['id'] = item.id;
+                
+                // Pass the collection path to updateItem
+                const success = await this.updateItem(updatedData, collectionPath);
+                if (success) {
+                  this.loadAllData(); // Refresh the data
+                }
+              } catch (error: unknown) {
+                console.error('Error in edit handler:', error);
+                await this.showAlert('Error', 'Failed to process edit');
+              } finally {
+                await loading.dismiss();
+              }
+            }
+          }
+        ]
+      });
+      await alert.present();
+    } catch (error: unknown) {
+      console.error('Error in editItem:', error);
+      await this.showAlert('Error', 'Failed to prepare edit form');
+    }
+  }
+
+  getCollectionPathForCard(cardTitle: string): string {
+    const pathMap: Record<string, string> = {
+      'Lecturers': 'staff',
+      'Mentors': 'mentors',
+      'Students': 'students',
+      'HODs': 'staff',
+      'Faculties': 'faculties'
+    };
+    return pathMap[cardTitle] || '';
+  }
+
+  private getInputType(key: string): ValidInputTypes {
+    const typeMap: Record<string, ValidInputTypes> = {
+      email: 'email',
+      phone: 'tel',
+      password: 'password',
+      age: 'number',
+      date: 'date',
+      description: 'textarea',
+      active: 'checkbox',
+      status: 'radio'
+    };
+    return typeMap[key] || 'text';
+  }
+
+  private formatLabel(key: string): string {
+    return key
+      .split(/(?=[A-Z])|_/)
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  }
+
+  private async showAlert(header: string, message: string) {
+    const alert = await this.alertController.create({
+      header,
+      message,
+      buttons: ['OK']
+    });
+    await alert.present();
+  }
+
+
 
   fetchFacultiesData() {
     const facultiesStat = this.stats.find(stat => stat.title === 'Faculties');
+    
     this.firestore.collection('faculties')
       .snapshotChanges()
       .pipe(
         map(actions => actions.map(a => ({
-          id: a.payload.doc.id,
-          ...a.payload.doc.data() as FacultyDocument
+          ...a.payload.doc.data() as FacultyDocument, // Spread data first
+          id: a.payload.doc.id, // Add `id` after
         })))
       )
       .subscribe(faculties => {
         facultiesStat!.count = faculties.length;
-        facultiesStat!.details = faculties.map(faculty => ({
-          id: faculty.id,
-          name: faculty.name || 'Unnamed Faculty',
-          departmentsCount: faculty.departments?.length || 0,
-          modulesCount: faculty.modules?.length || 0
-        }));
+        facultiesStat!.details = faculties.map(faculty => {
+          const displayName = faculty.name?.trim() || faculty.id;
+          
+          return {
+            id: faculty.id,
+            name: displayName,
+            departmentsCount: faculty.departments?.length || 0,
+            modulesCount: faculty.modules?.length || 0
+          };
+        });
       });
   }
   
@@ -204,41 +510,51 @@ export class AdminPage implements OnInit {
           
           snapshot.docs.forEach(doc => {
             const facultyData = doc.data() as FacultyDocument;
-            
-            // Check modules directly in faculty
-            if (facultyData.modules && Array.isArray(facultyData.modules)) {
-              const modulesWithDepartment = facultyData.modules.map(module => ({
-                ...module,
-                department: facultyData.name || 'Unknown Department'
-              }));
-              allModules.push(...modulesWithDepartment);
+  
+            // Extract modules directly under faculty
+            if (Array.isArray(facultyData.modules)) {
+              facultyData.modules.forEach(module => {
+                allModules.push({
+                  moduleCode: module.moduleCode,
+                  moduleLevel: module.moduleLevel,
+                  moduleName: module.moduleName,
+                  department: facultyData.name || 'Unknown Department'
+                });
+              });
             }
-            
-            // Check modules in departments
-            if (facultyData.departments && Array.isArray(facultyData.departments)) {
+  
+            // Extract modules from departments
+            if (Array.isArray(facultyData.departments)) {
               facultyData.departments.forEach(department => {
-                if (department.modules && Array.isArray(department.modules)) {
-                  const modulesWithDepartment = department.modules.map(module => ({
-                    ...module,
-                    department: department.name
-                  }));
-                  allModules.push(...modulesWithDepartment);
+                if (Array.isArray(department.modules)) {
+                  department.modules.forEach(module => {
+                    allModules.push({
+                      moduleCode: module.moduleCode,
+                      moduleLevel: module.moduleLevel,
+                      moduleName: module.moduleName,
+                      department: department.name
+                    });
+                  });
                 }
               });
             }
           });
-          
+  
+          // Update the modules array
           this.modules = allModules;
+  
+          // Update statistics
           if (modulesStat) {
             modulesStat.count = allModules.length;
             modulesStat.details = allModules.map(module => ({
-              name: module.moduleName || module.name,
-              code: module.code,
-              department: module.department,
-              credits: module.credits
+              name: module.moduleName,
+              code: module.moduleCode,
+              department: module.department || 'Unknown Department',
+              level: module.moduleLevel
             }));
           }
-          
+  
+          // Log the results for debugging
           console.log('Total modules found:', allModules.length);
           console.log('All modules:', allModules);
         },
@@ -247,6 +563,7 @@ export class AdminPage implements OnInit {
         }
       });
   }
+  
   fetchDepartments() {
     const departmentsStat = this.stats.find(stat => stat.title === 'Departments');
   
@@ -304,7 +621,6 @@ export class AdminPage implements OnInit {
       });
   }
 
- 
   fetchLecturersData() {
     const lecturerStat = this.stats.find(stat => stat.title === 'Lecturers');
     this.firestore.collection('staff', ref => ref.where('position', '==', 'Lecturer'))

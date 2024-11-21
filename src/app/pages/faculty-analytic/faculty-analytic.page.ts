@@ -15,13 +15,17 @@ import{DepartmentPerformance, ModuleAcademicPerformance}from '../../models/depar
   templateUrl: './faculty-analytic.page.html',
   styleUrls: ['./faculty-analytic.page.scss']
 })
+
 export class FacultyAnalyticPage implements OnInit, AfterViewInit {
   selectedPerformanceType: 'academic' | 'attendance' = 'academic';
+  selectedTime: string = 'all'; // Default to 'all'
   faculty: string = '';
   departmentPerformanceChart: Chart | null = null;
   performanceLevelChart: Chart | null = null;
   isLoading: boolean = true;
   departmentStats: DepartmentPerformance[] = [];
+  availableMonths: string[] = [];
+
 
   private readonly HIGH_PERFORMANCE_THRESHOLD = 75;
   private readonly MEDIUM_PERFORMANCE_THRESHOLD = 50;
@@ -44,14 +48,49 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
   ) {
     Chart.register(...registerables);
   }
-
   async ngOnInit() {
     const user = await this.authService.getLoggedInStaff();
     if (user) {
       this.faculty = user.faculty;
+      await this.loadAvailableMonths();
       await this.onFacultyChange();
     }
   }
+
+ /* async loadAvailableMonths() {
+    if (!this.faculty) return;
+    
+    const facultyDoc = await this.firestore
+      .doc<Faculty>(`faculties/${this.faculty}`)
+      .get()
+      .toPromise();
+
+    if (facultyDoc?.exists) {
+      const faculty = facultyDoc.data() as Faculty;
+      const allModules = faculty.departments.flatMap(dept => 
+        this.getAllModulesFromDepartment(dept)
+      );
+
+      // Get unique months across all modules
+      const monthsPromises = allModules.map(module => 
+        this.attendanceService.getAvailableMonths(module.moduleCode)
+      );
+      
+      const allMonthsArrays = await Promise.all(monthsPromises);
+      const uniqueMonths = new Set(allMonthsArrays.flat());
+      this.availableMonths = Array.from(uniqueMonths).sort();
+
+      // Set default to most recent month
+      if (this.availableMonths.length > 0) {
+        this.selectedMonth = this.availableMonths[this.availableMonths.length - 1];
+      }
+    }
+  }*/
+
+ /* async onMonthChange() {
+    await this.onFacultyChange();
+  }*/
+
 
   ngAfterViewInit() {
     setTimeout(() => {
@@ -90,12 +129,49 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
     }
   }
 
+  async loadAvailableMonths() {
+    if (!this.faculty) return;
+    
+    const facultyDoc = await this.firestore
+      .doc<Faculty>(`faculties/${this.faculty}`)
+      .get()
+      .toPromise();
+
+    if (facultyDoc?.exists) {
+      const faculty = facultyDoc.data() as Faculty;
+      const allModules = faculty.departments.reduce((modules: Module[], dept: Department) => {
+        const deptModules = this.getAllModulesFromDepartment(dept);
+        return [...modules, ...deptModules];
+      }, []);
+
+      const monthsPromises = allModules.map((module: Module) => 
+        this.attendanceService.getAvailableMonths(module.moduleCode)
+      );
+      
+      const allMonthsArrays = await Promise.all(monthsPromises);
+      const allMonths = allMonthsArrays.reduce((acc: string[], curr: string[]) => {
+        return [...acc, ...curr];
+      }, []);
+      
+      const uniqueMonths = new Set<string>(allMonths);
+      this.availableMonths = Array.from(uniqueMonths).sort().reverse(); // Sort in reverse to show newest first
+    }
+  }
+
+  async onTimeChange() {
+    await this.onFacultyChange();
+  }
+
   private async getDepartmentPerformance(faculty: Faculty): Promise<DepartmentPerformance[]> {
-    const departmentPromises = faculty.departments.map(async (department) => {
+    const departmentPromises = faculty.departments.map(async (department: Department) => {
       const modules = this.getAllModulesFromDepartment(department);
       const [moduleAcademicPerformances, moduleAttendancePerformances] = await Promise.all([
         this.academicService.getModuleAcademicPerformance(modules),
-        this.attendanceService.getModuleAttendancePerformance(modules)
+        this.attendanceService.getModuleAttendancePerformance(
+          modules,
+          this.selectedTime === 'all' ? undefined : this.selectedTime,
+          this.selectedTime === 'all' ? 'all' : 'month'
+        )
       ]);
 
       return this.processDepartmentData(
@@ -107,6 +183,7 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
 
     return await Promise.all(departmentPromises);
   }
+
 
   private getAllModulesFromDepartment(department: Department): Module[] {
     const modules: Module[] = [...(department.modules || [])];
@@ -123,6 +200,23 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
 
     return modules;
   }
+
+
+ /* private getAllModulesFromDepartment(department: Department): Module[] {
+    const modules: Module[] = [...(department.modules || [])];
+    
+    if (department.streams) {
+      Object.values(department.streams).forEach(streams => {
+        streams.forEach(stream => {
+          if (stream.modules) {
+            modules.push(...stream.modules);
+          }
+        });
+      });
+    }
+
+    return modules;
+  }*/
 
 
   private processDepartmentData(
@@ -397,3 +491,6 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
    });
  }
 }
+
+
+
