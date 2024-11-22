@@ -25,6 +25,19 @@ interface StaffDetails {
 }
 
 
+interface StudentMark {
+  studentNumber: number;
+  average: string;
+  test1: number;
+  test2: number;
+  test3: number;
+  test4: number;
+  test5: string;
+  test6: string;
+  test7: string;
+}
+
+
 interface ModuleMentorshipData {
   moduleCode: string;
   moduleName: string;
@@ -36,6 +49,7 @@ interface ModuleMentorshipData {
   department: string;
   lecturerEmail: string;
   lecturerDetails?: StaffDetails;
+  studentsNeedingMentor?: StudentMark[]; // Add this line
 }
 
 interface AssignedModule {
@@ -65,6 +79,8 @@ export class ModuleMentorshipPage implements OnInit, AfterViewInit {
   lecturerEmails: Map<string, string> = new Map();
   selectedView: 'all' | 'lowPerforming' | 'needingMentorship' = 'all';
   staffDetails: Map<string, StaffDetails> = new Map();
+  selectedModule: ModuleMentorshipData | null = null;
+  showStudentList: boolean = false;
 
   private readonly LOW_PERFORMANCE_THRESHOLD = 50;
   private readonly CHART_COLORS = {
@@ -117,7 +133,7 @@ export class ModuleMentorshipPage implements OnInit, AfterViewInit {
     }
   }
 
-  private async processModuleData(faculty: Faculty) {
+  async processModuleData(faculty: Faculty) {
     const departments = faculty.departments || [];
     const moduleData: ModuleMentorshipData[] = [];
 
@@ -133,8 +149,17 @@ export class ModuleMentorshipPage implements OnInit, AfterViewInit {
         const attendance = attendancePerformance.find(ap => ap.moduleCode === modules[i].moduleCode);
 
         if (academic && academic.averageMarks < this.LOW_PERFORMANCE_THRESHOLD) {
-          const studentsNeedingMentorship = Math.round((academic.totalStudents *
-            (this.LOW_PERFORMANCE_THRESHOLD - academic.averageMarks)) / 100);
+          // Get students marks for this module
+          const marksDoc = await this.firestore
+            .collection('marks')
+            .doc(modules[i].moduleCode)
+            .get()
+            .toPromise();
+
+          const marksData = marksDoc?.data() as { marks: StudentMark[] } | undefined;
+          const studentsNeedingMentor = marksData?.marks.filter(
+            student => parseFloat(student.average) < this.LOW_PERFORMANCE_THRESHOLD
+          ) || [];
 
           const lecturerEmail = this.getLecturerEmail(modules[i].moduleCode);
           const lecturerDetails = this.staffDetails.get(lecturerEmail.toLowerCase());
@@ -144,12 +169,13 @@ export class ModuleMentorshipPage implements OnInit, AfterViewInit {
             moduleName: modules[i].moduleName,
             lecturer: modules[i].lecturer || 'Not Assigned',
             lecturerEmail: lecturerEmail,
-            lecturerDetails: lecturerDetails, // Add lecturer details
+            lecturerDetails: lecturerDetails,
             averageMarks: academic.averageMarks,
             averageAttendance: attendance?.averageAttendance || 0,
             totalStudents: academic.totalStudents,
-            studentsNeedingMentorship,
-            department: dept.name
+            studentsNeedingMentorship: studentsNeedingMentor.length,
+            department: dept.name,
+            studentsNeedingMentor: studentsNeedingMentor
           });
         }
       }
@@ -166,6 +192,15 @@ export class ModuleMentorshipPage implements OnInit, AfterViewInit {
     }, 0);
   }
 
+  async showModuleStudents(module: ModuleMentorshipData) {
+    this.selectedModule = module;
+    this.showStudentList = true;
+  }
+
+  hideStudentList() {
+    this.showStudentList = false;
+    this.selectedModule = null;
+  }
 
 
 
