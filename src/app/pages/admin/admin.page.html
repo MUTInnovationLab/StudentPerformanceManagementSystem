@@ -49,6 +49,15 @@
       </ion-header>
       <ion-content class="ion-padding">
         <ng-container *ngIf="selectedCard">
+          <!-- Search Bar -->
+          <ion-item>
+            <ion-input 
+              [(ngModel)]="searchQuery" 
+              placeholder="Search..." 
+              clearInput>
+            </ion-input>
+          </ion-item>
+          
           <ion-list *ngIf="selectedCard.details && selectedCard.details.length > 0; else noDetails">
             <ion-item *ngFor="let item of selectedCard.details">
               <ion-label>

@@ -8,6 +8,8 @@ import { ProfileComponent } from '../../components/profile/profile.component';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { AlertController, AlertInput } from '@ionic/angular';
 import { LoadingController } from '@ionic/angular';
+import { DomSanitizer } from '@angular/platform-browser';
+
 
 type ValidInputTypes = 'text' | 'number' | 'email' | 'tel' | 'password' | 'date' | 'textarea' | 'checkbox' | 'radio';
 
@@ -140,9 +142,10 @@ interface PerformanceData {
   styleUrls: ['./admin.page.scss'],
 })
 export class AdminPage implements OnInit {
+  searchQuery: string = '';
+  searchTimeout: any;
   isLoggedIn: boolean = false;
   private readonly validCollections = ['staff', 'mentors', 'students', 'faculties', 'courses', 'modules', 'departments'];
-
 
   objectKeys = Object.keys;
   Array = Array;
@@ -181,7 +184,7 @@ export class AdminPage implements OnInit {
   };
 
   constructor(private router: Router, private firestore: AngularFirestore,private popoverController: PopoverController,private auth: AngularFireAuth,    private alertController: AlertController,
-  private loadingController: LoadingController,
+  private loadingController: LoadingController,private sanitizer: DomSanitizer,
 
   // Add this injection
   ) {this.auth.authState.subscribe(user => {
@@ -798,16 +801,104 @@ fetchDepartments() {
 }
 
   
-  showCardDetails(card: StatCard) {
-    console.log('Selected Card Details:', card.details); // Check if details are populated
-    this.selectedCard = card;
-    this.showDetails = true;
-  }
+showCardDetails(card: StatCard) {
+  this.clearSearch();
+  this.selectedCard = card;
+  this.showDetails = true;
+}
   
   closeDetails() {
     this.showDetails = false;
     this.selectedCard = null;
+    this.searchQuery = ''; // Clear search when modal closes
   }
+  filteredDetails(): DetailItem[] {
+    if (!this.selectedCard?.details || !Array.isArray(this.selectedCard.details)) {
+      return [];
+    }
+
+    if (!this.searchQuery.trim()) {
+      return this.selectedCard.details;
+    }
+
+    const query = this.searchQuery.toLowerCase().trim();
+    
+    return this.selectedCard.details.filter((item: DetailItem) => {
+      // Handle arrays and nested objects
+      const searchInValue = (value: any): boolean => {
+        if (Array.isArray(value)) {
+          return value.some(v => searchInValue(v));
+        } else if (value && typeof value === 'object') {
+          return Object.values(value).some(v => searchInValue(v));
+        } else if (value !== null && value !== undefined) {
+          return value.toString().toLowerCase().includes(query);
+        }
+        return false;
+      };
+
+      // Search in all item properties
+      return Object.entries(item).some(([key, value]) => {
+        // Skip searching in specific fields
+        if (['id', 'password', 'uid', 'createdAt', 'updatedAt'].includes(key)) {
+          return false;
+        }
+        return searchInValue(value);
+      });
+    });
+  }
+  onSearchChange(event: any): void {
+    if (this.searchTimeout) {
+      clearTimeout(this.searchTimeout);
+    }
+
+    this.searchTimeout = setTimeout(() => {
+      this.searchQuery = event.target.value;
+    }, 300); // 300ms debounce
+  }
+  clearSearch(): void {
+    this.searchQuery = '';
+    if (this.searchTimeout) {
+      clearTimeout(this.searchTimeout);
+    }
+  }
+  getSearchPlaceholder(): string {
+    if (!this.selectedCard) return 'Search...';
+    
+    const placeholders: { [key: string]: string } = {
+      'Lecturers': 'Search by name, email, or department...',
+      'Mentors': 'Search by name, email, or specialization...',
+      'Students': 'Search by name, number, or course...',
+      'Courses': 'Search by course name or department...',
+      'Modules': 'Search by module code or name...',
+      'Departments': 'Search by department name...',
+      'HODs': 'Search by name or department...',
+      'Faculties': 'Search by faculty name...'
+    };
+
+    return placeholders[this.selectedCard.title] || 'Search...';
+  }
+
+  // Helper method to highlight search matches
+  highlightMatch(text: string): string {
+    if (!this.searchQuery.trim() || !text) {
+      return text;
+    }
+
+    const query = this.searchQuery.toLowerCase();
+    const textLower = text.toLowerCase();
+    const index = textLower.indexOf(query);
+
+    if (index === -1) {
+      return text;
+    }
+
+    const highlighted = text.slice(0, index) +
+      `<mark>${text.slice(index, index + query.length)}</mark>` +
+      text.slice(index + query.length);
+
+    return this.sanitizer.bypassSecurityTrustHtml(highlighted) as string;
+  }
+
   getFieldLabel(key: string): string {
     const labels: { [key: string]: string } = {
       name: 'Name',
