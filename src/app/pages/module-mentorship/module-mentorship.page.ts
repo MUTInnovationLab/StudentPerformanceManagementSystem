@@ -102,14 +102,145 @@ export class ModuleMentorshipPage implements OnInit, AfterViewInit {
       const user = await this.authService.getLoggedInStaff();
       if (user) {
         this.faculty = user.faculty;
-        await this.loadLecturerEmails();
-        await this.loadStaffDetails(); // Add this line
-        await this.loadModuleData();
+  
+        // Load data in parallel
+        await Promise.all([this.loadLecturerEmails(), this.loadStaffDetails()]);
+        await this.loadModuleData(); // Load modules after essential data
       }
     } catch (error) {
       console.error('Error in ngOnInit:', error);
     }
   }
+  
+  // Optimize data processing by parallelizing API calls
+  async processModuleData(faculty: Faculty) {
+    const departments = faculty.departments || [];
+    const moduleData: ModuleMentorshipData[] = []; // This will store the final array
+  
+    // Loop through each department
+    for (const dept of departments) {
+      const modules = this.getAllModulesFromDepartment(dept); // Assume this method returns an array of modules
+      const [academicPerformance, attendancePerformance] = await Promise.all([
+        this.academicService.getModuleAcademicPerformance(modules), // Get academic performance data
+        this.attendanceService.getModuleAttendancePerformance(modules) // Get attendance performance data
+      ]);
+  
+      // Process each module
+      const modulesMentorshipData = await Promise.all(
+        modules.map(async (module) => {
+          // Find corresponding academic and attendance data for each module
+          const academic = academicPerformance.find(ap => ap.moduleCode === module.moduleCode);
+          const attendance = attendancePerformance.find(ap => ap.moduleCode === module.moduleCode);
+  
+          if (academic && academic.averageMarks < this.LOW_PERFORMANCE_THRESHOLD) {
+            // If average marks are below threshold, get additional data
+            const marksDoc = await this.firestore
+              .collection('marks')
+              .doc(module.moduleCode)
+              .get()
+              .toPromise();
+  
+            const marksData = marksDoc?.data() as { marks: StudentMark[] } | undefined;
+            const studentsNeedingMentor = marksData?.marks.filter(
+              student => parseFloat(student.average) < this.LOW_PERFORMANCE_THRESHOLD
+            ) || [];
+  
+            // Get lecturer details
+            const lecturerEmail = this.getLecturerEmail(module.moduleCode);
+            const lecturerDetails = this.staffDetails.get(lecturerEmail.toLowerCase());
+  
+            // Return the ModuleMentorshipData object
+            return {
+              moduleCode: module.moduleCode,
+              moduleName: module.moduleName,
+              lecturer: module.lecturer || 'Not Assigned',
+              lecturerEmail: lecturerEmail,
+              lecturerDetails: lecturerDetails,
+              averageMarks: academic.averageMarks,
+              averageAttendance: attendance?.averageAttendance || 0,
+              totalStudents: academic.totalStudents,
+              studentsNeedingMentorship: studentsNeedingMentor.length,
+              department: dept.name,
+              studentsNeedingMentor: studentsNeedingMentor
+            } as ModuleMentorshipData; // Type assertion to ensure correct type
+          }
+  
+          return null; // If module doesn't meet the condition, return null
+        })
+      );
+  
+      // Filter out null values from the results
+      moduleData.push(...modulesMentorshipData.filter((module) => module !== null) as ModuleMentorshipData[]);
+    }
+  
+    // Filter low-performing modules based on average marks
+    this.lowPerformingModules = moduleData.filter(module => module.averageMarks < 50);
+    this.filteredModules = [...this.lowPerformingModules]; // For UI filtering or additional handling
+  
+    // Calculate total students needing mentorship
+    this.totalStudentsNeedingMentorship = this.lowPerformingModules.reduce(
+      (sum, module) => sum + module.studentsNeedingMentorship, 0
+    );
+  
+    setTimeout(() => {
+      this.updateCharts(); // Update any relevant charts or UI
+    }, 0);
+  }
+  
+  
+  // Process modules for a specific department
+  private async processDepartmentModules(modules: Module[], departmentName: string): Promise<ModuleMentorshipData[]> {
+    const [academicPerformance, attendancePerformance] = await Promise.all([
+      this.academicService.getModuleAcademicPerformance(modules),
+      this.attendanceService.getModuleAttendancePerformance(modules)
+    ]);
+  
+    // Use Promise.all to handle the array of async results
+    const modulesMentorshipData = await Promise.all(modules.map(async (module) => {
+      const academic = academicPerformance.find(ap => ap.moduleCode === module.moduleCode);
+      const attendance = attendancePerformance.find(ap => ap.moduleCode === module.moduleCode);
+  
+      if (!academic || academic.averageMarks >= this.LOW_PERFORMANCE_THRESHOLD) {
+        return null; // Skip modules that are not low-performing
+      }
+  
+      const marksDoc = await this.firestore.collection('marks').doc(module.moduleCode).get().toPromise();
+      const marksData = marksDoc?.data() as { marks: StudentMark[] } | undefined;
+      const studentsNeedingMentor = marksData?.marks.filter(
+        student => parseFloat(student.average) < this.LOW_PERFORMANCE_THRESHOLD
+      ) || [];
+  
+      const lecturerEmail = this.getLecturerEmail(module.moduleCode);
+      const lecturerDetails = this.staffDetails.get(lecturerEmail.toLowerCase());
+  
+      return {
+        moduleCode: module.moduleCode,
+        moduleName: module.moduleName,
+        lecturer: module.lecturer || 'Not Assigned',
+        lecturerEmail: lecturerEmail,
+        lecturerDetails: lecturerDetails,
+        averageMarks: academic.averageMarks,
+        averageAttendance: attendance?.averageAttendance || 0,
+        totalStudents: academic.totalStudents,
+        studentsNeedingMentorship: studentsNeedingMentor.length,
+        department: departmentName,
+        studentsNeedingMentor: studentsNeedingMentor
+      } as ModuleMentorshipData;
+    }));
+  
+    // Filter out null values from the result of Promise.all
+    return modulesMentorshipData.filter(module => module !== null) as ModuleMentorshipData[];
+  }
+  
+  
+  // Ensure charts render only after data is loaded
+  private updateCharts() {
+    if (this.filteredModules.length > 0) {
+      this.createModuleComparisonChart();
+      this.createDepartmentMentorshipChart();
+    }
+  }
+  
 
   // Add new method to load staff details
   private async loadStaffDetails() {
@@ -133,65 +264,7 @@ export class ModuleMentorshipPage implements OnInit, AfterViewInit {
     }
   }
 
-  async processModuleData(faculty: Faculty) {
-    const departments = faculty.departments || [];
-    const moduleData: ModuleMentorshipData[] = [];
-
-    for (const dept of departments) {
-      const modules = this.getAllModulesFromDepartment(dept);
-      const [academicPerformance, attendancePerformance] = await Promise.all([
-        this.academicService.getModuleAcademicPerformance(modules),
-        this.attendanceService.getModuleAttendancePerformance(modules)
-      ]);
-
-      for (let i = 0; i < modules.length; i++) {
-        const academic = academicPerformance.find(ap => ap.moduleCode === modules[i].moduleCode);
-        const attendance = attendancePerformance.find(ap => ap.moduleCode === modules[i].moduleCode);
-
-        if (academic && academic.averageMarks < this.LOW_PERFORMANCE_THRESHOLD) {
-          // Get students marks for this module
-          const marksDoc = await this.firestore
-            .collection('marks')
-            .doc(modules[i].moduleCode)
-            .get()
-            .toPromise();
-
-          const marksData = marksDoc?.data() as { marks: StudentMark[] } | undefined;
-          const studentsNeedingMentor = marksData?.marks.filter(
-            student => parseFloat(student.average) < this.LOW_PERFORMANCE_THRESHOLD
-          ) || [];
-
-          const lecturerEmail = this.getLecturerEmail(modules[i].moduleCode);
-          const lecturerDetails = this.staffDetails.get(lecturerEmail.toLowerCase());
-
-          moduleData.push({
-            moduleCode: modules[i].moduleCode,
-            moduleName: modules[i].moduleName,
-            lecturer: modules[i].lecturer || 'Not Assigned',
-            lecturerEmail: lecturerEmail,
-            lecturerDetails: lecturerDetails,
-            averageMarks: academic.averageMarks,
-            averageAttendance: attendance?.averageAttendance || 0,
-            totalStudents: academic.totalStudents,
-            studentsNeedingMentorship: studentsNeedingMentor.length,
-            department: dept.name,
-            studentsNeedingMentor: studentsNeedingMentor
-          });
-        }
-      }
-    }
-
-    this.lowPerformingModules = moduleData.filter(module => module.averageMarks < 50);
-    this.filteredModules = [...this.lowPerformingModules];
-    this.totalStudentsNeedingMentorship = this.lowPerformingModules.reduce(
-      (sum, module) => sum + module.studentsNeedingMentorship, 0
-    );
-
-    setTimeout(() => {
-      this.updateCharts();
-    }, 0);
-  }
-
+  
   async showModuleStudents(module: ModuleMentorshipData) {
     this.selectedModule = module;
     this.showStudentList = true;
@@ -269,10 +342,6 @@ export class ModuleMentorshipPage implements OnInit, AfterViewInit {
     return modules;
   }
 
-  private updateCharts() {
-    this.createModuleComparisonChart();
-    this.createDepartmentMentorshipChart();
-  }
 
   private createModuleComparisonChart() {
     const canvas = document.getElementById('moduleComparisonChart') as HTMLCanvasElement;

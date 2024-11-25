@@ -23,6 +23,7 @@ export interface DepartmentPerformance {
     moduleName: string;
     averageMarks: number;
     totalStudents: number;
+    studentsNeedingMentorship?: number; // Add this if applicable
   }
 
   
