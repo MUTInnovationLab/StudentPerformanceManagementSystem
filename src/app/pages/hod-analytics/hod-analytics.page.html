@@ -52,14 +52,17 @@
         </ion-item>
 
         <ion-grid>
+          <!-- Table Header -->
           <ion-row class="table-header">
             <ion-col size="2"><strong>Module Code</strong></ion-col>
             <ion-col size="4"><strong>Module Name</strong></ion-col>
             <ion-col size="3"><strong>Module Level</strong></ion-col>
             <ion-col size="3"><strong>Action</strong></ion-col>
           </ion-row>
+        
+          <!-- Table Body -->
           <ng-container *ngFor="let module of moduleDetailsData; let i = index">
-            <ion-row (click)="toggleRow(i)" button>
+            <ion-row class="table-row" (click)="toggleRow(i)" button>
               <ion-col size="2">{{ module.moduleCode }}</ion-col>
               <ion-col size="4">{{ module.moduleName }}</ion-col>
               <ion-col size="3">{{ module.moduleLevel }}</ion-col>
@@ -69,26 +72,26 @@
                 </ion-button>
               </ion-col>
             </ion-row>
-
-            <ion-row *ngIf="expandedRowIndex === i" class="table">
-              <ion-col colspan="4">
+        
+            <!-- Expanded Row for Additional Details -->
+            <ion-row *ngIf="expandedRowIndex === i" class="expanded-row">
+              <ion-col size="12">
                 <ion-card class="lecturer-student-card">
                   <ion-card-header>
                     <ion-card-title class="t">Lecturer and Students Details</ion-card-title>
                   </ion-card-header>
                   <ion-card-content>
                     <ion-grid>
-                      <ion-row class="table-header">
-                       
-                      </ion-row>
+                      <!-- Lecturer Details -->
                       <ion-row *ngIf="module.lecturerDetails">
-                        <ion-col>{{ module.lecturerDetails.fullName }}</ion-col>
-                        <ion-col>{{ module.lecturerDetails.email }}</ion-col>
+                        <ion-col size="6">{{ module.lecturerDetails.fullName }}</ion-col>
+                        <ion-col size="6">{{ module.lecturerDetails.email }}</ion-col>
                       </ion-row>
                       <ion-row *ngIf="!module.lecturerDetails">
                         <ion-col colspan="2">Loading lecturer details...</ion-col>
                       </ion-row>
-                    
+        
+                      <!-- Student Details -->
                       <ion-row class="table-header" *ngIf="failingStudentsDetails.length > 0">
                         <ion-col>Student Name</ion-col>
                         <ion-col>Student Number</ion-col>
@@ -101,7 +104,6 @@
                         <ion-col color="danger">{{ student.average }}%</ion-col>
                         <ion-col>{{ student.email }}</ion-col>
                       </ion-row>
-                
                     </ion-grid>
                   </ion-card-content>
                 </ion-card>
@@ -109,6 +111,7 @@
             </ion-row>
           </ng-container>
         </ion-grid>
+        
       </ion-card-content>
     </ion-card>
   </div>
