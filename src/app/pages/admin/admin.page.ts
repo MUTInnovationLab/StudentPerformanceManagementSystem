@@ -1023,21 +1023,50 @@ showCardDetails(card: StatCard) {
       mentors: this.firestore.collection('mentors').valueChanges(),
       students: this.firestore.collection('students').valueChanges(),
       staff: this.firestore.collection('staff').valueChanges(),
-      staffWithLectures: staffCollection$
+      staffWithLectures: staffCollection$,
+      attendanceData: this.firestore.collection('Attended').valueChanges()
     }).pipe(
-      map(results => ({
-        mentorCount: results.mentors.length,
-        studentsCount: results.students.length,
-        staffCount: results.staff.length,
-        staffWithLecturesCount: results.staffWithLectures.length
-      }))
+      map(results => {
+        // Normalize attendance data
+        const totalStudents = results.students as any[];
+        const attendanceData = results.attendanceData as any[];
+  
+        const studentNumbers = totalStudents
+          .map(student => student.studentNumber?.toString().trim().toLowerCase())
+          .filter(Boolean);
+  
+        const attendedStudentNumbers = attendanceData
+          .map(attendance => attendance.studentNumber?.toString().trim().toLowerCase())
+          .filter(Boolean);
+  
+        const uniqueAttendedStudentNumbers = new Set(
+          attendedStudentNumbers.filter(number => studentNumbers.includes(number))
+        );
+  
+        const totalStudentsCount = studentNumbers.length;
+        const attendedStudentsCount = uniqueAttendedStudentNumbers.size;
+  
+        // Calculate attendance rate
+        const attendanceRate = totalStudentsCount > 0
+          ? (attendedStudentsCount / totalStudentsCount) * 100
+          : 0;
+  
+        return {
+          mentorCount: results.mentors.length,
+          studentsCount: totalStudentsCount,
+          staffCount: results.staff.length,
+          staffWithLecturesCount: results.staffWithLectures.length,
+          attendanceRate
+        };
+      })
     ).subscribe({
       next: (counts) => {
         const { 
           mentorCount, 
           studentsCount, 
           staffCount, 
-          staffWithLecturesCount 
+          staffWithLecturesCount, 
+          attendanceRate 
         } = counts;
   
         // Total population for percentage calculation
@@ -1048,7 +1077,7 @@ showCardDetails(card: StatCard) {
           const mentorsPercentage = (mentorCount / totalPopulation) * 100;
           const studentsPercentage = (studentsCount / totalPopulation) * 100;
           const staffPercentage = (staffCount / totalPopulation) * 100;
-          
+  
           // Calculate Lectures Percentage based on staff with lectures
           const lecturesPercentage = staffCount > 0 
             ? (staffWithLecturesCount / staffCount) * 100 
@@ -1059,6 +1088,7 @@ showCardDetails(card: StatCard) {
           this.academicStats.studentsPercentage = Math.round(studentsPercentage * 10) / 10;
           this.academicStats.staffPercentage = Math.round(staffPercentage * 10) / 10;
           this.academicStats.lecturesPercentage = Math.round(lecturesPercentage * 10) / 10;
+          this.academicStats.attendanceRate = Math.round(attendanceRate * 10) / 10;
   
           // Update the Mentors stat card count
           const mentorStat = this.stats.find(stat => stat.title === 'Mentors');
@@ -1066,10 +1096,12 @@ showCardDetails(card: StatCard) {
             mentorStat.count = mentorCount;
           }
   
+          // Log results
           console.log(`Mentors Percentage: ${this.academicStats.mentorsPercentage}%`);
           console.log(`Students Percentage: ${this.academicStats.studentsPercentage}%`);
           console.log(`Staff Percentage: ${this.academicStats.staffPercentage}%`);
           console.log(`Lectures Percentage: ${this.academicStats.lecturesPercentage}%`);
+          console.log(`Attendance Rate: ${this.academicStats.attendanceRate}%`);
           console.log(`Total Staff: ${staffCount}`);
           console.log(`Staff with Lectures: ${staffWithLecturesCount}`);
         } else {
@@ -1078,6 +1110,7 @@ showCardDetails(card: StatCard) {
           this.academicStats.studentsPercentage = 0;
           this.academicStats.staffPercentage = 0;
           this.academicStats.lecturesPercentage = 0;
+          this.academicStats.attendanceRate = 0;
           console.log('No population data found');
         }
       },
@@ -1087,9 +1120,11 @@ showCardDetails(card: StatCard) {
         this.academicStats.studentsPercentage = 0;
         this.academicStats.staffPercentage = 0;
         this.academicStats.lecturesPercentage = 0;
+        this.academicStats.attendanceRate = 0;
       }
     });
   }
+  
   // Fetch the total count of students from Firestore
   fetchStudentsCount(): void {
     this.firestore.collection('students')
