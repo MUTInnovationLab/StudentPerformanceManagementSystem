@@ -112,6 +112,7 @@ export class ModuleMentorshipPage implements OnInit, AfterViewInit {
     }
   }
   
+  
   // Optimize data processing by parallelizing API calls
   async processModuleData(faculty: Faculty) {
     const departments = faculty.departments || [];

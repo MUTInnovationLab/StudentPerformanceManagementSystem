@@ -7,7 +7,6 @@ import { ToastController } from '@ionic/angular';
 import { Faculty, Department, Module } from 'src/app/models/faculty.model';
 import { AttendanceService, ModuleAttendancePerformance } from '../../services/attendance.service';
 import { AcademicService,  } from '../../services/academic.service';
-
 import{DepartmentPerformance, ModuleAcademicPerformance}from '../../models/departmentPerfomance.model';
 
 @Component({
@@ -57,40 +56,7 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
     }
   }
 
- /* async loadAvailableMonths() {
-    if (!this.faculty) return;
-    
-    const facultyDoc = await this.firestore
-      .doc<Faculty>(`faculties/${this.faculty}`)
-      .get()
-      .toPromise();
-
-    if (facultyDoc?.exists) {
-      const faculty = facultyDoc.data() as Faculty;
-      const allModules = faculty.departments.flatMap(dept => 
-        this.getAllModulesFromDepartment(dept)
-      );
-
-      // Get unique months across all modules
-      const monthsPromises = allModules.map(module => 
-        this.attendanceService.getAvailableMonths(module.moduleCode)
-      );
-      
-      const allMonthsArrays = await Promise.all(monthsPromises);
-      const uniqueMonths = new Set(allMonthsArrays.flat());
-      this.availableMonths = Array.from(uniqueMonths).sort();
-
-      // Set default to most recent month
-      if (this.availableMonths.length > 0) {
-        this.selectedMonth = this.availableMonths[this.availableMonths.length - 1];
-      }
-    }
-  }*/
-
- /* async onMonthChange() {
-    await this.onFacultyChange();
-  }*/
-
+ 
 
   ngAfterViewInit() {
     setTimeout(() => {
@@ -183,8 +149,6 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
 
     return await Promise.all(departmentPromises);
   }
-
-
   private getAllModulesFromDepartment(department: Department): Module[] {
     const modules: Module[] = [...(department.modules || [])];
     
@@ -200,24 +164,6 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
 
     return modules;
   }
-
-
- /* private getAllModulesFromDepartment(department: Department): Module[] {
-    const modules: Module[] = [...(department.modules || [])];
-    
-    if (department.streams) {
-      Object.values(department.streams).forEach(streams => {
-        streams.forEach(stream => {
-          if (stream.modules) {
-            modules.push(...stream.modules);
-          }
-        });
-      });
-    }
-
-    return modules;
-  }*/
-
 
   private processDepartmentData(
     department: Department,
@@ -246,10 +192,7 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
       averageAttendance: attendanceAverage,
       modules: this.combineModuleData(department.modules || [], validAcademicModules, validAttendanceModules)
     };
-  }
-
-
-  
+  } 
   private combineModuleData(
     modules: Module[],
     academicData: ModuleAcademicPerformance[],
@@ -269,18 +212,15 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
       };
     });
   }
-
   private getPerformanceLevel(performanceRate: number): 'High' | 'Medium' | 'Low' {
     if (performanceRate >= this.HIGH_PERFORMANCE_THRESHOLD) return 'High';
     if (performanceRate >= this.MEDIUM_PERFORMANCE_THRESHOLD) return 'Medium';
     return 'Low';
   }
-
   private updateCharts() {
     this.updateDepartmentPerformanceChart();
     this.updatePerformanceLevelChart();
   }
-
   private updateDepartmentPerformanceChart() {
     if (!this.departmentStats.length) return;
 
@@ -294,8 +234,6 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
 
     this.createDepartmentPerformanceChart(this.departmentStats, performanceData, metricLabel);
   }
-
-  
   private updatePerformanceLevelChart() {
     if (!this.departmentStats.length) return;
 
@@ -326,10 +264,6 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
 
     this.createPerformanceLevelChart(data);
   }
-
-
-
-
   private createDepartmentPerformanceChart(
     departmentData: DepartmentPerformance[],
     performanceData: number[],
@@ -386,8 +320,6 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
       }
     });
   }
-
-
   private async presentToast(message: string) {
     const toast = await this.toastController.create({
       message,
@@ -397,8 +329,6 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
     });
     await toast.present();
   }
-
-
   private createPerformanceLevelChart(data: ChartData) {
   const canvas = document.getElementById('performanceLevelChart') as HTMLCanvasElement;
   if (!canvas) return;
