@@ -57,6 +57,8 @@
               clearInput>
             </ion-input>
           </ion-item>
+
+          
           
           <ion-list *ngIf="selectedCard.details && selectedCard.details.length > 0; else noDetails">
             <ion-item *ngFor="let item of selectedCard.details">
@@ -120,26 +122,26 @@
         </ion-item>
         <ion-item>
           <ion-label>
-            <h2>Average GPA</h2>
-            <ion-progress-bar [value]="academicStats.averageGrade / 4" color="primary"></ion-progress-bar>
-            <p class="ion-text-end">{{ academicStats.averageGrade }}/4.0</p>
+            <h2>Attendance Rate</h2>
+            <ion-progress-bar [value]="academicStats.attendanceRate / 100" color="primary"></ion-progress-bar>
+            <p class="ion-text-end">{{ academicStats.attendanceRate }}%</p>
           </ion-label>
         </ion-item>
         <ion-item>
           <ion-label>
-            <h2>Course Completion Rate</h2>
-            <ion-progress-bar [value]="academicStats.completionRate / 100" color="tertiary"></ion-progress-bar>
-            <p class="ion-text-end">{{ academicStats.completionRate }}%</p>
+            <h2>Lectures Percentage</h2>
+            <ion-progress-bar [value]="academicStats.lecturesPercentage / 100" color="tertiary"></ion-progress-bar>
+            <p class="ion-text-end">{{ academicStats.lecturesPercentage }}%</p>
           </ion-label>
         </ion-item>
         <ion-item>
           <ion-label>
-            <h2>Student Satisfaction</h2>
-            <ion-progress-bar [value]="academicStats.satisfactionRate / 100" color="secondary"></ion-progress-bar>
-            <p class="ion-text-end">{{ academicStats.satisfactionRate }}%</p>
+            <h2>Mentors Percentage</h2>
+            <ion-progress-bar [value]="academicStats.mentorsPercentage / 100" color="secondary"></ion-progress-bar>
+            <p class="ion-text-end">{{ academicStats.mentorsPercentage }}%</p>
           </ion-label>
         </ion-item>
       </ion-list>
     </ion-card-content>
   </ion-card>
-</ion-content>
+  </ion-content>

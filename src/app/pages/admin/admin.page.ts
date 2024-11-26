@@ -1,7 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { AngularFirestore, QuerySnapshot, DocumentData } from '@angular/fire/compat/firestore';
 import { Router } from '@angular/router';
-import { Observable } from 'rxjs';
+import { combineLatest, forkJoin, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { PopoverController } from '@ionic/angular';
 import { ProfileComponent } from '../../components/profile/profile.component';
@@ -21,6 +21,11 @@ interface BaseItem {
   collection?: string; // Added to track which collection the item belongs to
   [key: string]: any;
 }
+interface Attendance {
+  studentId: string;
+}
+
+
 
 interface UpdatedData {
   id?: string;
@@ -126,6 +131,15 @@ interface DetailItem {
   average?: number;
   [key: string]: any; // For other dynamic properties
 }
+interface AcademicStats {
+  passingRate: number;
+  attendanceRate: number;
+  mentorsPercentage: number;
+  studentsPercentage: number;
+  staffPercentage: number; // Add this line
+  attendancePercentage: number;
+  lecturesPercentage: number;
+}
 
 
 // Interface for Performance Data
@@ -176,15 +190,18 @@ export class AdminPage implements OnInit {
   hods: HOD[] = [];
 
   // Academic statistics
-  academicStats = {
+  academicStats: AcademicStats = {
     passingRate: 0,
-    averageGrade: 3.4,
-    completionRate: 92,
-    satisfactionRate: 88
+    attendanceRate: 0,
+    mentorsPercentage: 0,
+    studentsPercentage: 0,
+    staffPercentage: 0, // Include this
+    attendancePercentage: 0,
+    lecturesPercentage: 0
   };
-
   constructor(private router: Router, private firestore: AngularFirestore,private popoverController: PopoverController,private auth: AngularFireAuth,    private alertController: AlertController,
-  private loadingController: LoadingController,private sanitizer: DomSanitizer,
+  private loadingController: LoadingController,private sanitizer: DomSanitizer,  private cd: ChangeDetectorRef,
+
 
   // Add this injection
   ) {this.auth.authState.subscribe(user => {
@@ -207,7 +224,8 @@ export class AdminPage implements OnInit {
     this.loadAllData();
     this.fetchDepartments();
     this.fetchHODs();
-    this.fetchFacultiesData(); // Load faculties data
+    this.fetchAttendanceRate();
+    this.fetchFacultiesData(); 
     this.debugFirestoreStructure();
   }
   debugFirestoreStructure() {
@@ -234,6 +252,7 @@ export class AdminPage implements OnInit {
   navigateHome() {
     this.router.navigate(['/home']);
   }
+  
   async presentProfilePopover(event: any) {
     console.log('Profile popover triggered', event);
     
@@ -813,39 +832,47 @@ showCardDetails(card: StatCard) {
     this.searchQuery = ''; // Clear search when modal closes
   }
   filteredDetails(): DetailItem[] {
+    // Check if the details array exists and is an array
     if (!this.selectedCard?.details || !Array.isArray(this.selectedCard.details)) {
+      console.log('No details found or invalid details array');
       return [];
     }
-
+  
+    // If no search query, return all details
     if (!this.searchQuery.trim()) {
+      console.log('No search query provided, returning all details');
       return this.selectedCard.details;
     }
-
+  
     const query = this.searchQuery.toLowerCase().trim();
-    
-    return this.selectedCard.details.filter((item: DetailItem) => {
-      // Handle arrays and nested objects
-      const searchInValue = (value: any): boolean => {
+    console.log('Search Query:', query);
+  
+    // Filter all items in the details array
+    const filtered = this.selectedCard.details.filter((item: DetailItem) => {
+      // Check if any value in the item matches the query
+      const isMatch = Object.values(item).some(value => {
+        // If the value is an array, check each element
         if (Array.isArray(value)) {
-          return value.some(v => searchInValue(v));
-        } else if (value && typeof value === 'object') {
-          return Object.values(value).some(v => searchInValue(v));
-        } else if (value !== null && value !== undefined) {
-          return value.toString().toLowerCase().includes(query);
+          const matchInArray = value.some((v: unknown) => v?.toString().toLowerCase().includes(query));
+          console.log('Array match found:', matchInArray, 'For value:', value);
+          return matchInArray;
         }
-        return false;
-      };
-
-      // Search in all item properties
-      return Object.entries(item).some(([key, value]) => {
-        // Skip searching in specific fields
-        if (['id', 'password', 'uid', 'createdAt', 'updatedAt'].includes(key)) {
-          return false;
-        }
-        return searchInValue(value);
+        // Check if the value (converted to string) contains the query
+        const match = value?.toString().toLowerCase().includes(query);
+        console.log('Value match found:', match, 'For value:', value);
+        return match;
       });
+      
+      console.log('Item:', item, 'Matches:', isMatch);
+      return isMatch;
     });
+  
+    console.log('Filtered Results:', filtered);
+    return filtered;
   }
+  
+  
+  
   onSearchChange(event: any): void {
     if (this.searchTimeout) {
       clearTimeout(this.searchTimeout);
@@ -854,6 +881,9 @@ showCardDetails(card: StatCard) {
     this.searchTimeout = setTimeout(() => {
       this.searchQuery = event.target.value;
     }, 300); // 300ms debounce
+  }
+  getKeys(obj: any): string[] {
+    return obj ? Object.keys(obj) : [];
   }
   clearSearch(): void {
     this.searchQuery = '';
@@ -919,25 +949,147 @@ showCardDetails(card: StatCard) {
     const excludedFields = ['id', 'password', 'uid', 'createdAt', 'updatedAt'];
     return !excludedFields.includes(key);
   }
-
+  fetchAttendanceRate(): void {
+    console.log('Fetching attendance rate...');
+  
+    forkJoin({
+      totalStudents: this.firestore.collection('students').valueChanges(),
+      attendanceData: this.firestore.collection('Attended').valueChanges()
+    }).subscribe({
+      next: (results) => {
+        const totalStudents = results.totalStudents as any[];
+        const attendanceData = results.attendanceData as any[];
+  
+        // Log fetched data
+        console.log('Raw Students Collection Data:', totalStudents);
+        console.log('Raw Attended Collection Data:', attendanceData);
+  
+        // Normalize student numbers from 'students' collection
+        const studentNumbers = totalStudents
+          .map(student => student.studentNumber?.toString().trim().toLowerCase())
+          .filter(Boolean); // Remove undefined/null values
+        console.log('Normalized Student Numbers:', studentNumbers);
+  
+        // Normalize student numbers from 'Attended' collection
+        const attendedStudentNumbers = attendanceData
+          .map(attendance => attendance.studentNumber?.toString().trim().toLowerCase())
+          .filter(Boolean); // Remove undefined/null values
+        console.log('Normalized Attended Student Numbers:', attendedStudentNumbers);
+  
+        // Find unique attended student numbers that match the students list
+        const uniqueAttendedStudentNumbers = new Set(
+          attendedStudentNumbers.filter(number => studentNumbers.includes(number))
+        );
+        console.log('Matching Attended Student Numbers:', Array.from(uniqueAttendedStudentNumbers));
+  
+        // Calculate counts
+        const totalStudentsCount = studentNumbers.length;
+        const attendedStudentsCount = uniqueAttendedStudentNumbers.size;
+  
+        console.log(`Total Students Count: ${totalStudentsCount}`);
+        console.log(`Attended Students Count: ${attendedStudentsCount}`);
+  
+        // Calculate attendance rate
+        const attendanceRate = totalStudentsCount > 0
+          ? (attendedStudentsCount / totalStudentsCount) * 100
+          : 0;
+        this.academicStats.attendanceRate = Math.round(attendanceRate * 10) / 10;
+  
+        console.log(`Attendance Rate: ${this.academicStats.attendanceRate}%`);
+  
+        // Trigger change detection
+        this.cd.detectChanges();
+      },
+      error: (error) => {
+        console.error('Error fetching attendance data:', error);
+        this.academicStats.attendanceRate = 0;
+  
+        // Trigger change detection
+        this.cd.detectChanges();
+      }
+    });
+  }
+  
+  
   // Fetch the total count of mentors from Firestore
   fetchMentorsCount(): void {
-    this.firestore.collection('mentors')
-      .get()
-      .subscribe({
-        next: (snapshot) => {
-          const mentorCount = snapshot.size; // Get the total number of documents in the 'mentors' collection
+    // Use valueChanges() to get staff with their lecture details
+    const staffCollection$ = this.firestore.collection('staff', ref => 
+      ref.where('hasLectures', '==', true)
+    ).valueChanges();
+  
+    // Combine with other collections
+    combineLatest({
+      mentors: this.firestore.collection('mentors').valueChanges(),
+      students: this.firestore.collection('students').valueChanges(),
+      staff: this.firestore.collection('staff').valueChanges(),
+      staffWithLectures: staffCollection$
+    }).pipe(
+      map(results => ({
+        mentorCount: results.mentors.length,
+        studentsCount: results.students.length,
+        staffCount: results.staff.length,
+        staffWithLecturesCount: results.staffWithLectures.length
+      }))
+    ).subscribe({
+      next: (counts) => {
+        const { 
+          mentorCount, 
+          studentsCount, 
+          staffCount, 
+          staffWithLecturesCount 
+        } = counts;
+  
+        // Total population for percentage calculation
+        const totalPopulation = mentorCount + studentsCount + staffCount;
+  
+        if (totalPopulation > 0) {
+          // Calculate percentages
+          const mentorsPercentage = (mentorCount / totalPopulation) * 100;
+          const studentsPercentage = (studentsCount / totalPopulation) * 100;
+          const staffPercentage = (staffCount / totalPopulation) * 100;
+          
+          // Calculate Lectures Percentage based on staff with lectures
+          const lecturesPercentage = staffCount > 0 
+            ? (staffWithLecturesCount / staffCount) * 100 
+            : 0;
+  
+          // Round all percentages to one decimal place
+          this.academicStats.mentorsPercentage = Math.round(mentorsPercentage * 10) / 10;
+          this.academicStats.studentsPercentage = Math.round(studentsPercentage * 10) / 10;
+          this.academicStats.staffPercentage = Math.round(staffPercentage * 10) / 10;
+          this.academicStats.lecturesPercentage = Math.round(lecturesPercentage * 10) / 10;
+  
+          // Update the Mentors stat card count
           const mentorStat = this.stats.find(stat => stat.title === 'Mentors');
           if (mentorStat) {
-            mentorStat.count = mentorCount; // Update the count on the stat card
+            mentorStat.count = mentorCount;
           }
-        },
-        error: (error) => {
-          console.error("Error fetching mentor count:", error);
+  
+          console.log(`Mentors Percentage: ${this.academicStats.mentorsPercentage}%`);
+          console.log(`Students Percentage: ${this.academicStats.studentsPercentage}%`);
+          console.log(`Staff Percentage: ${this.academicStats.staffPercentage}%`);
+          console.log(`Lectures Percentage: ${this.academicStats.lecturesPercentage}%`);
+          console.log(`Total Staff: ${staffCount}`);
+          console.log(`Staff with Lectures: ${staffWithLecturesCount}`);
+        } else {
+          // Reset percentages if no population data
+          this.academicStats.mentorsPercentage = 0;
+          this.academicStats.studentsPercentage = 0;
+          this.academicStats.staffPercentage = 0;
+          this.academicStats.lecturesPercentage = 0;
+          console.log('No population data found');
         }
-      });
+      },
+      error: (error) => {
+        console.error("Error fetching mentor and lecture count:", error);
+        this.academicStats.mentorsPercentage = 0;
+        this.academicStats.studentsPercentage = 0;
+        this.academicStats.staffPercentage = 0;
+        this.academicStats.lecturesPercentage = 0;
+      }
+    });
   }
-
   // Fetch the total count of students from Firestore
   fetchStudentsCount(): void {
     this.firestore.collection('students')
@@ -958,20 +1110,40 @@ showCardDetails(card: StatCard) {
 
   // Fetch the total count of lecturers from Firestore by filtering 'staff' collection
   fetchLecturersCount(): void {
-    this.firestore.collection('staff', ref => ref.where('position', '==', 'Lecturer'))
-      .get()
-      .subscribe({
-        next: (snapshot) => {
-          const lecturerCount = snapshot.size; // Get the total number of documents where position is 'Lecturer'
-          const lecturerStat = this.stats.find(stat => stat.title === 'Lecturers');
-          if (lecturerStat) {
-            lecturerStat.count = lecturerCount; // Update the count on the stat card
-          }
-        },
-        error: (error) => {
-          console.error("Error fetching lecturer count:", error);
+    // Fetch total staff and lecturers
+    combineLatest({
+      totalStaff: this.firestore.collection('staff').valueChanges(),
+      lecturers: this.firestore.collection('staff', ref => ref.where('position', '==', 'Lecturer')).valueChanges()
+    }).subscribe({
+      next: (results) => {
+        const totalStaffCount = results.totalStaff.length;
+        const lecturerCount = results.lecturers.length;
+  
+        // Calculate lecturer percentage
+        const lecturesPercentage = totalStaffCount > 0 
+          ? (lecturerCount / totalStaffCount) * 100 
+          : 0;
+  
+        // Update lecturer stat card
+        const lecturerStat = this.stats.find(stat => stat.title === 'Lecturers');
+        if (lecturerStat) {
+          lecturerStat.count = lecturerCount;
         }
-      });
+  
+        // Update lectures percentage in academic stats
+        this.academicStats.lecturesPercentage = Math.round(lecturesPercentage * 10) / 10;
+  
+        console.log(`Total Staff: ${totalStaffCount}`);
+        console.log(`Lecturer Count: ${lecturerCount}`);
+        console.log(`Lectures Percentage: ${this.academicStats.lecturesPercentage}%`);
+      },
+      error: (error) => {
+        console.error("Error fetching lecturer count:", error);
+        
+        // Reset lectures percentage in case of error
+        this.academicStats.lecturesPercentage = 0;
+      }
+    });
   }
 
   // Fetch the total count of courses from Firestore based on faculty name
