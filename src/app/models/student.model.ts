@@ -1,4 +1,5 @@
 export interface Student {
+    id: number;  
     studentNumber: string; // Ensure it's a string
     name: string;
     surname: string;
@@ -6,5 +7,6 @@ export interface Student {
     course: string;
     year: string;
     department: string;
+    enrollmentDate: string;
   }
   
