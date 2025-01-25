@@ -6,6 +6,7 @@ export interface Student {
     email: string;
     course: string;
     year: string;
+    faculty: string;
     department: string;
     enrollmentDate: string;
   }

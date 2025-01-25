@@ -44,19 +44,19 @@ export class SupportfeedbackPage implements OnInit {
 
   loadFeedback(studentId: number): void {
     this.firestoreService.getFeedbacks(studentId).subscribe(
-      (feedbacks: Feedback[]) => {
-        this.feedbackHistory[studentId] = feedbacks;
+      (feedbacks: Feedback[] | unknown[]) => {
+        this.feedbackHistory[studentId] = feedbacks as Feedback[];
       },
       (error: any) => {
         console.error('Error loading feedback:', error);
       }
     );
-  }
-
+  }  
+  
   get filteredStudents(): Student[] {
     return this.students.filter(student =>
       student.name.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-      student.course.toLowerCase().includes(this.searchTerm.toLowerCase())
+      student.department.toLowerCase().includes(this.searchTerm.toLowerCase())
     );
   }
 

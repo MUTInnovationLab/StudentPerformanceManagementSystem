@@ -2,6 +2,9 @@ export interface Student {
     id: number;
     name: string;
     course: string;
+    department: string;
+    studentNumber: string;
+    faculty: string;
     enrollmentDate: string;
   }
   
