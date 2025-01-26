@@ -7,10 +7,17 @@ import{ModuleAcademicPerformance}from '../models/departmentPerfomance.model';
   providedIn: 'root'
 })
 export class AcademicService {
+  private academicCache = new Map<string, ModuleAcademicPerformance[]>();
+
   constructor(private firestore: AngularFirestore) {}
 
   async getModuleAcademicPerformance(modules: Module[]): Promise<ModuleAcademicPerformance[]> {
-    return await Promise.all(
+    const cacheKey = modules.map(m => m.moduleCode).join(',');
+    if (this.academicCache.has(cacheKey)) {
+      return this.academicCache.get(cacheKey)!;
+    }
+
+    const performance = await Promise.all(
       modules.map(async (module) => {
         const marksDoc = await this.firestore.collection('marks').doc(module.moduleCode).get().toPromise();
         const marks = marksDoc?.exists ? marksDoc.data() as { marks: StudentMarks[], testPercentages: TestPercentages } : null;
@@ -23,6 +30,9 @@ export class AcademicService {
         };
       })
     );
+
+    this.academicCache.set(cacheKey, performance);
+    return performance;
   }
 
   private calculateModuleAverage(marks: StudentMarks[], testPercentages: TestPercentages): number {

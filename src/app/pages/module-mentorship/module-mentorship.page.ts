@@ -7,6 +7,8 @@ import { AttendanceService } from '../../services/attendance.service';
 import { AcademicService } from '../../services/academic.service';
 import { Faculty, Department } from 'src/app/models/faculty.model';
 import { ModalController } from '@ionic/angular';
+import { AngularFireAuth } from '@angular/fire/compat/auth';;
+import * as XLSX from 'xlsx'; // Add XLSX import
 
 interface Module {
   moduleCode: string;
@@ -35,6 +37,15 @@ interface StudentMark {
   test5: string;
   test6: string;
   test7: string;
+}
+
+interface StudentDetails {
+  id?: string;
+  studentNumber: number;
+  name: string;
+  faculty: string;
+  department?: string;
+  email?: string;
 }
 
 
@@ -77,10 +88,15 @@ export class ModuleMentorshipPage implements OnInit, AfterViewInit {
   faculty: string = '';
   searchQuery: string = '';
   lecturerEmails: Map<string, string> = new Map();
-  selectedView: 'all' | 'lowPerforming' | 'needingMentorship' = 'all';
+  selectedView: 'all' | 'lowPerforming' | 'needingMentorship' | 'allStudents' = 'all';
   staffDetails: Map<string, StaffDetails> = new Map();
   selectedModule: ModuleMentorshipData | null = null;
   showStudentList: boolean = false;
+  staffData: StaffDetails | null = null;
+  totalStudents: number = 0;
+  allStudents: any[] = [];
+ 
+
 
   private readonly LOW_PERFORMANCE_THRESHOLD = 50;
   private readonly CHART_COLORS = {
@@ -94,24 +110,156 @@ export class ModuleMentorshipPage implements OnInit, AfterViewInit {
     private authService: AuthenticationService,
     private attendanceService: AttendanceService,
     private academicService: AcademicService,
-    private modalController: ModalController
-  ) {}
+    private modalController: ModalController,
+    private afAuth: AngularFireAuth
+  ) {
+    this.afAuth.setPersistence('local');
+  }
 
   async ngOnInit() {
-    try {
-      const user = await this.authService.getLoggedInStaff();
+    this.afAuth.onAuthStateChanged(async (user) => {
       if (user) {
-        this.faculty = user.faculty;
-  
-        // Load data in parallel
-        await Promise.all([this.loadLecturerEmails(), this.loadStaffDetails()]);
-        await this.loadModuleData(); // Load modules after essential data
+        // Try to get staff data from local storage first
+        const storedStaffData = localStorage.getItem('staffData');
+        if (storedStaffData) {
+          this.staffData = JSON.parse(storedStaffData);
+          this.faculty = this.staffData?.faculty || '';
+        } else {
+          // If no local storage, fetch from authentication service
+          this.staffData = await this.authService.getLoggedInStaff();
+          if (this.staffData) {
+            localStorage.setItem('staffData', JSON.stringify(this.staffData));
+            this.faculty = this.staffData.faculty;
+          }
+        }
+
+        if (this.faculty) {
+          // Load data in parallel
+          await Promise.all([
+            this.loadLecturerEmails(), 
+            this.loadStaffDetails()
+          ]);
+          await this.loadModuleData();
+        }
+      } else {
+        console.error('No user logged in');
       }
-    } catch (error) {
-      console.error('Error in ngOnInit:', error);
+    });
+  }
+
+
+
+
+  showAllStudents() {
+    this.selectedView = 'allStudents';
+    this.filteredModules = []; // Clear module filters
+
+    // Generate Excel file immediately
+    if (this.allStudents.length > 0) {
+      this.generateFacultyStudentsExcel();
     }
   }
+  generateFacultyStudentsExcel() {
+    if (this.allStudents.length === 0) {
+      return; // Silently exit if no students
+    }
   
+    // Create a map to track student's module risks
+    const studentRisks = new Map<number, string[]>();
+  
+    // Iterate through low-performing modules to identify students at risk
+    this.lowPerformingModules.forEach(module => {
+      module.studentsNeedingMentor?.forEach(studentMark => {
+        const riskKey = studentMark.studentNumber;
+        const moduleRisk = `${module.moduleCode}`;
+        
+        if (!studentRisks.has(riskKey)) {
+          studentRisks.set(riskKey, [moduleRisk]);
+        } else {
+          const existingRisks = studentRisks.get(riskKey) || [];
+          if (!existingRisks.includes(moduleRisk)) {
+            existingRisks.push(moduleRisk);
+            studentRisks.set(riskKey, existingRisks);
+          }
+        }
+      });
+    });
+  
+    // Generate Excel data with risk status
+    const excelData = this.allStudents.map(student => {
+      // Get risks for this student
+      const risks = studentRisks.get(student.studentNumber) || [];
+      
+      return {
+        'Student Number': student.studentNumber,
+        'Name': student.name.split(' ')[0], // First name
+        'Surname': student.surname.split(' ').slice(1).join(' ') || student.surname.split(' ')[0], // Full last name or first name if no last name
+        'Email': student.email || 'N/A',
+        'Department': student.department || 'N/A',
+        'Status': risks.length > 0 
+          ? `Risk in modules: ${risks.join(', ')}` 
+          : '' // Empty string if no risks
+      };
+    });
+  
+    const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(excelData);
+    const wb: XLSX.WorkBook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Faculty Students');
+  
+    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([wbout], { type: 'application/octet-stream' });
+  
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${this.faculty}_students_list.xlsx`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  }
+
+  
+  private async loadModuleData() {
+    this.isLoading = true;
+    try {
+      const facultyDoc = await this.firestore.doc<Faculty>(`faculties/${this.faculty}`).get().toPromise();
+      if (facultyDoc?.exists) {
+        const faculty = facultyDoc.data() as Faculty;
+        await this.processModuleData(faculty);
+        await this.loadTotalStudents(faculty);
+      }
+    } catch (error) {
+      console.error('Error loading faculty data:', error);
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+
+  
+  
+private async loadTotalStudents(faculty: Faculty) {
+  try {
+    const studentsSnapshot = await this.firestore
+      .collection('students', ref => ref.where('faculty', '==', this.faculty))
+      .get()
+      .toPromise();
+
+    this.totalStudents = studentsSnapshot?.docs.length || 0;
+      
+    // Explicitly type the mapping
+    this.allStudents = studentsSnapshot?.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data() as StudentDetails
+    })) || [];
+
+  } catch (error) {
+    console.error('Error loading total students:', error);
+    this.totalStudents = 0;
+    this.allStudents = [];
+  }
+}
+
+
   
   // Optimize data processing by parallelizing API calls
   async processModuleData(faculty: Faculty) {
@@ -312,7 +460,7 @@ export class ModuleMentorshipPage implements OnInit, AfterViewInit {
     return this.lecturerEmails.get(moduleCode.trim()) || 'Not Assigned';
   }
 
-  private async loadModuleData() {
+ /* private async loadModuleData() {
     this.isLoading = true;
     try {
       const facultyDoc = await this.firestore.doc<Faculty>(`faculties/${this.faculty}`).get().toPromise();
@@ -325,6 +473,16 @@ export class ModuleMentorshipPage implements OnInit, AfterViewInit {
     } finally {
       this.isLoading = false;
     }
+  }*/
+
+  private async ensureUserAuthentication() {
+    const user = await this.afAuth.currentUser;
+    if (!user) {
+      // Redirect to login or handle unauthenticated state
+      console.error('User not authenticated');
+      return false;
+    }
+    return true;
   }
 
   private getAllModulesFromDepartment(department: Department): Module[] {
