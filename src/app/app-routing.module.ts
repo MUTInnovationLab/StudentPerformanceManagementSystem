@@ -92,6 +92,10 @@ const routes: Routes = [
     path: 'module-mentorship',
     loadChildren: () => import('./pages/module-mentorship/module-mentorship.module').then( m => m.ModuleMentorshipPageModule)
   },
+  {
+    path: 'students-performance',
+    loadChildren: () => import('./pages/students-performance/students-performance.module').then( m => m.StudentsPerformancePageModule)
+  },
 
 ];
 

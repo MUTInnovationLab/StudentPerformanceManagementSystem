@@ -113,6 +113,7 @@
     </ion-card-header>
     <ion-card-content>
       <ion-list>
+        <!-- Passing Rate -->
         <ion-item>
           <ion-label>
             <h2>Passing Rate</h2>
@@ -120,6 +121,7 @@
             <p class="ion-text-end">{{ academicStats.passingRate }}%</p>
           </ion-label>
         </ion-item>
+        <!-- Attendance Rate -->
         <ion-item>
           <ion-label>
             <h2>Attendance Rate</h2>
@@ -127,6 +129,7 @@
             <p class="ion-text-end">{{ academicStats.attendanceRate }}%</p>
           </ion-label>
         </ion-item>
+        <!-- Lectures Percentage -->
         <ion-item>
           <ion-label>
             <h2>Lectures Percentage</h2>
@@ -134,6 +137,7 @@
             <p class="ion-text-end">{{ academicStats.lecturesPercentage }}%</p>
           </ion-label>
         </ion-item>
+        <!-- Mentors Percentage -->
         <ion-item>
           <ion-label>
             <h2>Mentors Percentage</h2>
@@ -141,7 +145,24 @@
             <p class="ion-text-end">{{ academicStats.mentorsPercentage }}%</p>
           </ion-label>
         </ion-item>
+        <!-- Students Percentage -->
+        <ion-item>
+          <ion-label>
+            <h2>Students Percentage</h2>
+            <ion-progress-bar [value]="academicStats.studentsPercentage / 100" color="warning"></ion-progress-bar>
+            <p class="ion-text-end">{{ academicStats.studentsPercentage }}%</p>
+          </ion-label>
+        </ion-item>
+        <!-- Staff Percentage -->
+        <ion-item>
+          <ion-label>
+            <h2>Staff Percentage</h2>
+            <ion-progress-bar [value]="academicStats.staffPercentage / 100" color="dark"></ion-progress-bar>
+            <p class="ion-text-end">{{ academicStats.staffPercentage }}%</p>
+          </ion-label>
+        </ion-item>
       </ion-list>
     </ion-card-content>
   </ion-card>
   </ion-content>
+  
