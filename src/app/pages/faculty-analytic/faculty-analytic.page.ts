@@ -6,91 +6,90 @@ import { AuthenticationService } from '../../services/auths.service';
 import { ToastController } from '@ionic/angular';
 import { Faculty, Department, Module } from 'src/app/models/faculty.model';
 import { AttendanceService, ModuleAttendancePerformance } from '../../services/attendance.service';
-import { AcademicService,  } from '../../services/academic.service';
-
-import{DepartmentPerformance, ModuleAcademicPerformance}from '../../models/departmentPerfomance.model';
+import { AcademicService } from '../../services/academic.service';
+import { DepartmentPerformance, ModuleAcademicPerformance } from '../../models/departmentPerfomance.model';
+import { AngularFireAuth } from '@angular/fire/compat/auth';
+import { ChangeDetectorRef } from '@angular/core';
 
 @Component({
   selector: 'app-faculty-analytic',
   templateUrl: './faculty-analytic.page.html',
   styleUrls: ['./faculty-analytic.page.scss']
 })
-
 export class FacultyAnalyticPage implements OnInit, AfterViewInit {
   selectedPerformanceType: 'academic' | 'attendance' = 'academic';
-  selectedTime: string = 'all'; // Default to 'all'
+  selectedTime: string = 'all'; 
   faculty: string = '';
   departmentPerformanceChart: Chart | null = null;
   performanceLevelChart: Chart | null = null;
   isLoading: boolean = true;
   departmentStats: DepartmentPerformance[] = [];
   availableMonths: string[] = [];
-
+  staffData: any | null = null;
 
   private readonly HIGH_PERFORMANCE_THRESHOLD = 75;
   private readonly MEDIUM_PERFORMANCE_THRESHOLD = 50;
 
-  // Chart colors configuration
   private readonly CHART_COLORS = {
-    HIGH: '#22c55e',    // Green for high performance
-    MEDIUM: '#eab308',  // Yellow for medium performance
-    LOW: '#ef4444',     // Red for low performance
-    ACADEMIC: '#4ade80', // Light green for academic metrics
-    ATTENDANCE: '#60a5fa' // Light blue for attendance metrics
+    HIGH: '#22c55e',    
+    MEDIUM: '#eab308',  
+    LOW: '#ef4444',     
+    ACADEMIC: '#4ade80', 
+    ATTENDANCE: '#60a5fa' 
   };
 
   constructor(
     private firestore: AngularFirestore,
     private authService: AuthenticationService,
     private attendanceService: AttendanceService,
-    private toastController: ToastController, // Inject ToastController
-    private academicService: AcademicService
+    private toastController: ToastController,
+    private academicService: AcademicService,
+    private afAuth: AngularFireAuth,
+    private cdr: ChangeDetectorRef
   ) {
     Chart.register(...registerables);
+    this.afAuth.setPersistence('local');
   }
+
   async ngOnInit() {
-    const user = await this.authService.getLoggedInStaff();
-    if (user) {
-      this.faculty = user.faculty;
-      await this.loadAvailableMonths();
-      await this.onFacultyChange();
-    }
+    this.afAuth.onAuthStateChanged(async (user) => {
+      if (user) {
+        await this.initializeData();
+      } else {
+        console.error('No user logged in');
+      }
+    });
   }
 
- /* async loadAvailableMonths() {
-    if (!this.faculty) return;
-    
-    const facultyDoc = await this.firestore
-      .doc<Faculty>(`faculties/${this.faculty}`)
-      .get()
-      .toPromise();
-
-    if (facultyDoc?.exists) {
-      const faculty = facultyDoc.data() as Faculty;
-      const allModules = faculty.departments.flatMap(dept => 
-        this.getAllModulesFromDepartment(dept)
-      );
-
-      // Get unique months across all modules
-      const monthsPromises = allModules.map(module => 
-        this.attendanceService.getAvailableMonths(module.moduleCode)
-      );
+  async initializeData() {
+    try {
+      this.staffData = await this.authService.getLoggedInStaff();
       
-      const allMonthsArrays = await Promise.all(monthsPromises);
-      const uniqueMonths = new Set(allMonthsArrays.flat());
-      this.availableMonths = Array.from(uniqueMonths).sort();
-
-      // Set default to most recent month
-      if (this.availableMonths.length > 0) {
-        this.selectedMonth = this.availableMonths[this.availableMonths.length - 1];
+      // Store staff data in localStorage for persistence
+      if (this.staffData) {
+        localStorage.setItem('staffData', JSON.stringify(this.staffData));
+        this.faculty = this.staffData.faculty;
+        
+        await this.loadAvailableMonths();
+        await this.onFacultyChange();
+      } else {
+        // Try to retrieve staff data from localStorage if not from service
+        const storedStaffData = localStorage.getItem('staffData');
+        if (storedStaffData) {
+          this.staffData = JSON.parse(storedStaffData);
+          this.faculty = this.staffData.faculty;
+          
+          await this.loadAvailableMonths();
+          await this.onFacultyChange();
+        }
       }
+    } catch (error) {
+      console.error('Error initializing data:', error);
+    } finally {
+      this.isLoading = false;
+      this.cdr.detectChanges();
     }
-  }*/
-
- /* async onMonthChange() {
-    await this.onFacultyChange();
-  }*/
-
+  }
 
   ngAfterViewInit() {
     setTimeout(() => {
@@ -106,14 +105,19 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
       await this.onFacultyChange();
     } finally {
       this.isLoading = false;
+      this.cdr.detectChanges();
     }
   }
 
   private async onFacultyChange() {
     await this.calculateDepartmentPerformance(this.faculty);
     this.updateCharts();
+    this.cdr.detectChanges();
   }
 
+
+
+ 
   private async calculateDepartmentPerformance(facultyId: string) {
     this.isLoading = true;
     try {
@@ -126,35 +130,40 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
       console.error('Error loading faculty data:', error);
     } finally {
       this.isLoading = false;
+      this.cdr.detectChanges();
     }
   }
 
   async loadAvailableMonths() {
     if (!this.faculty) return;
     
-    const facultyDoc = await this.firestore
-      .doc<Faculty>(`faculties/${this.faculty}`)
-      .get()
-      .toPromise();
+    try {
+      const facultyDoc = await this.firestore
+        .doc<Faculty>(`faculties/${this.faculty}`)
+        .get()
+        .toPromise();
 
-    if (facultyDoc?.exists) {
-      const faculty = facultyDoc.data() as Faculty;
-      const allModules = faculty.departments.reduce((modules: Module[], dept: Department) => {
-        const deptModules = this.getAllModulesFromDepartment(dept);
-        return [...modules, ...deptModules];
-      }, []);
+      if (facultyDoc?.exists) {
+        const faculty = facultyDoc.data() as Faculty;
+        const allModules = faculty.departments.reduce((modules: Module[], dept: Department) => {
+          const deptModules = this.getAllModulesFromDepartment(dept);
+          return [...modules, ...deptModules];
+        }, []);
 
-      const monthsPromises = allModules.map((module: Module) => 
-        this.attendanceService.getAvailableMonths(module.moduleCode)
-      );
-      
-      const allMonthsArrays = await Promise.all(monthsPromises);
-      const allMonths = allMonthsArrays.reduce((acc: string[], curr: string[]) => {
-        return [...acc, ...curr];
-      }, []);
-      
-      const uniqueMonths = new Set<string>(allMonths);
-      this.availableMonths = Array.from(uniqueMonths).sort().reverse(); // Sort in reverse to show newest first
+        const monthsPromises = allModules.map((module: Module) => 
+          this.attendanceService.getAvailableMonths(module.moduleCode)
+        );
+        
+        const allMonthsArrays = await Promise.all(monthsPromises);
+        const allMonths = allMonthsArrays.reduce((acc: string[], curr: string[]) => {
+          return [...acc, ...curr];
+        }, []);
+        
+        const uniqueMonths = new Set<string>(allMonths);
+        this.availableMonths = Array.from(uniqueMonths).sort().reverse(); 
+      }
+    } catch (error) {
+      console.error('Error loading available months:', error);
     }
   }
 
@@ -162,6 +171,7 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
     await this.onFacultyChange();
   }
 
+  
   private async getDepartmentPerformance(faculty: Faculty): Promise<DepartmentPerformance[]> {
     const departmentPromises = faculty.departments.map(async (department: Department) => {
       const modules = this.getAllModulesFromDepartment(department);
@@ -183,8 +193,6 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
 
     return await Promise.all(departmentPromises);
   }
-
-
   private getAllModulesFromDepartment(department: Department): Module[] {
     const modules: Module[] = [...(department.modules || [])];
     
@@ -200,24 +208,6 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
 
     return modules;
   }
-
-
- /* private getAllModulesFromDepartment(department: Department): Module[] {
-    const modules: Module[] = [...(department.modules || [])];
-    
-    if (department.streams) {
-      Object.values(department.streams).forEach(streams => {
-        streams.forEach(stream => {
-          if (stream.modules) {
-            modules.push(...stream.modules);
-          }
-        });
-      });
-    }
-
-    return modules;
-  }*/
-
 
   private processDepartmentData(
     department: Department,
@@ -246,10 +236,7 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
       averageAttendance: attendanceAverage,
       modules: this.combineModuleData(department.modules || [], validAcademicModules, validAttendanceModules)
     };
-  }
-
-
-  
+  } 
   private combineModuleData(
     modules: Module[],
     academicData: ModuleAcademicPerformance[],
@@ -269,18 +256,15 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
       };
     });
   }
-
   private getPerformanceLevel(performanceRate: number): 'High' | 'Medium' | 'Low' {
     if (performanceRate >= this.HIGH_PERFORMANCE_THRESHOLD) return 'High';
     if (performanceRate >= this.MEDIUM_PERFORMANCE_THRESHOLD) return 'Medium';
     return 'Low';
   }
-
   private updateCharts() {
     this.updateDepartmentPerformanceChart();
     this.updatePerformanceLevelChart();
   }
-
   private updateDepartmentPerformanceChart() {
     if (!this.departmentStats.length) return;
 
@@ -294,8 +278,6 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
 
     this.createDepartmentPerformanceChart(this.departmentStats, performanceData, metricLabel);
   }
-
-  
   private updatePerformanceLevelChart() {
     if (!this.departmentStats.length) return;
 
@@ -326,10 +308,6 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
 
     this.createPerformanceLevelChart(data);
   }
-
-
-
-
   private createDepartmentPerformanceChart(
     departmentData: DepartmentPerformance[],
     performanceData: number[],
@@ -386,8 +364,6 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
       }
     });
   }
-
-
   private async presentToast(message: string) {
     const toast = await this.toastController.create({
       message,
@@ -397,8 +373,6 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
     });
     await toast.present();
   }
-
-
   private createPerformanceLevelChart(data: ChartData) {
   const canvas = document.getElementById('performanceLevelChart') as HTMLCanvasElement;
   if (!canvas) return;

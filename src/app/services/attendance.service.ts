@@ -17,6 +17,8 @@ export interface ModuleAttendancePerformance {
   providedIn: 'root'
 })
 export class AttendanceService {
+  private attendanceCache = new Map<string, ModuleAttendancePerformance[]>();
+
   constructor(private firestore: AngularFirestore) {}
 
   async getModuleAttendancePerformance(
@@ -24,9 +26,14 @@ export class AttendanceService {
     selectedMonth?: string,
     timeframe: 'month' | 'all' = 'month'
   ): Promise<ModuleAttendancePerformance[]> {
+    const cacheKey = `${modules.map(m => m.moduleCode).join(',')}-${selectedMonth}-${timeframe}`;
+    if (this.attendanceCache.has(cacheKey)) {
+      return this.attendanceCache.get(cacheKey)!;
+    }
+
     const enrolledStudentsMap = await this.getEnrolledStudentsForModules(modules);
 
-    return await Promise.all(
+    const performance = await Promise.all(
       modules.map(async (module) => {
         const attendanceDoc = await this.firestore
           .collection('Attended')
@@ -53,6 +60,9 @@ export class AttendanceService {
         );
       })
     );
+
+    this.attendanceCache.set(cacheKey, performance);
+    return performance;
   }
 
   private async getEnrolledStudentsForModules(modules: Module[]): Promise<Map<string, number>> {
