@@ -73,7 +73,10 @@
                     <th>Test4</th>
                     <th>Average</th>
                     <th>Action</th>
-                    <th>Statistics</th>
+                    <th>  <ion-button color="primary" size="small" (click)="openPerfomance()">
+                      Attendance
+                    </ion-button></th>
+                    <!-- <th>Statistics</th> -->
                   </tr>
                 </thead>
                 <tbody>
@@ -91,6 +94,7 @@
                       <ion-button color="primary" size="small" (click)="openAssignMentorModal(student)">
                         assign
                       </ion-button>
+                    
                     </td>
                     <td>
                       <div class="progress-bar" [style.background-image]="getProgressBarStyle(student.average)">
@@ -109,6 +113,80 @@
     </ion-row>
   </ion-grid>
 </ion-content>
+
+<ion-modal 
+  [isOpen]="isAttendanceModalOpen" 
+  (didDismiss)="closeAttendanceModal()" 
+  class="attendance-modal">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar color="primary">
+        <ion-title>Attendance Summary for {{ selectedModule }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="closeAttendanceModal()">Close</ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content class="ion-padding">
+      <ion-list *ngIf="attendanceSummary.length > 0">
+        <ion-item *ngFor="let summary of attendanceSummary">
+          <ion-label>
+            <h2>{{ summary.date }}</h2>
+            <p>Total Attendees: {{ summary.totalAttendees }}</p>
+            <ion-list>
+              <ion-item *ngFor="let studentNumber of getObjectKeys(summary.attendeeDetails)">
+                <ion-label>
+                  Student {{ studentNumber }}: {{ summary.attendeeDetails[studentNumber] }} attendance(s)
+                </ion-label>
+                <ion-button 
+                  color="primary" 
+                  size="small" 
+                  (click)="viewStudentAttendance(studentNumber)">
+                  View Details
+                </ion-button>
+              </ion-item>
+            </ion-list>
+          </ion-label>
+        </ion-item>
+      </ion-list>
+      <p *ngIf="attendanceSummary.length === 0">No attendance records found.</p>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+<!-- New modal for individual student attendance -->
+<ion-modal 
+  [isOpen]="isStudentAttendanceModalOpen" 
+  (didDismiss)="closeStudentAttendanceModal()" 
+  class="student-attendance-modal">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar color="primary">
+        <ion-title>Attendance Details for Student {{ selectedStudentAttendance?.studentNumber }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="closeStudentAttendanceModal()">Close</ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content class="ion-padding">
+      <ion-list *ngIf="selectedStudentAttendance && selectedStudentAttendance.attendanceDetails.length > 0">
+        <ion-item *ngFor="let record of selectedStudentAttendance.attendanceDetails">
+          <ion-label>
+            <h2>{{ record.date }}</h2>
+            <p>Attendance Time: {{ record.attendanceTime }}</p>
+          </ion-label>
+        </ion-item>
+      </ion-list>
+      <p *ngIf="selectedStudentAttendance && selectedStudentAttendance.attendanceDetails.length === 0">
+        No attendance records found for this student.
+      </p>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+
 <ion-modal 
   #mentorModal 
   [isOpen]="isModalOpen" 
@@ -164,6 +242,60 @@
     </ion-content>
   </ng-template>
 </ion-modal>
+
+
+<ion-modal
+ 
+ #mentorModal 
+ [isOpen]="openSelectedStudent "
+ class="mentor-modal"
+>
+  <ng-template>
+    <ion-header>
+      <ion-toolbar color="primary">
+        <ion-title>Student Performance Details</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="openSelectedStudent = false">Close</ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content class="ion-padding" *ngIf="fullstudentDetails">
+      <ion-list>
+        <ion-item>
+          <ion-label>
+            <h2>{{ fullstudentDetails.name }} {{ fullstudentDetails.surname }}</h2>
+            <p>Student Number: {{ fullstudentDetails.studentNumber }}</p>
+          </ion-label>
+        </ion-item>
+
+        <ion-item>
+          <ion-label>
+            <h3>Test Results</h3>
+            <ion-grid>
+              <ion-row>
+                <ion-col>Test 1: {{ fullstudentDetails.test1 }}%</ion-col>
+                <ion-col>Test 2: {{ fullstudentDetails.test2 }}%</ion-col>
+                <ion-col>Test 3: {{ fullstudentDetails.test3 }}%</ion-col>
+                <ion-col>Test 4: {{ fullstudentDetails.test4 }}%</ion-col>
+              </ion-row>
+              <hr>
+              <ion-row>
+                <ion-col>Test 5: {{ fullstudentDetails.test5 }}%</ion-col>
+                <ion-col>Test 6: {{ fullstudentDetails.test6 }}%</ion-col>
+                <ion-col>Test 7: {{ fullstudentDetails.test7 }}%</ion-col>
+                <ion-col>Average: {{ fullstudentDetails.studentavg }}%</ion-col>
+              </ion-row>
+            </ion-grid>
+          </ion-label>
+        </ion-item>
+      </ion-list>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+
+
 
 
 <ion-modal

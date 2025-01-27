@@ -5,7 +5,14 @@
 </ion-header>
 
 <ion-content [fullscreen]="true">
-  <div class="w-full max-w-4xl">
+  <!-- Loading spinner -->
+  <div *ngIf="isLoading" class="loading-container">
+    <ion-spinner name="circular"></ion-spinner>
+    <p>Loading data...</p>
+  </div>
+
+  <!-- Main content - only shown when not loading -->
+  <div class="w-full max-w-4xl" *ngIf="!isLoading">
     <div class="dropdown">
       <label for="performance-select">Select Performance Type</label>
       <select
