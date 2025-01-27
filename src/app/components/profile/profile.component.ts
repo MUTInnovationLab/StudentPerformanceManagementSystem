@@ -71,6 +71,7 @@ export class ProfileComponent implements OnInit {
       this.initializeEditForm(user);
     });
   }
+  
 
   private initializeEditForm(user: UserProfile) {
     this.editProfileForm = this.formBuilder.group({
@@ -79,6 +80,7 @@ export class ProfileComponent implements OnInit {
       staffNumber: [user.staffNumber, [Validators.required]]
     });
   }
+
 
   private getEmptyProfile(): UserProfile {
     return {

@@ -3,7 +3,15 @@
     <ion-title class="center-content">
       <ion-icon name="videocam"></ion-icon>
       <span>Video Meeting</span>
-    </ion-title>    
+    </ion-title>
+
+    <ion-buttons slot="start">
+      <!-- Menu Button (3 dots) -->
+      <ion-button (click)="openMenu()">
+        <ion-icon name="ellipsis-vertical-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+        
     <ion-buttons slot="end" *ngIf="isJoined">
       <ion-button (click)="leaveMeeting()" color="danger">
         <ion-icon name="exit-outline" slot="start"></ion-icon>
@@ -18,7 +26,13 @@
   </ion-toolbar>
 </ion-header>
 
+
+
 <ion-content>
+  <div *ngIf="menuVisible" class="menu">
+    <ion-item (click)="goToCsv()">Go to CSV</ion-item>
+    <ion-item (click)="logout()">Logout</ion-item>
+  </div>
   <!-- Join Meeting Form -->
   <div class="input-container" *ngIf="!isJoined">
     <h2>Join Meeting</h2>

@@ -5,6 +5,7 @@ import { AuthenticationService } from '../../services/auths.service';
 import { ChangeDetectorRef } from '@angular/core';
 import { AlertController } from '@ionic/angular';
 import { ModalController } from '@ionic/angular';
+import { Router } from '@angular/router';
 import { ModuleRange, Faculty, User, Student, AssignedLectures, StudentMark, MarksData } from '../../models/hod.model';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
 
@@ -14,6 +15,8 @@ import { AngularFireAuth } from '@angular/fire/compat/auth';
   styleUrls: ['./hod-analytics.page.scss'],
 })
 export class HODANALYTICSPage implements OnInit {
+  menuVisible: boolean = false;
+
   moduleRanges: {
     '0-49': ModuleRange;
     '50-59': ModuleRange;
@@ -45,6 +48,7 @@ export class HODANALYTICSPage implements OnInit {
     private authService: AuthenticationService,
     private cdr: ChangeDetectorRef,
     private alertController: AlertController,
+    private router: Router,
     private modalController: ModalController,
     private afAuth: AngularFireAuth
   ) {
@@ -60,6 +64,32 @@ export class HODANALYTICSPage implements OnInit {
         console.error('No user logged in');
       }
     });
+  }
+  openMenu() {
+    this.menuVisible = !this.menuVisible;
+  }
+  goToMeeting() {
+    this.router.navigate(['/live-meet']);  // Ensure you have this route set up
+    this.menuVisible = false;  // Hide the menu after selecting
+  }
+  async logout() {
+    try {
+      await this.authService.signOut();
+      this.router.navigate(['/login']); // Redirect to login page after logout
+      this.menuVisible = false;  // Hide the menu after logging out
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  }
+
+  
+  async showLogoutMessage() {
+    const alert = await this.alertController.create({
+      header: 'Logged Out',
+      message: 'You have been successfully logged out.',
+      buttons: ['OK']
+    });
+    await alert.present();
   }
 
   async initializeData() {

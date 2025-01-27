@@ -9,6 +9,8 @@ import { AttendanceService, ModuleAttendancePerformance } from '../../services/a
 import { AcademicService } from '../../services/academic.service';
 import { DepartmentPerformance, ModuleAcademicPerformance } from '../../models/departmentPerfomance.model';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
+import { Router } from '@angular/router';
+import { AlertController } from '@ionic/angular';
 import { ChangeDetectorRef } from '@angular/core';
 
 @Component({
@@ -17,6 +19,7 @@ import { ChangeDetectorRef } from '@angular/core';
   styleUrls: ['./faculty-analytic.page.scss']
 })
 export class FacultyAnalyticPage implements OnInit, AfterViewInit {
+  menuVisible: boolean = false;
   selectedPerformanceType: 'academic' | 'attendance' = 'academic';
   selectedTime: string = 'all'; 
   faculty: string = '';
@@ -43,8 +46,10 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
     private authService: AuthenticationService,
     private attendanceService: AttendanceService,
     private toastController: ToastController,
+    private router: Router,
     private academicService: AcademicService,
     private afAuth: AngularFireAuth,
+    private alertController: AlertController,
     private cdr: ChangeDetectorRef
   ) {
     Chart.register(...registerables);
@@ -60,6 +65,34 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
       }
     });
   }
+  
+  openMenu() {
+    this.menuVisible = !this.menuVisible;
+  }
+  goToMeeting() {
+    this.router.navigate(['/live-meet']);  // Ensure you have this route set up
+    this.menuVisible = false;  // Hide the menu after selecting
+  }
+  async logout() {
+    try {
+      await this.authService.signOut();
+      this.router.navigate(['/login']); // Redirect to login page after logout
+      this.menuVisible = false;  // Hide the menu after logging out
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  }
+
+  
+  async showLogoutMessage() {
+    const alert = await this.alertController.create({
+      header: 'Logged Out',
+      message: 'You have been successfully logged out.',
+      buttons: ['OK']
+    });
+    await alert.present();
+  }
+
 
   async initializeData() {
     try {

@@ -5,6 +5,8 @@ import { Staff } from 'src/app/models/staff.model';
 import { AuthenticationService } from '../../services/auths.service';
 import { DataService } from 'src/app/services/data.service';
 import {Module } from 'src/app/models/assignedModules.model';
+import { Router } from '@angular/router';
+import { AlertController } from '@ionic/angular';
 import {  StudentMarks,  TestPercentages, ModuleMarksDocument } from '../../models/studentsMarks.model';
 // import { ModalController } from '@ionic/angular';
 // import { AlertController, LoadingController,ToastController } from '@ionic/angular';
@@ -16,6 +18,7 @@ import { EmailService } from 'src/app/services/email.service';
   styleUrls: ['./student-management.page.scss'],
 })
 export class StudentManagementPage implements OnInit {
+  menuVisible: boolean = false;
   selectedModule = '';
   selectedRange = '0-40';
   selectedOrder = 'ascending';
@@ -50,10 +53,30 @@ export class StudentManagementPage implements OnInit {
   fullstudentDetails:any;
   
   constructor(
+    private alertController: AlertController,
+    private router: Router,
     private auth: AuthenticationService,
+    private authService: AuthenticationService,
     private dataService: DataService,
     private email : EmailService
   ) {}
+  openMenu() {
+    this.menuVisible = !this.menuVisible;
+  }
+  goToMeeting() {
+    this.router.navigate(['/live-meet']);  // Ensure you have this route set up
+    this.menuVisible = false;  // Hide the menu after selecting
+  }
+  async logout() {
+    try {
+      await this.authService.signOut();
+      this.router.navigate(['/login']); // Redirect to login page after logout
+      this.menuVisible = false;  // Hide the menu after logging out
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  }
+
 
   ngOnInit() {
     this.auth.getLoggedInStaff().then((staffData) => {
