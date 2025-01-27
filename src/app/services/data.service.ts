@@ -45,6 +45,30 @@ export class DataService {
         map(doc => doc?.modules || []) // Return the modules array or an empty array if not found
       );
   }
+
+  getAttendanceByModule(moduleId: string): Observable<{ totalSessions: number; attendanceCounts: any }> {
+    return this.firestore
+      .collection('Attended')
+      .doc(moduleId)
+      .valueChanges()
+      .pipe(
+        map((attendanceData: any) => {
+          // Ensure attendanceData is an array
+          const attendanceArray = Array.isArray(attendanceData) ? attendanceData : [];
+          
+          const attendanceCounts = attendanceArray.reduce((acc: any, entry: any) => {
+            const studentNumber = entry.studentNumber;
+            acc[studentNumber] = (acc[studentNumber] || 0) + 1;
+            return acc;
+          }, {});
+          
+          return {
+            totalSessions: attendanceArray.length,
+            attendanceCounts
+          };
+        })
+      );
+  }
   getModuleMarks(moduleCode: string): Observable<ModuleMarksDocument | null> {
     return this.firestore
       .collection('marks')
