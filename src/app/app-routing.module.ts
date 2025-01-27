@@ -93,10 +93,6 @@ const routes: Routes = [
     path: 'module-mentorship',
     loadChildren: () => import('./pages/module-mentorship/module-mentorship.module').then( m => m.ModuleMentorshipPageModule)
   },
-  
-   
-=======
-  },
   {
     path: '',
     redirectTo: 'home',
@@ -184,7 +180,6 @@ const routes: Routes = [
     path: 'module-mentorship',
     loadChildren: () => import('./pages/module-mentorship/module-mentorship.module').then( m => m.ModuleMentorshipPageModule)
   },
->>>>>>> 6d98e96af0b59e9ceb395e603d3759987963d70e
   {
     path: 'department-analytics',
     loadChildren: () => import('./pages/department-analytics/department-analytics.module').then( m => m.DepartmentAnalyticsPageModule)
