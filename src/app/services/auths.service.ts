@@ -24,10 +24,8 @@ export interface User {
   providedIn: 'root'
 })
 export class AuthenticationService {
-  // signInWithEmailAndPassword(email: string, staffNumber: string) {
-  //   throw new Error('Method not implemented.');
-  // }
-  
+  private cachedStaff: Staff | null = null;
+
   constructor(private afAuth: AngularFireAuth, private firestore: AngularFirestore) {}
 
   // Login method using Firebase Authentication
@@ -36,6 +34,10 @@ export class AuthenticationService {
   }
 
   async getLoggedInStaff(): Promise<Staff> {
+    if (this.cachedStaff) {
+      return this.cachedStaff;
+    }
+
     const user = await this.afAuth.currentUser;
 
     if (!user) {
@@ -51,7 +53,8 @@ export class AuthenticationService {
       throw new Error('No staff data found for the logged-in user.');
     }
 
-    return staffDataSnapshot.docs[0].data() as Staff;
+    this.cachedStaff = staffDataSnapshot.docs[0].data() as Staff;
+    return this.cachedStaff;
   }
 
   // Get the faculty of the logged-in staff

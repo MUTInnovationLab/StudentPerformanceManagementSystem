@@ -22,7 +22,9 @@ const firebaseConfig = {
 };
 
 @NgModule({
-  declarations: [AppComponent,ProfileComponent
+  declarations: [
+    AppComponent,
+    ProfileComponent
   ],
   imports: [
     BrowserModule, 
@@ -30,20 +32,17 @@ const firebaseConfig = {
     AppRoutingModule,
     ReactiveFormsModule,
     AngularFireModule.initializeApp(environment.firebaseConfig),
-    AngularFireAuthModule
-    
-    
+    AngularFireAuthModule,
+    AngularFirestoreModule
   ],
   
-  schemas: [CUSTOM_ELEMENTS_SCHEMA]  ,
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   providers: 
-  [ FirestoreService, 
+  [ 
+    FirestoreService, 
     { 
-      provide: 
-      RouteReuseStrategy, 
-      
-      useClass: 
-      IonicRouteStrategy 
+      provide: RouteReuseStrategy,   
+      useClass: IonicRouteStrategy 
     }
   ],
   bootstrap: [AppComponent],

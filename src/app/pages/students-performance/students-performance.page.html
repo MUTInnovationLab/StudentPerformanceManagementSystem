@@ -1,0 +1,116 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title class="custom-title">
+      <ion-icon name="document-text-outline" class="title-icon"></ion-icon>
+      Track Students' Performance
+    </ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding custom-content">
+
+
+  <ion-card class="custom-card">
+    <ion-card-header>
+      <ion-card-title>
+        <ion-icon name="cloud-upload-outline" class="card-icon"></ion-icon>
+        File Operations
+      </ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <!-- <ion-button expand="block" (click)="generateSpreadsheet()" [disabled]="isLoading" class="custom-button">
+        <ion-icon name="download-outline" slot="start"></ion-icon>
+        <ion-spinner name="crescent" *ngIf="isLoading"></ion-spinner>
+        <span *ngIf="!isLoading">Generate Template</span>
+      </ion-button> -->
+
+      <ion-item lines="none" class="custom-file-input">
+        <ion-label>Upload Spreadsheet</ion-label>
+        <input type="file" (change)="onFileChange($event)" accept=".xlsx, .xls" [disabled]="isLoading">
+      </ion-item>
+
+      <!-- <ion-button expand="block" (click)="previewSpreadsheet()" [disabled]="!file || isLoading" class="custom-button">
+        <ion-icon name="eye-outline" slot="start"></ion-icon>
+        <ion-spinner name="crescent" *ngIf="isLoading"></ion-spinner>
+        <span *ngIf="!isLoading">Preview Spreadsheet</span>
+      </ion-button> -->
+
+      <!-- <ion-button expand="block" (click)="uploadToFirestore()" [disabled]="previewData.length === 0 || isLoading" class="custom-button">
+        <ion-icon name="cloud-upload-outline" slot="start"></ion-icon>
+        <ion-spinner name="crescent" *ngIf="isLoading"></ion-spinner>
+        <span *ngIf="!isLoading">Upload to Firestore</span>
+      </ion-button> -->
+    </ion-card-content>
+  </ion-card>
+
+  <ion-card *ngIf="previewData.length > 0" class="custom-card">
+    <!-- <ion-card-header>
+      <ion-card-title>
+        <ion-icon name="list-outline" class="card-icon"></ion-icon>
+        Data Preview
+      </ion-card-title>
+    </ion-card-header> -->
+
+    <ion-card-content class="table-container">
+      <ion-card-header class="table-heading">
+        <span class="table-heading">
+          <ion-icon name="analytics-outline" class="card-icon"></ion-icon>
+          Test Percentages Breakdown:
+        </span>
+      </ion-card-header>
+      <ion-grid class="custom-table">
+        <ion-row class="header-row">
+          <ion-col size="12" size-md="6" size-lg="3" *ngFor="let test of tests; let i = index">
+            <ion-item lines="none" class="custom-item">
+              <ion-label position="floating">Test {{i + 1}} %</ion-label>
+              <ion-input 
+                type="number" 
+                [(ngModel)]="test.percentage" 
+                style="color: black;"
+                class="custom-input">
+              </ion-input>
+            </ion-item>
+          </ion-col>
+        </ion-row>
+        <!-- <ion-row>
+          <ion-col>
+            <ion-button (click)="visualizePerformance()">Visualize Performance</ion-button>
+          </ion-col>
+        </ion-row> -->
+      </ion-grid>
+    </ion-card-content>
+
+    <ion-card-content class="table-container">
+      <ion-grid class="custom-table">
+        <ion-row class="header-row">
+          <ion-col>Student Number</ion-col>
+          <ion-col *ngFor="let test of tests; let i = index">Test {{i + 1}}</ion-col>
+        <ion-col *ngIf="calculateAverage">Average</ion-col>        
+      </ion-row>
+        <ion-row class="data-row" *ngFor="let row of previewData">
+          <ion-col>{{row.studentNumber}}</ion-col>
+          <ion-col *ngFor="let test of tests; let i = index" [ngClass]="getScoreClass(row['test' + (i + 1)], test.percentage)">
+            {{row['test' + (i + 1)]}}
+          </ion-col>
+          <ion-col *ngIf="calculateAverage">{{row.average}}%</ion-col>
+        </ion-row>
+      </ion-grid>
+    </ion-card-content>
+  
+  
+  </ion-card>
+</ion-content>
+
+<ion-toast
+  [isOpen]="isToastOpen"
+  [message]="toastMessage"
+  [color]="toastColor"
+  [duration]="3000"
+  (didDismiss)="isToastOpen = false">
+</ion-toast>
+
+<ion-loading
+  [isOpen]="isLoading"
+  message="Please wait..."
+  [duration]="3000">
+</ion-loading>

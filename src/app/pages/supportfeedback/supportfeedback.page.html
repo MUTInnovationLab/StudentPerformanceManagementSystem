@@ -1,3 +1,7 @@
+<!--Container-->
+<!--Header with Icon-->
+
+<!>
 <div class="container">
   <div class="header-with-icon">
     <ion-icon name="people-circle" class="title-icon"></ion-icon>
@@ -14,7 +18,9 @@
       <ion-item *ngFor="let student of filteredStudents" (click)="selectStudent(student)" button>
         <ion-label>
           <h2>{{student.name}}</h2>
-          <p>{{student.course}}</p>
+          <p>{{student.department}}</p>
+          <p>{{student.faculty}}</p>
+          <p>{{student.studentNumber}}</p>
           <p class="enrollment-date">Enrolled: {{formatDate(student.enrollmentDate)}}</p>
         </ion-label>
         <ion-icon name="chevron-forward" slot="end"></ion-icon>

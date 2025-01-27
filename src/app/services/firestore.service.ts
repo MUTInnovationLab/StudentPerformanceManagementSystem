@@ -2,15 +2,25 @@ import { Injectable } from '@angular/core';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { Feedback } from '../models/feedback.model'; // Make sure the path is correct
+import { Student } from '../models/student.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class FirestoreService {
+  constructor(private firestore: AngularFirestore) { }
 
-  constructor(
-    private firestore: AngularFirestore
-  ) { }
+  addFeedback(feedback: Feedback) {
+    return this.firestore.collection('feedback').add(feedback);
+  }
+
+  getFeedbacks(studentId: number) {
+    return this.firestore.collection('feedback', ref => ref.where('studentId', '==', studentId)).valueChanges();
+  }
+    getStudents() {
+    return this.firestore.collection<Student>('students').valueChanges();
+  }
 
   // Fetch the data and map it to the expected structure
   getAttendedModules(): Observable<any[]> {
