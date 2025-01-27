@@ -10,12 +10,15 @@ import {  StudentMarks,  TestPercentages, ModuleMarksDocument } from '../../mode
 // import { AlertController, LoadingController,ToastController } from '@ionic/angular';
 import { Student } from 'src/app/models/users.model';
 import { EmailService } from 'src/app/services/email.service';
+import { AngularFirestore } from '@angular/fire/compat/firestore';
 @Component({
   selector: 'app-student-management',
   templateUrl: './student-management.page.html',
   styleUrls: ['./student-management.page.scss'],
 })
 export class StudentManagementPage implements OnInit {
+  attendanceSummary: any[] = [];
+isAttendanceModalOpen = false;
   selectedModule = '';
   selectedRange = '0-40';
   selectedOrder = 'ascending';
@@ -52,7 +55,8 @@ export class StudentManagementPage implements OnInit {
   constructor(
     private auth: AuthenticationService,
     private dataService: DataService,
-    private email : EmailService
+    private email : EmailService,
+    private db: AngularFirestore
   ) {}
 
   ngOnInit() {
@@ -68,6 +72,162 @@ export class StudentManagementPage implements OnInit {
         this.getModuleMarks('55tt');
       }
     });
+  }
+
+
+  async openPerfomance() {
+    try {
+      if (!this.selectedModule) {
+        this.email.toastMessage('Please select a module first', 'danger', 'close-circle-outline', 'cancel');
+        return;
+      }
+  
+      const attendanceRef = this.db.collection('Attended').doc(this.selectedModule);
+      
+      const doc = await attendanceRef.get().toPromise();
+      
+      if (!doc?.exists) {
+        this.email.toastMessage('No attendance records found', 'warning', 'information-circle-outline', 'cancel');
+        return;
+      }
+  
+      const attendanceData = doc.data() || {};
+      
+      // Prepare attendance summary
+      const attendanceSummary = Object.entries(attendanceData).map(([date, records]) => ({
+        date,
+        totalAttendees: records.length,
+        attendeeDetails: records.reduce((acc: { [x: string]: any; }, record: { studentNumber: string | number; }) => {
+          acc[record.studentNumber] = (acc[record.studentNumber] || 0) + 1;
+          return acc;
+        }, {})
+      }));
+  
+      // Open modal to display attendance summary
+      this.openAttendanceModal(attendanceSummary);
+  
+    } catch (error) {
+      console.error('Error retrieving attendance:', error);
+      this.email.toastMessage('Failed to retrieve attendance', 'danger', 'close-circle-outline', 'cancel');
+    }
+  }
+
+  // async openPerfomance(studentNumber?: string) {
+  //   try {
+  //     if (!this.selectedModule) {
+  //       this.email.toastMessage('Please select a module first', 'danger', 'close-circle-outline', 'cancel');
+  //       return;
+  //     }
+  
+  //     const attendanceRef = this.db.collection('Attended').doc(this.selectedModule);
+      
+  //     const doc = await attendanceRef.get().toPromise();
+      
+  //     if (!doc?.exists) {
+  //       this.email.toastMessage('No attendance records found', 'warning', 'information-circle-outline', 'cancel');
+  //       return;
+  //     }
+  
+  //     const attendanceData = doc.data() || {};
+      
+  //     // If a specific student number is provided, filter attendance for that student
+  //     if (studentNumber) {
+  //       const studentAttendanceDetails = Object.entries(attendanceData)
+  //         .map(([date, records]) => ({
+  //           date,
+  //           attendanceTime: records.find((record: any) => record.studentNumber === studentNumber)?.scanTime || ''
+  //         }))
+  //         .filter(record => record.attendanceTime);
+  
+  //       this.selectedStudentAttendance = {
+  //         studentNumber,
+  //         attendanceDetails: studentAttendanceDetails
+  //       };
+  //       this.isStudentAttendanceModalOpen = true;
+  //     } else {
+  //       // Original all-module attendance logic
+  //       const attendanceSummary = Object.entries(attendanceData).map(([date, records]) => ({
+  //         date,
+  //         totalAttendees: records.length,
+  //         attendeeDetails: records.reduce((acc: { [x: string]: any; }, record: { studentNumber: string | number; }) => {
+  //           acc[record.studentNumber] = (acc[record.studentNumber] || 0) + 1;
+  //           return acc;
+  //         }, {})
+  //       }));
+  
+  //       this.openAttendanceModal(attendanceSummary);
+  //     }
+  
+  //   } catch (error) {
+  //     console.error('Error retrieving attendance:', error);
+  //     this.email.toastMessage('Failed to retrieve attendance', 'danger', 'close-circle-outline', 'cancel');
+  //   }
+  // }
+
+  getObjectKeys(obj: any): string[] {
+    return Object.keys(obj);
+  }
+
+  async viewStudentAttendance(studentNumber: string) {
+    try {
+      if (!this.selectedModule) {
+        this.email.toastMessage('Please select a module first', 'danger', 'close-circle-outline', 'cancel');
+        return;
+      }
+  
+      const attendanceRef = this.db.collection('Attended').doc(this.selectedModule);
+      
+      const doc = await attendanceRef.get().toPromise();
+      
+      if (!doc?.exists) {
+        this.email.toastMessage('No attendance records found', 'warning', 'information-circle-outline', 'cancel');
+        return;
+      }
+  
+      const attendanceData = doc.data() || {};
+      
+      // Filter attendance records for the specific student
+      const studentAttendanceDetails = Object.entries(attendanceData)
+        .map(([date, records]) => ({
+          date,
+          attendanceTime: records.find((record: any) => record.studentNumber === studentNumber)?.scanTime
+        }))
+        .filter(record => record.attendanceTime);
+  
+      // Open modal to display student's attendance details
+      this.selectedStudentAttendance = {
+        studentNumber,
+        attendanceDetails: studentAttendanceDetails || []  // Ensure array is never undefined
+      };
+      this.isStudentAttendanceModalOpen = true;
+  
+    } catch (error) {
+      console.error('Error retrieving student attendance:', error);
+      this.email.toastMessage('Failed to retrieve student attendance', 'danger', 'close-circle-outline', 'cancel');
+    }
+  }
+  
+  // Add these properties to your component
+  selectedStudentAttendance: {
+    studentNumber: string;
+    attendanceDetails: { date: string; attendanceTime: string }[];
+  } | null = null;
+  isStudentAttendanceModalOpen = false;
+  
+  closeStudentAttendanceModal() {
+    this.isStudentAttendanceModalOpen = false;
+    this.selectedStudentAttendance = null;
+  }
+  
+  openAttendanceModal(attendanceSummary: any[]) {
+    // Add this to your component properties
+    this.attendanceSummary = attendanceSummary;
+    this.isAttendanceModalOpen = true;
+  }
+  
+  closeAttendanceModal() {
+    this.isAttendanceModalOpen = false;
+    this.attendanceSummary = [];
   }
 
   // Helper method to format mark values
@@ -214,6 +374,8 @@ export class StudentManagementPage implements OnInit {
   
     await this.getAvailableMentors(this.selectedModule);
   }
+
+
 
   closeModal() {
     this.isModalOpen = false;
