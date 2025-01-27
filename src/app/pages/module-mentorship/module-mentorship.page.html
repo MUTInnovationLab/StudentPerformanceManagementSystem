@@ -83,16 +83,16 @@
     </div>
   </div>
 
-  <div *ngIf="isLoading" class="ion-text-center ion-padding">
+  <div *ngIf="isLoading" class="loading-container">
     <ion-spinner></ion-spinner>
     <p>Loading module data...</p>
   </div>
-
+  
   <div class="charts" *ngIf="!isLoading && filteredModules.length > 0">
-    <div style="position: relative; height: 40vh; margin-bottom: 20px;">
+    <div class="chart-container">
       <canvas id="moduleComparisonChart"></canvas>
     </div>
-    <div style="position: relative; height: 40vh;">
+    <div class="chart-container">
       <canvas id="departmentMentorshipChart"></canvas>
     </div>
   </div>
