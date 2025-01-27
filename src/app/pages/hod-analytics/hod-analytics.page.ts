@@ -7,6 +7,7 @@ import { AlertController } from '@ionic/angular';
 import { ModalController } from '@ionic/angular';
 import { ModuleRange, Faculty, User, Student, AssignedLectures, StudentMark, MarksData } from '../../models/hod.model';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
+import { Router } from '@angular/router';  // Add this import at the top
 
 @Component({
   selector: 'app-hod-analytics',
@@ -46,7 +47,8 @@ export class HODANALYTICSPage implements OnInit {
     private cdr: ChangeDetectorRef,
     private alertController: AlertController,
     private modalController: ModalController,
-    private afAuth: AngularFireAuth
+    private afAuth: AngularFireAuth,
+    private router: Router  // Add this injection
   ) {
     Chart.register(...registerables);
     this.afAuth.setPersistence('local');
@@ -425,5 +427,9 @@ export class HODANALYTICSPage implements OnInit {
   private getRandomColor(): string {
     this.cdr.detectChanges();
     return '#' + Math.floor(Math.random() * 16777215).toString(16);
+  }
+
+  navigateToDepartmentAnalytics() {
+    this.router.navigate(['/department-analytics']);
   }
 }

@@ -62,6 +62,15 @@ export class AuthenticationService {
     const staff = await this.getLoggedInStaff();
     return staff.faculty;
   }
+  async isHOD(): Promise<boolean> {
+    const staff = await this.getLoggedInStaff();
+    return staff.position === 'HOD';
+  }
+
+  async getLoggedInDepartment(): Promise<string> {
+    const staff = await this.getLoggedInStaff();
+    return staff.department;
+  }
 }
 
 

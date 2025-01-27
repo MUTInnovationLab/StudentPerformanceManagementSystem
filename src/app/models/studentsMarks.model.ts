@@ -20,6 +20,17 @@ export interface StudentMarks {
     test7: number;
   }
   
+  export interface DetailedStudentInfo {
+    studentNumber: string;
+    name: string;
+    surname: string;
+    department: string;
+    email: string;
+    marks: StudentMarks;
+    moduleName: string;
+    average: number;
+  }
+  
   export interface ModuleMarksDocument {
     moduleCode: string;
     marks: StudentMarks[];

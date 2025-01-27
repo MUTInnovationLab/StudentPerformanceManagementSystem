@@ -1,0 +1,143 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button></ion-back-button>
+    </ion-buttons>
+    <ion-title>{{departments[0]?.name}} Analytics</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="presentReportFormatOptions()">
+        <ion-icon slot="start" name="document"></ion-icon>
+        Generate Report
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-grid *ngIf="!isLoading">
+    <div class="charts-grid">
+      <div class="chart-wrapper">
+        <div class="chart-content">
+          <div class="chart-container">
+            <canvas id="performanceChart"></canvas>
+          </div>
+        </div>
+      </div>
+      
+      <div class="chart-wrapper">
+        <div class="chart-content">
+          <div class="chart-container">
+            <canvas id="distributionChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <ion-row>
+      <ion-col size="12">
+        <ion-list>
+          <ion-item-group *ngFor="let dept of departments">
+            <ion-item-divider>
+              <ion-label>{{dept.name}}</ion-label>
+            </ion-item-divider>
+            
+            <!-- At Risk Students -->
+            <ion-item-group>
+              <ion-item-divider color="danger">
+                <ion-label>At Risk Students (0-49%)</ion-label>
+              </ion-item-divider>
+              <ion-item *ngFor="let student of dept.performanceCategories.atRisk.students">
+                <ion-label>
+                  <h2>{{student.name}} {{student.surname}} ({{student.studentNumber}})</h2>
+                  <p>Module: {{student.moduleName}}</p>
+                  <p>Average: {{student.average}}%</p>
+                  <div class="test-marks">
+                    <div *ngFor="let test of [1,2,3,4,5,6,7]" class="test-mark">
+                      <ng-container *ngIf="getTestMark(student.marks, test)">
+                        Test {{test}}: {{getTestMark(student.marks, test)}}%
+                      </ng-container>
+                    </div>
+                  </div>
+                </ion-label>
+              </ion-item>
+            </ion-item-group>
+
+            <!-- Partial Pass Students -->
+            <ion-item-group>
+              <ion-item-divider color="warning">
+                <ion-label>Partial Pass Students (50-59%)</ion-label>
+              </ion-item-divider>
+              <ion-item *ngFor="let student of dept.performanceCategories.partialPass.students">
+                <ion-label>
+                  <h2>{{student.name}} {{student.surname}} ({{student.studentNumber}})</h2>
+                  <p>Module: {{student.moduleName}}</p>
+                  <p>Average: {{student.average}}%</p>
+                  <div class="test-marks">
+                    <div *ngFor="let test of [1,2,3,4,5,6,7]" class="test-mark">
+                      <ng-container *ngIf="getTestMark(student.marks, test)">
+                        Test {{test}}: {{getTestMark(student.marks, test)}}%
+                      </ng-container>
+                    </div>
+                  </div>
+                </ion-label>
+              </ion-item>
+            </ion-item-group>
+
+            <!-- Intermediate Pass Students -->
+            <ion-item-group>
+              <ion-item-divider color="primary">
+                <ion-label>Intermediate Pass Students (60-74%)</ion-label>
+              </ion-item-divider>
+              <ion-item *ngFor="let student of dept.performanceCategories.intermediatePass.students">
+                <ion-label>
+                  <h2>{{student.name}} {{student.surname}} ({{student.studentNumber}})</h2>
+                  <p>Module: {{student.moduleName}}</p>
+                  <p>Average: {{student.average}}%</p>
+                  <div class="test-marks">
+                    <div *ngFor="let test of [1,2,3,4,5,6,7]" class="test-mark">
+                      <ng-container *ngIf="getTestMark(student.marks, test)">
+                        Test {{test}}: {{getTestMark(student.marks, test)}}%
+                      </ng-container>
+                    </div>
+                  </div>
+                </ion-label>
+              </ion-item>
+            </ion-item-group>
+
+            <!-- Distinction Students -->
+            <ion-item-group>
+              <ion-item-divider color="success">
+                <ion-label>Distinction Students (75-100%)</ion-label>
+              </ion-item-divider>
+              <ion-item *ngFor="let student of dept.performanceCategories.distinction.students">
+                <ion-label>
+                  <h2>{{student.name}} {{student.surname}} ({{student.studentNumber}})</h2>
+                  <p>Module: {{student.moduleName}}</p>
+                  <p>Average: {{student.average}}%</p>
+                  <div class="test-marks">
+                    <div *ngFor="let test of [1,2,3,4,5,6,7]" class="test-mark">
+                      <ng-container *ngIf="getTestMark(student.marks, test)">
+                        Test {{test}}: {{getTestMark(student.marks, test)}}%
+                      </ng-container>
+                    </div>
+                  </div>
+                </ion-label>
+              </ion-item>
+            </ion-item-group>
+          </ion-item-group>
+        </ion-list>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+
+  <div *ngIf="isLoading" class="loading-container">
+    <ion-spinner class="loading-spinner"></ion-spinner>
+    <p>Loading analytics data...</p>
+  </div>
+
+  <div *ngIf="error" class="error-container">
+    <ion-icon name="alert-circle-outline"></ion-icon>
+    <p>{{ error }}</p>
+    <ion-button (click)="retryLoad()">Retry</ion-button>
+  </div>
+</ion-content>
