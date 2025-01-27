@@ -10,4 +10,56 @@
       <ion-title size="large">students-performance</ion-title>
     </ion-toolbar>
   </ion-header>
+
+  <ion-grid>
+    <ion-row>
+      <ion-col>
+        <ion-card>
+          <ion-card-header>
+            <ion-card-title>Student Marks</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <table>
+              <thead>
+                <tr>
+                  <th>Student Number</th>
+                  <th>Name</th>
+                  <th>Surname</th>
+                  <th>Email</th>
+                  <th>Department</th>
+                  <th>Module</th>
+                  <th>Average</th>
+                  <th>Test 1</th>
+                  <th>Test 2</th>
+                  <th>Test 3</th>
+                  <th>Test 4</th>
+                  <th>Test 5</th>
+                  <th>Test 6</th>
+                  <th>Test 7</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let student of students">
+                  <td>{{ student.studentNumber }}</td>
+                  <td>{{ student.name }}</td>
+                  <td>{{ student.surname }}</td>
+                  <td>{{ student.email }}</td>
+                  <td>{{ student.department }}</td>
+                  <td>{{ student.moduleName }}</td>
+                  <td>{{ student.average }}</td>
+                  <td>{{ student.marks.test1 }}</td>
+                  <td>{{ student.marks.test2 }}</td>
+                  <td>{{ student.marks.test3 }}</td>
+                  <td>{{ student.marks.test4 }}</td>
+                  <td>{{ student.marks.test5 }}</td>
+                  <td>{{ student.marks.test6 }}</td>
+                  <td>{{ student.marks.test7 }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </ion-card-content>
+        </ion-card>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
 </ion-content>
