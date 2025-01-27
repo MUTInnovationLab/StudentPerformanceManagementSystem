@@ -88,14 +88,13 @@ const routes: Routes = [
   {
     path: 'faculty-analytic',
     loadChildren: () => import('./pages/faculty-analytic/faculty-analytic.module').then(m => m.FacultyAnalyticPageModule)
-  },  {
+  },
+  {
     path: 'module-mentorship',
     loadChildren: () => import('./pages/module-mentorship/module-mentorship.module').then( m => m.ModuleMentorshipPageModule)
   },
-  {
-    path: 'students-performance',
-    loadChildren: () => import('./pages/students-performance/students-performance.module').then( m => m.StudentsPerformancePageModule)
-  },
+  
+   
   {
     path: 'department-analytics',
     loadChildren: () => import('./pages/department-analytics/department-analytics.module').then( m => m.DepartmentAnalyticsPageModule)
