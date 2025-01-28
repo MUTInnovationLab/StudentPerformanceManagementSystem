@@ -26,7 +26,6 @@ interface StaffDetails {
   position: string;
 }
 
-
 interface StudentMark {
   studentNumber: number;
   average: string;
@@ -167,59 +166,101 @@ export class ModuleMentorshipPage implements OnInit, AfterViewInit {
       return; // Silently exit if no students
     }
   
-    // Create a map to track student's module risks
-    const studentRisks = new Map<number, string[]>();
+    // Create a map to track student's module risks with averages
+    const studentRisks = new Map<number, Array<{ moduleCode: string; average: number }>>();
   
-    // Iterate through low-performing modules to identify students at risk
-    this.lowPerformingModules.forEach(module => {
+    // First pass: Collect all modules where students have low performance
+    this.allModules.forEach(module => {
       module.studentsNeedingMentor?.forEach(studentMark => {
-        // Only add to risks if average is below 50%
+        const studentNumber = studentMark.studentNumber;
+        const moduleCode = module.moduleCode.trim();
+        
+        // Get the calculated average for this student in this module
         const average = parseFloat(studentMark.average);
+  
+        // Only track if average is below 50%
         if (average < 50) {
-          const riskKey = studentMark.studentNumber;
-          const moduleRisk = module.moduleCode.trim(); // Ensure clean module code
+          if (!studentRisks.has(studentNumber)) {
+            studentRisks.set(studentNumber, []);
+          }
           
-          if (!studentRisks.has(riskKey)) {
-            studentRisks.set(riskKey, [moduleRisk]);
-          } else {
-            const existingRisks = studentRisks.get(riskKey) || [];
-            if (!existingRisks.includes(moduleRisk)) {
-              existingRisks.push(moduleRisk);
-              studentRisks.set(riskKey, existingRisks);
-            }
+          const studentModules = studentRisks.get(studentNumber)!;
+          
+          // Check if module already exists for this student
+          const existingModule = studentModules.find(m => m.moduleCode === moduleCode);
+          
+          if (!existingModule) {
+            studentModules.push({
+              moduleCode: moduleCode,
+              average: average
+            });
+            studentRisks.set(studentNumber, studentModules);
           }
         }
       });
     });
   
-    // Generate Excel data with risk status
+    // Generate Excel data with detailed risk status
     const excelData = this.allStudents.map(student => {
-      // Get risks for this student
-      const risks = studentRisks.get(student.studentNumber) || [];
+      // Get all risk modules for this student
+      const riskModules = studentRisks.get(student.studentNumber) || [];
       
+      // Sort modules by code for consistent display
+      riskModules.sort((a, b) => a.moduleCode.localeCompare(b.moduleCode));
+  
+      // Create status string with module codes and averages
+      const status = riskModules.length > 0
+        ? `Risk in: ${riskModules.map(m => 
+            `${m.moduleCode}(${m.average.toFixed(1)}%)`
+          ).join(', ')}`
+        : 'No Risk'; // Or '' if you prefer empty for no risk
+  
       return {
         'Student Number': student.studentNumber,
         'Name': student.name.split(' ')[0],
         'Surname': student.surname.split(' ').slice(1).join(' ') || student.surname.split(' ')[0],
         'Email': student.email || 'N/A',
         'Department': student.department || 'N/A',
-        'Status': risks.length > 0 
-          ? `Risk in: ${risks.join(', ')}` 
-          : ''  // Empty string if no risks
+        'Total Risk Modules': riskModules.length,
+        'Status': status
       };
     });
   
+    // Sort the data by number of risk modules (descending) then by student number
+    excelData.sort((a, b) => {
+      if (b['Total Risk Modules'] !== a['Total Risk Modules']) {
+        return b['Total Risk Modules'] - a['Total Risk Modules'];
+      }
+      return a['Student Number'] - b['Student Number'];
+    });
+  
+    // Create worksheet with custom column widths
     const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(excelData);
+    
+    // Set column widths for better readability
+    ws['!cols'] = [
+      { wch: 15 },  // Student Number
+      { wch: 15 },  // Name
+      { wch: 20 },  // Surname
+      { wch: 30 },  // Email
+      { wch: 20 },  // Department
+      { wch: 15 },  // Total Risk Modules
+      { wch: 50 }   // Status
+    ];
+  
+    // Create workbook and add the worksheet
     const wb: XLSX.WorkBook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Faculty Students');
   
+    // Generate Excel file
     const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
     const blob = new Blob([wbout], { type: 'application/octet-stream' });
   
+    // Download the file
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${this.faculty}_students_list.xlsx`;
+    a.download = `${this.faculty}_students_at_risk.xlsx`;
     a.click();
     window.URL.revokeObjectURL(url);
   }
@@ -269,14 +310,12 @@ private async loadTotalStudents(faculty: Faculty) {
 }
 
 
-  
-async processModuleData(faculty: Faculty) {
+private async processModuleData(faculty: Faculty) {
   this.isLoading = true;
   const departments = faculty.departments || [];
   const moduleData: ModuleMentorshipData[] = [];
 
   try {
-    // Loop through each department
     for (const dept of departments) {
       const modules = this.getAllModulesFromDepartment(dept);
       
@@ -287,18 +326,15 @@ async processModuleData(faculty: Faculty) {
         this.attendanceService.getModuleAttendancePerformance(modules)
       ]);
 
-      // Process each module in chunks to avoid overwhelming Firestore
       const CHUNK_SIZE = 5;
       const moduleChunks = this.chunkArray(modules, CHUNK_SIZE);
 
       for (const moduleChunk of moduleChunks) {
         const modulesMentorshipData = await Promise.all(
           moduleChunk.map(async (module) => {
-            // Get academic and attendance data for this module
             const academic = academicPerformance.find(ap => ap.moduleCode === module.moduleCode);
             const attendance = attendancePerformance.find(ap => ap.moduleCode === module.moduleCode);
 
-            // Get marks data for all modules, not just low performing ones
             const marksDoc = await this.firestore
               .collection('marks')
               .doc(module.moduleCode)
@@ -314,22 +350,34 @@ async processModuleData(faculty: Faculty) {
             let averageMarks = 0;
 
             if (marksData && marksData.marks) {
-              // Calculate averages for all students in the module
-              studentsNeedingMentor = marksData.marks.filter(student => {
-                const actualAverage = this.calculateStudentAverage(student, marksData.testPercentages);
-                return actualAverage < this.LOW_PERFORMANCE_THRESHOLD;
-              });
+              // Calculate and update each student's average
+              studentsNeedingMentor = marksData.marks.map(student => {
+                const calculatedAverage = this.calculateStudentAverage(student, marksData.testPercentages);
+                // Update the student's average in the mark object
+                return {
+                  ...student,
+                  average: calculatedAverage.toFixed(1) // Store as string with 1 decimal place
+                };
+              }).filter(student => parseFloat(student.average) < this.LOW_PERFORMANCE_THRESHOLD);
 
-              // Calculate module average using weighted averages
-              averageMarks = marksData.marks.reduce((sum, student) => 
-                sum + this.calculateStudentAverage(student, marksData.testPercentages), 0
-              ) / marksData.marks.length;
+              // Calculate overall module average
+              averageMarks = marksData.marks.reduce((sum, student) => {
+                const studentAvg = this.calculateStudentAverage(student, marksData.testPercentages);
+                return sum + studentAvg;
+              }, 0) / marksData.marks.length;
+
+              // Update the marks in Firestore with new averages
+              await this.firestore.collection('marks').doc(module.moduleCode).update({
+                marks: marksData.marks.map(student => ({
+                  ...student,
+                  average: this.calculateStudentAverage(student, marksData.testPercentages).toFixed(1)
+                }))
+              });
             }
 
             const lecturerEmail = this.getLecturerEmail(module.moduleCode);
             const lecturerDetails = this.staffDetails.get(lecturerEmail.toLowerCase());
 
-            // Return data for all modules
             return {
               moduleCode: module.moduleCode,
               moduleName: module.moduleName,
@@ -346,26 +394,17 @@ async processModuleData(faculty: Faculty) {
           })
         );
 
-        // Add all modules to moduleData, not just non-null ones
         moduleData.push(...modulesMentorshipData.filter(module => module !== null) as ModuleMentorshipData[]);
       }
     }
 
-    // Store all modules
     this.allModules = [...moduleData];
-    
-    // Filter low-performing modules for specific views
     this.lowPerformingModules = moduleData.filter(module => module.averageMarks < this.LOW_PERFORMANCE_THRESHOLD);
-    
-    // Initialize filtered modules with all modules instead of just low performing ones
     this.filteredModules = [...moduleData];
-
-    // Calculate total students needing mentorship across all modules
     this.totalStudentsNeedingMentorship = moduleData.reduce(
       (sum, module) => sum + module.studentsNeedingMentorship, 0
     );
 
-    // Update charts with complete data
     setTimeout(() => {
       this.updateCharts();
     }, 0);
@@ -377,23 +416,28 @@ async processModuleData(faculty: Faculty) {
   }
 }
 
-private calculateStudentAverage(mark: StudentMark, testPercentages: any): number {
+private calculateStudentAverage(mark: StudentMark, testPercentages: { [key: string]: number }): number {
   let totalWeightedScore = 0;
   let totalWeight = 0;
-  
-  // Calculate for all available tests
+
+  // Process each test, handling both number and string values
   for (let i = 1; i <= 7; i++) {
     const testKey = `test${i}` as keyof StudentMark;
-    const score = Number(mark[testKey]);
+    const testScore = mark[testKey];
     const weight = testPercentages[testKey];
-    
-    if (!isNaN(score) && score !== null && weight) {
+
+    // Convert test score to number if it's a string
+    const score = typeof testScore === 'string' ? parseFloat(testScore) : testScore;
+
+    // Only include valid scores and weights in calculation
+    if (!isNaN(score) && score !== null && weight && weight > 0) {
       totalWeightedScore += (score * weight);
       totalWeight += weight;
     }
   }
-  
-  return totalWeight > 0 ? totalWeightedScore / totalWeight : 0;
+
+  // Return calculated average or 0 if no valid scores
+  return totalWeight > 0 ? (totalWeightedScore / totalWeight) : 0;
 }
 
 private chunkArray<T>(array: T[], size: number): T[][] {
@@ -403,7 +447,11 @@ private chunkArray<T>(array: T[], size: number): T[][] {
   }
   return chunks;
 }
-  
+
+
+
+
+
   // Process modules for a specific department
   private async processDepartmentModules(modules: Module[], departmentName: string): Promise<ModuleMentorshipData[]> {
     const [academicPerformance, attendancePerformance] = await Promise.all([
@@ -526,21 +574,6 @@ private chunkArray<T>(array: T[], size: number): T[][] {
   private getLecturerEmail(moduleCode: string): string {
     return this.lecturerEmails.get(moduleCode.trim()) || 'Not Assigned';
   }
-
- /* private async loadModuleData() {
-    this.isLoading = true;
-    try {
-      const facultyDoc = await this.firestore.doc<Faculty>(`faculties/${this.faculty}`).get().toPromise();
-      if (facultyDoc?.exists) {
-        const faculty = facultyDoc.data() as Faculty;
-        await this.processModuleData(faculty);
-      }
-    } catch (error) {
-      console.error('Error loading faculty data:', error);
-    } finally {
-      this.isLoading = false;
-    }
-  }*/
 
   private async ensureUserAuthentication() {
     const user = await this.afAuth.currentUser;

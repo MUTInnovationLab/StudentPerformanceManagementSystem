@@ -160,6 +160,10 @@ const routes: Routes = [
     loadChildren: () => import('./pages/struggling-students/struggling-students.module').then( m => m.StrugglingStudentsPageModule)
   },
   {
+    path: 'students-performance',
+    loadChildren: () => import('./students-performance/students-performance.module').then( m => m.StudentsPerformancePageModule)
+  },
+  {
     path: 'faculty-form',
     loadChildren: () => import('./pages/faculty-form/faculty-form.module').then( m => m.FacultyFormPageModule)
   },

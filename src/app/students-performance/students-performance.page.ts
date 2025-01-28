@@ -5,6 +5,7 @@ import { AcademicService } from '../services/academic.service';
 import { Router } from '@angular/router';
 import { ModuleMarksDocument, DetailedStudentInfo } from '../models/studentsMarks.model';
 import { Faculty, Department, Module } from '../models/faculty.model';
+import * as XLSX from 'xlsx';
 
 @Component({
   selector: 'app-students-performance',
@@ -16,6 +17,7 @@ export class StudentsPerformancePage implements OnInit {
   students: DetailedStudentInfo[] = [];
   studentsNeedingAttention: DetailedStudentInfo[] = [];
   error: string | null = null;
+  errorMessage: string | null = null;
   testOutOf: number[] = Array(7).fill(100); // For testing purposes, each test is out of 100
 
   constructor(
@@ -76,8 +78,12 @@ export class StudentsPerformancePage implements OnInit {
       this.studentsNeedingAttention = this.getStudentsNeedingAttention(this.students);
       console.log('Students needing attention:', this.studentsNeedingAttention); // Debug log
     } catch (error) {
-      console.error('Error loading student marks:', error);
-      this.error = 'Failed to load student marks';
+      if ((error as any).code === 'resource-exhausted') {
+        this.error = 'Quota Exceeded: The Firestore quota has been exceeded. Please upload an Excel file with the student marks.';
+      } else {
+        console.error('Error loading student marks:', error);
+        this.error = 'Failed to load student marks';
+      }
     }
   }
 
@@ -236,5 +242,87 @@ export class StudentsPerformancePage implements OnInit {
     } else {
       return 'red';
     }
+  }
+
+  hasTestMarks(testNumber: number): boolean {
+    return this.students.some(student => student.marks[`test${testNumber}`] !== null && student.marks[`test${testNumber}`] !== undefined);
+  }
+
+  handleFileInput(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+        this.processExcelData(jsonData);
+      };
+      reader.readAsArrayBuffer(file);
+    }
+  }
+
+  processExcelData(data: any[]) {
+    const headers = data[0];
+    const rows = data.slice(1);
+    const students: DetailedStudentInfo[] = rows.map(row => {
+      const student: any = {};
+      headers.forEach((header: string, index: number) => {
+        student[header] = row[index];
+      });
+      return {
+        studentNumber: student.studentNumber,
+        name: student.name,
+        surname: student.surname,
+        email: student.email,
+        department: student.department,
+        average: student.average,
+        moduleName: student.moduleName,
+        marks: {
+          studentNumber: student.studentNumber,
+          average: student.average,
+          test1: student.test1 ?? 0,
+          test2: student.test2 ?? 0,
+          test3: student.test3 ?? 0,
+          test4: student.test4 ?? 0,
+          test5: student.test5 ?? 0,
+          test6: student.test6 ?? 0,
+          test7: student.test7 ?? 0
+        }
+      };
+    });
+    this.studentsNeedingAttention = this.getStudentsNeedingAttention(students);
+  }
+
+  onFileChange(event: any) {
+    this.handleFileInput(event);
+  }
+
+  downloadExcel() {
+    const filteredStudents = this.students.map(student => {
+      const filteredMarks = Object.keys(student.marks)
+        .filter(key => student.marks[key] !== null && typeof student.marks[key] === 'number')
+        .reduce((obj, key) => {
+          obj[key] = student.marks[key];
+          return obj;
+        }, {} as any);
+
+      return {
+        studentNumber: student.studentNumber,
+        name: student.name,
+        surname: student.surname,
+        email: student.email,
+        department: student.department,
+        moduleName: student.moduleName,
+        average: student.average,
+        ...filteredMarks
+      };
+    });
+
+    const worksheet: XLSX.WorkSheet = XLSX.utils.json_to_sheet(filteredStudents);
+    const workbook: XLSX.WorkBook = { Sheets: { 'data': worksheet }, SheetNames: ['data'] };
+    XLSX.writeFile(workbook, 'StudentMarks.xlsx');
   }
 }
