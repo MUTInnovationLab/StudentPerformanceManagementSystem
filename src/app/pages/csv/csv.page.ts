@@ -1,5 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
+import { Router } from '@angular/router';
+import { AuthenticationService } from '../../services/auths.service';
+import { AlertController } from '@ionic/angular';
+
 import * as XLSX from 'xlsx';
 
 @Component({
@@ -8,6 +12,7 @@ import * as XLSX from 'xlsx';
   styleUrls: ['./csv.page.scss'],
 })
 export class CsvPage implements OnInit {
+  menuVisible: boolean = false;
   moduleCode: string = '';
   previewData: any[] = [];
   file: File | null = null;
@@ -27,7 +32,26 @@ export class CsvPage implements OnInit {
     { name: 'test7', percentage: 0 },
   ];
 
-  constructor(private firestore: AngularFirestore) { }
+  constructor(private firestore: AngularFirestore,private router: Router,private alertController: AlertController,private authService: AuthenticationService,
+
+  ) { }
+
+  openMenu() {
+    this.menuVisible = !this.menuVisible;
+  }
+  goToMeeting() {
+    this.router.navigate(['/live-meet']);  // Ensure you have this route set up
+    this.menuVisible = false;  // Hide the menu after selecting
+  }
+  async logout() {
+    try {
+      await this.authService.signOut();
+      this.router.navigate(['/login']); // Redirect to login page after logout
+      this.menuVisible = false;  // Hide the menu after logging out
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  }
 
   ngOnInit() { }
 

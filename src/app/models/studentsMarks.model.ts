@@ -1,13 +1,15 @@
 export interface StudentMarks {
     studentNumber: string;
-    test1: number | null;
-    test2: number | null;
-    test3: number | null;
-    test4: number | null;
-    test5: number | null;
-    test6: number | null;
-    test7: number | null;
+    test1?: number | null;
+    test2?: number | null;
+    test3?: number | null;
+    test4?: number | null;
+    test5?: number | null;
+    test6?: number | null;
+    test7?: number | null;
     average: number;
+    [key: string]: any; // Index signature to allow string indexing
+
   }
   
   export interface TestPercentages {

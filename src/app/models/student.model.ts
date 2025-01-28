@@ -9,5 +9,6 @@ export interface Student {
     faculty: string;
     department: string;
     enrollmentDate: string;
+    [key: string]: any;
   }
   

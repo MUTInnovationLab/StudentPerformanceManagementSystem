@@ -1,0 +1,90 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>students-performance</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-header collapse="condense">
+    <ion-toolbar>
+      <ion-title size="large">students-performance</ion-title>
+    </ion-toolbar>
+  </ion-header>
+  <div class="score-inputs" style="padding: 20px;">
+    <ion-grid>
+      <ion-row>
+        <!-- <ion-col size="1" *ngFor="let i of [1, 2, 3, 4, 5, 6, 7]">
+          <input [(ngModel)]="testOutOf[i - 1]" placeholder="Test {{ i }} Out Of" />
+        </ion-col> -->
+      </ion-row>
+    </ion-grid>
+  </div>
+  
+  <ion-grid>
+    <ion-row>
+      <ion-col>
+        <ion-card>
+          <ion-card-header>
+            <ion-card-title>Student Marks</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <div *ngFor="let i of [1, 2, 3, 4, 5, 6, 7]; let idx = index" style="margin-bottom: 15px;">
+              <label for="testOutOf{{ i }}" style="display: inline-block; width: 200px; font-weight: bold; margin-right: 10px;">Test {{ i }} :</label>
+              <input 
+                [(ngModel)]="testOutOf[i - 1]" 
+                placeholder="Type what Test {{ i }} was Out Of" 
+                style="padding: 3px; border: 1px solid #ccc; border-radius: 4px; width: 250px;"
+              />
+            </div>
+            <!-- Indicate what the colors mean -->
+            <div style="margin-top: 20px;">
+              <span style="color: green; font-weight: bold;">Green:</span> 75% and above = Good Perfomance<br>
+              <span style="color: orange; font-weight: bold;">Orange:</span> 50% to 74% = Moderate Performance<br>
+              <span style="color: red; font-weight: bold;">Red:</span> Below 50% = Poor Performance
+            </div>
+            <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+              <thead>
+                <tr style="background-color: #f2f2f2;">
+                  <th style="padding: 10px; border: 1px solid #ddd;">Student Number</th>
+                  <!-- <th>Name</th>
+                  <th>Surname</th>
+                  <th>Email</th>
+                  <th>Department</th>
+                  <th>Module</th>
+                  -->
+                  <th style="padding: 10px; border: 1px solid #ddd;">Test 1</th>
+                  <th style="padding: 10px; border: 1px solid #ddd;">Test 2</th>
+                  <th style="padding: 10px; border: 1px solid #ddd;">Test 3</th>
+                  <th style="padding: 10px; border: 1px solid #ddd;">Test 4</th>
+                  <th style="padding: 10px; border: 1px solid #ddd;">Test 5</th>
+                  <th style="padding: 10px; border: 1px solid #ddd;">Test 6</th>
+                  <th style="padding: 10px; border: 1px solid #ddd;">Test 7</th>
+                  <!-- <th>Average</th>  -->
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let student of students" style="text-align: center;">
+                  <td style="padding: 10px; border: 1px solid #ddd;">{{ student.studentNumber }}</td>
+                  <!-- <td>{{ student.name }}</td>
+                  <td>{{ student.surname }}</td>
+                  <td>{{ student.email }}</td>
+                  <td>{{ student.department }}</td>
+                  <td>{{ student.moduleName }}</td>
+                   -->
+                  <td [ngStyle]="{'color': getScoreColor(student.marks.test1, testOutOf[0])}" style="padding: 10px; border: 1px solid #ddd;">{{ student.marks.test1 }}</td>
+                  <td [ngStyle]="{'color': getScoreColor(student.marks.test2, testOutOf[1])}" style="padding: 10px; border: 1px solid #ddd;">{{ student.marks.test2 }}</td>
+                  <td [ngStyle]="{'color': getScoreColor(student.marks.test3, testOutOf[2])}" style="padding: 10px; border: 1px solid #ddd;">{{ student.marks.test3 }}</td>
+                  <td [ngStyle]="{'color': getScoreColor(student.marks.test4, testOutOf[3])}" style="padding: 10px; border: 1px solid #ddd;">{{ student.marks.test4 }}</td>
+                  <td [ngStyle]="{'color': getScoreColor(student.marks.test5, testOutOf[4])}" style="padding: 10px; border: 1px solid #ddd;">{{ student.marks.test5 }}</td>
+                  <td [ngStyle]="{'color': getScoreColor(student.marks.test6, testOutOf[5])}" style="padding: 10px; border: 1px solid #ddd;">{{ student.marks.test6 }}</td>
+                  <td [ngStyle]="{'color': getScoreColor(student.marks.test7, testOutOf[6])}" style="padding: 10px; border: 1px solid #ddd;">{{ student.marks.test7 }}</td>
+                  <!-- <td>{{ student.average }}</td> -->
+                </tr>
+              </tbody>
+            </table>
+          </ion-card-content>
+        </ion-card>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+</ion-content>

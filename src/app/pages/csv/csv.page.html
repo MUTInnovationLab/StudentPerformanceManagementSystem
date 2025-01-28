@@ -1,13 +1,24 @@
-<ion-header>
+<ion-header [translucent]="true">
   <ion-toolbar color="primary">
-    <ion-title class="custom-title">
+    <ion-title class="t">
       <ion-icon name="document-text-outline" class="title-icon"></ion-icon>
-      CSV Generator
+      HOD ANALYTICS
     </ion-title>
+    <ion-buttons slot="start">
+      <!-- Menu Button (3 dots) -->
+      <ion-button (click)="openMenu()">
+        <ion-icon name="ellipsis-vertical-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
+
 <ion-content class="ion-padding custom-content">
+  <div *ngIf="menuVisible" class="menu">
+    <ion-item (click)="goToMeeting()">Go to Meeting</ion-item>
+    <ion-item (click)="logout()">Logout</ion-item>
+  </div>
   <ion-card class="custom-card">
     <ion-card-header>
       <ion-card-title>

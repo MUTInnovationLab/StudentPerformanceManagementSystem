@@ -9,6 +9,8 @@ import {  StudentMarks,  TestPercentages, ModuleMarksDocument } from '../../mode
 // import { ModalController } from '@ionic/angular';
 // import { AlertController, LoadingController,ToastController } from '@ionic/angular';
 import { Student } from 'src/app/models/users.model';
+import { Router } from '@angular/router';  // Add this import at the top
+
 import { EmailService } from 'src/app/services/email.service';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 @Component({
@@ -17,6 +19,8 @@ import { AngularFirestore } from '@angular/fire/compat/firestore';
   styleUrls: ['./student-management.page.scss'],
 })
 export class StudentManagementPage implements OnInit {
+  menuVisible: boolean = false;
+
   attendanceSummary: any[] = [];
 isAttendanceModalOpen = false;
   selectedModule = '';
@@ -53,11 +57,30 @@ isAttendanceModalOpen = false;
   fullstudentDetails:any;
   
   constructor(
+    private authService: AuthenticationService,
+    private router: Router,
     private auth: AuthenticationService,
     private dataService: DataService,
     private email : EmailService,
     private db: AngularFirestore
   ) {}
+
+  openMenu() {
+    this.menuVisible = !this.menuVisible;
+  }
+  goToMeeting() {
+    this.router.navigate(['/live-meet']);  // Ensure you have this route set up
+    this.menuVisible = false;  // Hide the menu after selecting
+  }
+  async logout() {
+    try {
+      await this.authService.signOut();
+      this.router.navigate(['/login']); // Redirect to login page after logout
+      this.menuVisible = false;  // Hide the menu after logging out
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  }
 
   ngOnInit() {
     this.auth.getLoggedInStaff().then((staffData) => {

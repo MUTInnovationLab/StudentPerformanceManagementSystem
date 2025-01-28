@@ -1,5 +1,5 @@
 import { Component, OnInit, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
-import { Chart, ChartConfiguration, registerables } from 'chart.js'; // Add registerables
+import { Chart, ChartConfiguration, registerables } from 'chart.js';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { AuthenticationService } from '../../services/auths.service';
 import { AcademicService } from '../../services/academic.service';
@@ -14,7 +14,6 @@ interface PerformanceCategory {
   students: DetailedStudentInfo[];
 }
 
-// Update marks interface
 interface Marks {
   [key: `test${number}`]: number | null;
   studentNumber: string;
@@ -73,10 +72,10 @@ export class DepartmentAnalyticsPage implements OnInit {
   };
 
   private readonly CHART_COLORS = {
-    AT_RISK: '#ef4444',      // Red
-    PARTIAL: '#f59e0b',      // Orange
-    INTERMEDIATE: '#3b82f6',  // Blue
-    DISTINCTION: '#22c55e'    // Green
+    AT_RISK: '#ef4444',
+    PARTIAL: '#f59e0b',
+    INTERMEDIATE: '#3b82f6',
+    DISTINCTION: '#22c55e'
   };
 
   constructor(
@@ -86,7 +85,6 @@ export class DepartmentAnalyticsPage implements OnInit {
     private reportService: ReportService,
     private actionSheetCtrl: ActionSheetController
   ) {
-    // Register Chart.js components
     Chart.register(...registerables);
   }
 
@@ -101,7 +99,6 @@ export class DepartmentAnalyticsPage implements OnInit {
       this.faculty = await this.authService.getLoggedInFaculty();
       const department = await this.authService.getLoggedInDepartment();
       
-      // Debug log
       console.log('Loading analytics for:', {
         faculty: this.faculty,
         department: department
@@ -115,11 +112,10 @@ export class DepartmentAnalyticsPage implements OnInit {
   }
 
   async ngAfterViewInit() {
-    // Wait for data to be loaded before creating charts
     if (this.departments.length > 0) {
       setTimeout(() => {
         this.updateCharts();
-      }, 100); // Small delay to ensure canvas is ready
+      }, 100);
     }
   }
 
@@ -138,10 +134,8 @@ export class DepartmentAnalyticsPage implements OnInit {
   private async loadDepartmentAnalytics(hodDepartment: string) {
     this.isLoading = true;
     try {
-      // Debug log the faculty name
       console.log('Faculty before sanitization:', this.faculty);
       
-      // Check if faculty name is valid
       if (!this.faculty) {
         throw new Error('Faculty name is undefined or empty');
       }
@@ -211,20 +205,17 @@ export class DepartmentAnalyticsPage implements OnInit {
     let totalStudents = 0;
     
     try {
-      // Get all module marks in batches of 10 (Firestore limit)
       const moduleChunks = this.chunkArray(modules, 10);
       
       for (const moduleChunk of moduleChunks) {
         const moduleCodes = moduleChunk.map(m => m.moduleCode);
         console.log('Processing modules:', moduleCodes);
 
-        // Batch get marks documents
         const marksQuery = await this.firestore
           .collection('marks')
           .ref.where('moduleCode', 'in', moduleCodes)
           .get();
 
-        // Collect all student numbers
         const studentNumbers = new Set<string>();
         const moduleMarks = new Map<string, any>();
 
@@ -241,7 +232,6 @@ export class DepartmentAnalyticsPage implements OnInit {
           }
         });
 
-        // Batch get student documents in chunks
         const studentChunks = this.chunkArray(Array.from(studentNumbers), 10);
         const studentMap = new Map<string, any>();
 
@@ -256,7 +246,6 @@ export class DepartmentAnalyticsPage implements OnInit {
           });
         }
 
-        // Process all marks with student data
         moduleMarks.forEach((moduleData, moduleCode) => {
           const module = modules.find(m => m.moduleCode === moduleCode);
           if (!module) return;
@@ -265,7 +254,6 @@ export class DepartmentAnalyticsPage implements OnInit {
             if (!mark.studentNumber) return;
 
             totalStudents++;
-            // Calculate average if it's missing but has test marks
             const average = mark.average ? Number(mark.average) : 
                            this.calculateStudentAverage(mark, moduleData.testPercentages);
 
@@ -293,7 +281,6 @@ export class DepartmentAnalyticsPage implements OnInit {
                 }
               };
 
-              // Categorize student
               if (average >= this.PERFORMANCE_THRESHOLDS.DISTINCTION) {
                 performanceCategories.distinction.count++;
                 performanceCategories.distinction.students.push(studentDetail);
@@ -323,7 +310,6 @@ export class DepartmentAnalyticsPage implements OnInit {
     };
   }
 
-  // Helper method to chunk arrays for batch processing
   private chunkArray<T>(array: T[], size: number): T[][] {
     const chunks: T[][] = [];
     for (let i = 0; i < array.length; i += size) {
@@ -336,7 +322,7 @@ export class DepartmentAnalyticsPage implements OnInit {
     setTimeout(() => {
       this.createPerformanceDistributionChart();
       this.createDepartmentComparisonChart();
-    }, 150); // Add small delay like in HOD-analytics
+    }, 150);
   }
 
   private createPerformanceDistributionChart() {
@@ -351,7 +337,6 @@ export class DepartmentAnalyticsPage implements OnInit {
         throw new Error('Could not get 2D context for performance chart');
       }
 
-      // Destroy existing chart if it exists
       if (this.performanceChart) {
         this.performanceChart.destroy();
       }
@@ -461,7 +446,6 @@ export class DepartmentAnalyticsPage implements OnInit {
     }
   }
 
-  // Add this helper method
   getTestMark(marks: Marks, testNumber: number): number | undefined {
     return marks[`test${testNumber}`] ?? undefined;
   }
@@ -470,7 +454,6 @@ export class DepartmentAnalyticsPage implements OnInit {
     let totalWeightedScore = 0;
     let totalWeight = 0;
   
-    // Calculate for all available tests
     for (let i = 1; i <= 7; i++) {
       const testKey = `test${i}`;
       const score = Number(mark[testKey]);
