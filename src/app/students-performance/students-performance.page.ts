@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { AuthenticationService } from '../services/auths.service';
 import { AcademicService } from '../services/academic.service';
+import { Router } from '@angular/router';
 import { ModuleMarksDocument, DetailedStudentInfo } from '../models/studentsMarks.model';
 import { Faculty, Department, Module } from '../models/faculty.model';
 
@@ -11,16 +12,45 @@ import { Faculty, Department, Module } from '../models/faculty.model';
   styleUrls: ['./students-performance.page.scss'],
 })
 export class StudentsPerformancePage implements OnInit {
+  menuVisible: boolean = false;
   students: DetailedStudentInfo[] = [];
   studentsNeedingAttention: DetailedStudentInfo[] = [];
   error: string | null = null;
   testOutOf: number[] = Array(7).fill(100); // For testing purposes, each test is out of 100
 
   constructor(
+    private router: Router,
     private firestore: AngularFirestore,
     private authService: AuthenticationService,
     private academicService: AcademicService
   ) {}
+
+  openMenu() {
+    this.menuVisible = !this.menuVisible;
+  }
+  goToCsv(){
+    this.router.navigate(['/csv']);  // Ensure you have this route set up
+    this.menuVisible = false;  // Hide the menu after selecting
+
+  }
+  goToStudentsManagement() {
+    this.router.navigate(['/student-management']);  // Ensure you have this route set up
+    this.menuVisible = false;  // Hide the menu after selecting
+  }
+ 
+  goToMeeting() {
+    this.router.navigate(['/live-meet']);  // Ensure you have this route set up
+    this.menuVisible = false;  // Hide the menu after selecting
+  }
+  async logout() {
+    try {
+      await this.authService.signOut();
+      this.router.navigate(['/login']); // Redirect to login page after logout
+      this.menuVisible = false;  // Hide the menu after logging out
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  }
 
   ngOnInit() {
     this.loadStudentMarks();
