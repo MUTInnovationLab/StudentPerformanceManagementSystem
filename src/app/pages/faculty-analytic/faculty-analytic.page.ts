@@ -69,6 +69,11 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
   openMenu() {
     this.menuVisible = !this.menuVisible;
   }
+  goToStudentPerfomance() {
+    this.router.navigate(['/students-performance']);  // Ensure you have this route set up
+    this.menuVisible = false; 
+
+  }
   goToMeeting() {
     this.router.navigate(['/live-meet']);  // Ensure you have this route set up
     this.menuVisible = false;  // Hide the menu after selecting

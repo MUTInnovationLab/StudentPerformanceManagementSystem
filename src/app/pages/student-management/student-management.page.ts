@@ -68,6 +68,15 @@ isAttendanceModalOpen = false;
   openMenu() {
     this.menuVisible = !this.menuVisible;
   }
+  goToCsv(){
+    this.router.navigate(['/csv']);  // Ensure you have this route set up
+    this.menuVisible = false;  // Hide the menu after selecting
+
+  }
+  goToStudentPerformance() {
+    this.router.navigate(['/students-performance']);  // Ensure you have this route set up
+    this.menuVisible = false;  // Hide the menu after selecting
+  }
   goToMeeting() {
     this.router.navigate(['/live-meet']);  // Ensure you have this route set up
     this.menuVisible = false;  // Hide the menu after selecting
