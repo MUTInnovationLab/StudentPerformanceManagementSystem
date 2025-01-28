@@ -1,10 +1,25 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
     <ion-title>Faculty Analytic</ion-title>
+    <ion-buttons slot="start">
+      <!-- Menu Button (3 dots) -->
+      <ion-button (click)="openMenu()">
+        <ion-icon name="ellipsis-vertical-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
+
+
+
+
+
 <ion-content [fullscreen]="true">
+  <div *ngIf="menuVisible" class="menu">
+    <ion-item (click)="goToMeeting()">Go to Meeting</ion-item>
+    <ion-item (click)="logout()">Logout</ion-item>
+  </div>
   <!-- Loading spinner -->
   <div *ngIf="isLoading" class="loading-container">
     <ion-spinner name="circular"></ion-spinner>

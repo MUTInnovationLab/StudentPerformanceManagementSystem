@@ -1,13 +1,26 @@
 <ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title class="t">HOD ANALYTICS</ion-title>
+  <ion-toolbar color="primary">
+    <ion-title class="t">
+      <ion-icon name="document-text-outline" class="title-icon"></ion-icon>
+      HOD ANALYTICS
+    </ion-title>
     <ion-buttons slot="end">
       <ion-button (click)="navigateToDepartmentAnalytics()">Department Analytics</ion-button>
+    </ion-buttons>
+    <ion-buttons slot="start">
+      <!-- Menu Button (3 dots) -->
+      <ion-button (click)="openMenu()">
+        <ion-icon name="ellipsis-vertical-outline"></ion-icon>
+      </ion-button>
     </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
 <ion-content>
+  <div *ngIf="menuVisible" class="menu">
+    <ion-item (click)="goToMeeting()">Go to Meeting</ion-item>
+    <ion-item (click)="logout()">Logout</ion-item>
+  </div>
   <div class="analytics-container">
     <div class="charts-grid">
       <div class="chart-wrapper">

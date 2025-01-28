@@ -1,4 +1,6 @@
 import { Component, OnInit, OnDestroy, NgZone } from '@angular/core';
+import { Router } from '@angular/router';
+import { AuthenticationService } from '../../services/auths.service';
 import { ModalController } from '@ionic/angular';
 import { InvitationModalComponent } from 'src/app/invitation-modal/invitation-modal.component';
 import AgoraRTC, {
@@ -41,6 +43,7 @@ interface DeviceInfo {
   styleUrls: ['./live-meet.page.scss'],
 })
 export class LiveMeetPage implements OnInit, OnDestroy {
+  menuVisible: boolean = false;
   private client: IAgoraRTCClient;
   private localAudioTrack: ILocalAudioTrack | null = null;
   private localVideoTrack: ILocalVideoTrack | null = null;
@@ -69,6 +72,9 @@ export class LiveMeetPage implements OnInit, OnDestroy {
 
   constructor(
     private toastController: ToastController,
+    private router: Router,
+    private auth: AuthenticationService,
+    private authService: AuthenticationService,
     private loadingController: LoadingController,
     private modalController: ModalController, // Add this
     private alertController: AlertController,
@@ -80,6 +86,23 @@ export class LiveMeetPage implements OnInit, OnDestroy {
       role: 'host' as ClientRole
     });
   }
+  openMenu() {
+    this.menuVisible = !this.menuVisible;
+  }
+  goToCsv() {
+    this.router.navigate(['/csv']);  // Ensure you have this route set up
+    this.menuVisible = false;  // Hide the menu after selecting
+  }
+  async logout() {
+    try {
+      await this.authService.signOut();
+      this.router.navigate(['/login']); // Redirect to login page after logout
+      this.menuVisible = false;  // Hide the menu after logging out
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  }
+
 
   async ngOnInit(): Promise<void> {
     try {

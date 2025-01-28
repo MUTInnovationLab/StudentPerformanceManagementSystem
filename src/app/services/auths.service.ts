@@ -71,6 +71,10 @@ export class AuthenticationService {
     const staff = await this.getLoggedInStaff();
     return staff.department;
   }
+
+signOut() {
+  return this.afAuth.signOut();
+}
 }
 
 

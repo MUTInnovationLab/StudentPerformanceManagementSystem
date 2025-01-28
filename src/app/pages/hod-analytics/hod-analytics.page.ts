@@ -15,6 +15,8 @@ import { Router } from '@angular/router';  // Add this import at the top
   styleUrls: ['./hod-analytics.page.scss'],
 })
 export class HODANALYTICSPage implements OnInit {
+  menuVisible: boolean = false;
+
   moduleRanges: {
     '0-49': ModuleRange;
     '50-59': ModuleRange;
@@ -62,6 +64,32 @@ export class HODANALYTICSPage implements OnInit {
         console.error('No user logged in');
       }
     });
+  }
+  openMenu() {
+    this.menuVisible = !this.menuVisible;
+  }
+  goToMeeting() {
+    this.router.navigate(['/live-meet']);  // Ensure you have this route set up
+    this.menuVisible = false;  // Hide the menu after selecting
+  }
+  async logout() {
+    try {
+      await this.authService.signOut();
+      this.router.navigate(['/login']); // Redirect to login page after logout
+      this.menuVisible = false;  // Hide the menu after logging out
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  }
+
+  
+  async showLogoutMessage() {
+    const alert = await this.alertController.create({
+      header: 'Logged Out',
+      message: 'You have been successfully logged out.',
+      buttons: ['OK']
+    });
+    await alert.present();
   }
 
   async initializeData() {

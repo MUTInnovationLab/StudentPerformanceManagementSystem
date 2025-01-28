@@ -133,11 +133,10 @@ interface DetailItem {
 }
 interface AcademicStats {
   passingRate: number;
-  attendanceRate: number;
+  attendancePercentage: number; 
   mentorsPercentage: number;
   studentsPercentage: number;
   staffPercentage: number; // Add this line
-  attendancePercentage: number;
   lecturesPercentage: number;
 }
 
@@ -192,11 +191,10 @@ export class AdminPage implements OnInit {
   // Academic statistics
   academicStats: AcademicStats = {
     passingRate: 0,
-    attendanceRate: 0,
+    attendancePercentage: 0,
     mentorsPercentage: 0,
     studentsPercentage: 0,
     staffPercentage: 0, // Include this
-    attendancePercentage: 0,
     lecturesPercentage: 0
   };
   constructor(private router: Router, private firestore: AngularFirestore,private popoverController: PopoverController,private auth: AngularFireAuth,    private alertController: AlertController,
@@ -952,64 +950,92 @@ showCardDetails(card: StatCard) {
   fetchAttendanceRate(): void {
     console.log('Fetching attendance rate...');
   
+    // Fetch both collections using forkJoin
     forkJoin({
-      totalStudents: this.firestore.collection('students').valueChanges(),
-      attendanceData: this.firestore.collection('Attended').valueChanges()
+      students: this.firestore.collection('students').valueChanges(),
+      attended: this.firestore.collection('Attended').valueChanges()
     }).subscribe({
       next: (results) => {
-        const totalStudents = results.totalStudents as any[];
-        const attendanceData = results.attendanceData as any[];
+        const students = results.students as any[];
+        const attended = results.attended as any[];
   
-        // Log fetched data
-        console.log('Raw Students Collection Data:', totalStudents);
-        console.log('Raw Attended Collection Data:', attendanceData);
+        console.log('Students Fetched:', students);
+        console.log('Total Students Count:', students.length);
+        
+        // Log first few student details for debugging
+        students.slice(0, 5).forEach((student, index) => {
+          console.log(`Student ${index + 1}:`, {
+            studentNumber: student.studentNumber,
+            name: student.name,
+            department: student.department
+          });
+        });
   
-        // Normalize student numbers from 'students' collection
-        const studentNumbers = totalStudents
-          .map(student => student.studentNumber?.toString().trim().toLowerCase())
-          .filter(Boolean); // Remove undefined/null values
-        console.log('Normalized Student Numbers:', studentNumbers);
+        console.log('Attended Records Fetched:', attended);
+        console.log('Total Attended Count:', attended.length);
+        
+        // Log first few attendance records
+        attended.slice(0, 5).forEach((record, index) => {
+          console.log(`Attendance Record ${index + 1}:`, {
+            studentNumber: record.studentNumber,
+            scanTime: record.scanTime
+          });
+        });
   
-        // Normalize student numbers from 'Attended' collection
-        const attendedStudentNumbers = attendanceData
-          .map(attendance => attendance.studentNumber?.toString().trim().toLowerCase())
-          .filter(Boolean); // Remove undefined/null values
-        console.log('Normalized Attended Student Numbers:', attendedStudentNumbers);
+        // Normalize student numbers
+        const normalizeStudentNumber = (number: any) => 
+          number?.toString().trim().toLowerCase() || '';
   
-        // Find unique attended student numbers that match the students list
-        const uniqueAttendedStudentNumbers = new Set(
-          attendedStudentNumbers.filter(number => studentNumbers.includes(number))
+        // Create sets for comparison
+        const studentNumbers = new Set(
+          students
+            .map(student => normalizeStudentNumber(student.studentNumber))
+            .filter(Boolean)
         );
-        console.log('Matching Attended Student Numbers:', Array.from(uniqueAttendedStudentNumbers));
   
-        // Calculate counts
-        const totalStudentsCount = studentNumbers.length;
-        const attendedStudentsCount = uniqueAttendedStudentNumbers.size;
+        const attendedStudentNumbers = new Set(
+          attended
+            .map(record => normalizeStudentNumber(record.studentNumber))
+            .filter(Boolean)
+        );
   
-        console.log(`Total Students Count: ${totalStudentsCount}`);
-        console.log(`Attended Students Count: ${attendedStudentsCount}`);
+        console.log('Unique Student Numbers:', Array.from(studentNumbers));
+        console.log('Unique Attended Student Numbers:', Array.from(attendedStudentNumbers));
   
-        // Calculate attendance rate
-        const attendanceRate = totalStudentsCount > 0
-          ? (attendedStudentsCount / totalStudentsCount) * 100
+        // Calculate attendance
+        const totalStudentCount = studentNumbers.size;
+        const attendedStudentCount = Array.from(attendedStudentNumbers).filter(num => 
+          studentNumbers.has(num)
+        ).length;
+  
+        console.log('Total Students:', totalStudentCount);
+        console.log('Attended Students:', attendedStudentCount);
+  
+        // Calculate percentage
+        const attendancePercentage = totalStudentCount > 0
+          ? (attendedStudentCount / totalStudentCount) * 100
           : 0;
-        this.academicStats.attendanceRate = Math.round(attendanceRate * 10) / 10;
   
-        console.log(`Attendance Rate: ${this.academicStats.attendanceRate}%`);
+        // Set and round attendance percentage
+        this.academicStats.attendancePercentage = Number(attendancePercentage.toFixed(1));
+  
+        console.log('FINAL Attendance Percentage:', this.academicStats.attendancePercentage + '%');
   
         // Trigger change detection
         this.cd.detectChanges();
       },
       error: (error) => {
-        console.error('Error fetching attendance data:', error);
-        this.academicStats.attendanceRate = 0;
-  
-        // Trigger change detection
+        console.error('COMPLETE Error in attendance rate:', error);
+        this.academicStats.attendancePercentage = 0;
         this.cd.detectChanges();
       }
     });
   }
   
+  // Helper method for normalization
+  private normalizeStudentNumber(number: any): string {
+    return number?.toString().trim().toLowerCase() || '';
+  }
   
   // Fetch the total count of mentors from Firestore
   fetchMentorsCount(): void {
@@ -1088,7 +1114,7 @@ showCardDetails(card: StatCard) {
           this.academicStats.studentsPercentage = Math.round(studentsPercentage * 10) / 10;
           this.academicStats.staffPercentage = Math.round(staffPercentage * 10) / 10;
           this.academicStats.lecturesPercentage = Math.round(lecturesPercentage * 10) / 10;
-          this.academicStats.attendanceRate = Math.round(attendanceRate * 10) / 10;
+          this.academicStats.attendancePercentage = Math.round(attendanceRate * 10) / 10;
   
           // Update the Mentors stat card count
           const mentorStat = this.stats.find(stat => stat.title === 'Mentors');
@@ -1101,7 +1127,7 @@ showCardDetails(card: StatCard) {
           console.log(`Students Percentage: ${this.academicStats.studentsPercentage}%`);
           console.log(`Staff Percentage: ${this.academicStats.staffPercentage}%`);
           console.log(`Lectures Percentage: ${this.academicStats.lecturesPercentage}%`);
-          console.log(`Attendance Rate: ${this.academicStats.attendanceRate}%`);
+          console.log(`Attendance Rate: ${this.academicStats.attendancePercentage}%`);
           console.log(`Total Staff: ${staffCount}`);
           console.log(`Staff with Lectures: ${staffWithLecturesCount}`);
         } else {
@@ -1110,7 +1136,7 @@ showCardDetails(card: StatCard) {
           this.academicStats.studentsPercentage = 0;
           this.academicStats.staffPercentage = 0;
           this.academicStats.lecturesPercentage = 0;
-          this.academicStats.attendanceRate = 0;
+          this.academicStats.attendancePercentage = 0;
           console.log('No population data found');
         }
       },
@@ -1120,7 +1146,7 @@ showCardDetails(card: StatCard) {
         this.academicStats.studentsPercentage = 0;
         this.academicStats.staffPercentage = 0;
         this.academicStats.lecturesPercentage = 0;
-        this.academicStats.attendanceRate = 0;
+        this.academicStats.attendancePercentage = 0;
       }
     });
   }
