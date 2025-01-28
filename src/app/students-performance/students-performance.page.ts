@@ -14,9 +14,11 @@ import * as XLSX from 'xlsx';
 export class StudentsPerformancePage implements OnInit {
   students: DetailedStudentInfo[] = [];
   studentsNeedingAttention: DetailedStudentInfo[] = [];
+  uploadedStudents: DetailedStudentInfo[] = [];
   error: string | null = null;
   errorMessage: string | null = null;
   testOutOf: number[] = Array(7).fill(100); // For testing purposes, each test is out of 100
+  isLoading: boolean = true; // Add loading state
 
   constructor(
     private firestore: AngularFirestore,
@@ -29,6 +31,7 @@ export class StudentsPerformancePage implements OnInit {
   }
 
   private async loadStudentMarks() {
+    this.isLoading = true; // Set loading state to true
     try {
       // Bypass authentication for testing purposes
       const faculty = 'Faculty of Applied and Health Science';
@@ -54,6 +57,8 @@ export class StudentsPerformancePage implements OnInit {
         console.error('Error loading student marks:', error);
         this.error = 'Failed to load student marks';
       }
+    } finally {
+      this.isLoading = false; // Set loading state to false
     }
   }
 
@@ -237,7 +242,7 @@ export class StudentsPerformancePage implements OnInit {
   processExcelData(data: any[]) {
     const headers = data[0];
     const rows = data.slice(1);
-    const students: DetailedStudentInfo[] = rows.map(row => {
+    const uploadedStudents: DetailedStudentInfo[] = rows.map(row => {
       const student: any = {};
       headers.forEach((header: string, index: number) => {
         student[header] = row[index];
@@ -253,17 +258,23 @@ export class StudentsPerformancePage implements OnInit {
         marks: {
           studentNumber: student.studentNumber,
           average: student.average,
-          test1: student.test1 ?? 0,
-          test2: student.test2 ?? 0,
-          test3: student.test3 ?? 0,
-          test4: student.test4 ?? 0,
-          test5: student.test5 ?? 0,
-          test6: student.test6 ?? 0,
-          test7: student.test7 ?? 0
+          test1: student.test1 ?? null,
+          test2: student.test2 ?? null,
+          test3: student.test3 ?? null,
+          test4: student.test4 ?? null,
+          test5: student.test5 ?? null,
+          test6: student.test6 ?? null,
+          test7: student.test7 ?? null
         }
       };
     });
-    this.studentsNeedingAttention = this.getStudentsNeedingAttention(students);
+
+    const filteredUploadedStudents = uploadedStudents.filter(student => {
+      return this.students.some(existingStudent => existingStudent.studentNumber === student.studentNumber);
+    });
+
+    this.studentsNeedingAttention = this.getStudentsNeedingAttention(filteredUploadedStudents);
+    this.uploadedStudents = filteredUploadedStudents;
   }
 
   onFileChange(event: any) {
