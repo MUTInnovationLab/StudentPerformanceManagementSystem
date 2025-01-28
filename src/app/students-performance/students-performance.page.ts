@@ -12,8 +12,9 @@ import { Faculty, Department, Module } from '../models/faculty.model';
 })
 export class StudentsPerformancePage implements OnInit {
   students: DetailedStudentInfo[] = [];
+  studentsNeedingAttention: DetailedStudentInfo[] = [];
   error: string | null = null;
-  testOutOf: number[] = Array(7).fill(null);
+  testOutOf: number[] = Array(7).fill(100); // For testing purposes, each test is out of 100
 
   constructor(
     private firestore: AngularFirestore,
@@ -42,7 +43,8 @@ export class StudentsPerformancePage implements OnInit {
         return acc.concat(this.getAllModulesFromDepartment(dept));
       }, []);
       this.students = await this.retrieveStudentMarks(allModules);
-      console.log('Students data:', this.students); // Debug log
+      this.studentsNeedingAttention = this.getStudentsNeedingAttention(this.students);
+      console.log('Students needing attention:', this.studentsNeedingAttention); // Debug log
     } catch (error) {
       console.error('Error loading student marks:', error);
       this.error = 'Failed to load student marks';
@@ -129,13 +131,13 @@ export class StudentsPerformancePage implements OnInit {
                 marks: {
                   studentNumber: mark.studentNumber,
                   average: mark.average,
-                  test1: mark.test1 ?? undefined,
-                  test2: mark.test2 ?? undefined,
-                  test3: mark.test3 ?? undefined,
-                  test4: mark.test4 ?? undefined,
-                  test5: mark.test5 ?? undefined,
-                  test6: mark.test6 ?? undefined,
-                  test7: mark.test7 ?? undefined
+                  test1: mark.test1 ?? 0,
+                  test2: mark.test2 ?? 0,
+                  test3: mark.test3 ?? 0,
+                  test4: mark.test4 ?? 0,
+                  test5: mark.test5 ?? 0,
+                  test6: mark.test6 ?? 0,
+                  test7: mark.test7 ?? 0
                 }
               };
               students.push(studentDetail);
@@ -143,11 +145,27 @@ export class StudentsPerformancePage implements OnInit {
           });
         });
       }
+      console.log('Retrieved students:', students); // Debug log
     } catch (error) {
       console.error('Error retrieving student marks:', error);
       throw error;
     }
     return students;
+  }
+
+  private getStudentsNeedingAttention(students: DetailedStudentInfo[]): DetailedStudentInfo[] {
+    return students.filter(student => {
+      const failedTests = [
+        student.marks.test1 !== null && student.marks.test1 !== undefined && student.marks.test1 <= (this.testOutOf[0] ?? 0) * 0.5,
+        student.marks.test2 !== null && student.marks.test2 !== undefined && student.marks.test2 <= (this.testOutOf[1] ?? 0) * 0.5,
+        student.marks.test3 !== null && student.marks.test3 !== undefined && student.marks.test3 <= (this.testOutOf[2] ?? 0) * 0.5,
+        student.marks.test4 !== null && student.marks.test4 !== undefined && student.marks.test4 <= (this.testOutOf[3] ?? 0) * 0.5,
+        student.marks.test5 !== null && student.marks.test5 !== undefined && student.marks.test5 <= (this.testOutOf[4] ?? 0) * 0.5,
+        student.marks.test6 !== null && student.marks.test6 !== undefined && student.marks.test6 <= (this.testOutOf[5] ?? 0) * 0.5,
+        student.marks.test7 !== null && student.marks.test7 !== undefined && student.marks.test7 <= (this.testOutOf[6] ?? 0) * 0.5
+      ].filter(failed => failed);
+      return failedTests.length > 2;
+    });
   }
 
   private chunkArray<T>(array: T[], size: number): T[][] {
