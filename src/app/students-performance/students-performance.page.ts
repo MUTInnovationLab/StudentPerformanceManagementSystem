@@ -13,6 +13,7 @@ import { Faculty, Department, Module } from '../models/faculty.model';
 export class StudentsPerformancePage implements OnInit {
   students: DetailedStudentInfo[] = [];
   error: string | null = null;
+  testOutOf: number[] = Array(7).fill(null);
 
   constructor(
     private firestore: AngularFirestore,
@@ -173,5 +174,19 @@ export class StudentsPerformancePage implements OnInit {
     }
   
     return totalWeight > 0 ? totalWeightedScore / totalWeight : 0;
+  }
+
+  getScoreColor(score: number | null | undefined, outOf: number | null | undefined): string {
+    if (outOf === null || outOf === undefined || score === null || score === undefined) {
+      return 'black';
+    }
+    const percentage = (score / outOf) * 100;
+    if (percentage >= 75) {
+      return 'green';
+    } else if (percentage >= 50) {
+      return 'orange';
+    } else {
+      return 'red';
+    }
   }
 }
