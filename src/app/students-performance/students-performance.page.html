@@ -98,9 +98,10 @@
               </table>
               <!-- Table for students who need critical attention -->
               <div *ngIf="studentsNeedingAttention.length > 0" style="margin-top: 40px;">
-                <h2 style="color: red; text-align: center;">Students who need critical attention</h2>
+                <h2 style="color: red; text-align: center;">Students who need attention are processed into the excel file</h2>
                 <div style="text-align: center; margin-bottom: 20px;">
                   <h3>Total number of students needing attention: {{ studentsNeedingAttention.length }}</h3>
+                  <h2 style="color: red; text-align: center;">Download and Upload the excel file</h2>
                 </div>
                 <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
                   <thead>
