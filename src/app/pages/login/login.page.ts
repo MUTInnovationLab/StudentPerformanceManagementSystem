@@ -80,6 +80,9 @@ export class LoginPage implements OnInit {
               case 'dept-admin':
                 this.router.navigate(['/admin']); // Navigate to AdminPage
                 break;
+              case 'Lecturer':
+                this.router.navigate(['/csv']); // Navigate to CSV Page
+                break;
               default:
                 this.router.navigate(['/hod-analytics']); // Navigate to HOD's analytics
             }
@@ -99,6 +102,7 @@ export class LoginPage implements OnInit {
       }
     }
   }
+  
 
   async showAlert(header: string, message: string) {
     const alert = await this.alertController.create({

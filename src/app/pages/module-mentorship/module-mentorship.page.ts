@@ -95,6 +95,7 @@ export class ModuleMentorshipPage implements OnInit, AfterViewInit {
   staffData: StaffDetails | null = null;
   totalStudents: number = 0;
   allStudents: any[] = [];
+  allModules: ModuleMentorshipData[] = [];
  
 
 
@@ -159,6 +160,8 @@ export class ModuleMentorshipPage implements OnInit, AfterViewInit {
       this.generateFacultyStudentsExcel();
     }
   }
+
+
   generateFacultyStudentsExcel() {
     if (this.allStudents.length === 0) {
       return; // Silently exit if no students
@@ -170,16 +173,20 @@ export class ModuleMentorshipPage implements OnInit, AfterViewInit {
     // Iterate through low-performing modules to identify students at risk
     this.lowPerformingModules.forEach(module => {
       module.studentsNeedingMentor?.forEach(studentMark => {
-        const riskKey = studentMark.studentNumber;
-        const moduleRisk = `${module.moduleCode}`;
-        
-        if (!studentRisks.has(riskKey)) {
-          studentRisks.set(riskKey, [moduleRisk]);
-        } else {
-          const existingRisks = studentRisks.get(riskKey) || [];
-          if (!existingRisks.includes(moduleRisk)) {
-            existingRisks.push(moduleRisk);
-            studentRisks.set(riskKey, existingRisks);
+        // Only add to risks if average is below 50%
+        const average = parseFloat(studentMark.average);
+        if (average < 50) {
+          const riskKey = studentMark.studentNumber;
+          const moduleRisk = module.moduleCode.trim(); // Ensure clean module code
+          
+          if (!studentRisks.has(riskKey)) {
+            studentRisks.set(riskKey, [moduleRisk]);
+          } else {
+            const existingRisks = studentRisks.get(riskKey) || [];
+            if (!existingRisks.includes(moduleRisk)) {
+              existingRisks.push(moduleRisk);
+              studentRisks.set(riskKey, existingRisks);
+            }
           }
         }
       });
@@ -192,13 +199,13 @@ export class ModuleMentorshipPage implements OnInit, AfterViewInit {
       
       return {
         'Student Number': student.studentNumber,
-        'Name': student.name.split(' ')[0], // First name
-        'Surname': student.surname.split(' ').slice(1).join(' ') || student.surname.split(' ')[0], // Full last name or first name if no last name
+        'Name': student.name.split(' ')[0],
+        'Surname': student.surname.split(' ').slice(1).join(' ') || student.surname.split(' ')[0],
         'Email': student.email || 'N/A',
         'Department': student.department || 'N/A',
         'Status': risks.length > 0 
-          ? `Risk in modules: ${risks.join(', ')}` 
-          : '' // Empty string if no risks
+          ? `Risk in: ${risks.join(', ')}` 
+          : ''  // Empty string if no risks
       };
     });
   
@@ -217,7 +224,9 @@ export class ModuleMentorshipPage implements OnInit, AfterViewInit {
     window.URL.revokeObjectURL(url);
   }
 
-  
+
+
+
   private async loadModuleData() {
     this.isLoading = true;
     try {
@@ -261,81 +270,139 @@ private async loadTotalStudents(faculty: Faculty) {
 
 
   
-  // Optimize data processing by parallelizing API calls
-  async processModuleData(faculty: Faculty) {
-    const departments = faculty.departments || [];
-    const moduleData: ModuleMentorshipData[] = []; // This will store the final array
-  
+async processModuleData(faculty: Faculty) {
+  this.isLoading = true;
+  const departments = faculty.departments || [];
+  const moduleData: ModuleMentorshipData[] = [];
+
+  try {
     // Loop through each department
     for (const dept of departments) {
-      const modules = this.getAllModulesFromDepartment(dept); // Assume this method returns an array of modules
+      const modules = this.getAllModulesFromDepartment(dept);
+      
+      if (modules.length === 0) continue;
+
       const [academicPerformance, attendancePerformance] = await Promise.all([
-        this.academicService.getModuleAcademicPerformance(modules), // Get academic performance data
-        this.attendanceService.getModuleAttendancePerformance(modules) // Get attendance performance data
+        this.academicService.getModuleAcademicPerformance(modules),
+        this.attendanceService.getModuleAttendancePerformance(modules)
       ]);
-  
-      // Process each module
-      const modulesMentorshipData = await Promise.all(
-        modules.map(async (module) => {
-          // Find corresponding academic and attendance data for each module
-          const academic = academicPerformance.find(ap => ap.moduleCode === module.moduleCode);
-          const attendance = attendancePerformance.find(ap => ap.moduleCode === module.moduleCode);
-  
-          if (academic && academic.averageMarks < this.LOW_PERFORMANCE_THRESHOLD) {
-            // If average marks are below threshold, get additional data
+
+      // Process each module in chunks to avoid overwhelming Firestore
+      const CHUNK_SIZE = 5;
+      const moduleChunks = this.chunkArray(modules, CHUNK_SIZE);
+
+      for (const moduleChunk of moduleChunks) {
+        const modulesMentorshipData = await Promise.all(
+          moduleChunk.map(async (module) => {
+            // Get academic and attendance data for this module
+            const academic = academicPerformance.find(ap => ap.moduleCode === module.moduleCode);
+            const attendance = attendancePerformance.find(ap => ap.moduleCode === module.moduleCode);
+
+            // Get marks data for all modules, not just low performing ones
             const marksDoc = await this.firestore
               .collection('marks')
               .doc(module.moduleCode)
               .get()
               .toPromise();
-  
-            const marksData = marksDoc?.data() as { marks: StudentMark[] } | undefined;
-            const studentsNeedingMentor = marksData?.marks.filter(
-              student => parseFloat(student.average) < this.LOW_PERFORMANCE_THRESHOLD
-            ) || [];
-  
-            // Get lecturer details
+
+            const marksData = marksDoc?.data() as { 
+              marks: StudentMark[], 
+              testPercentages: { [key: string]: number } 
+            } | undefined;
+
+            let studentsNeedingMentor: StudentMark[] = [];
+            let averageMarks = 0;
+
+            if (marksData && marksData.marks) {
+              // Calculate averages for all students in the module
+              studentsNeedingMentor = marksData.marks.filter(student => {
+                const actualAverage = this.calculateStudentAverage(student, marksData.testPercentages);
+                return actualAverage < this.LOW_PERFORMANCE_THRESHOLD;
+              });
+
+              // Calculate module average using weighted averages
+              averageMarks = marksData.marks.reduce((sum, student) => 
+                sum + this.calculateStudentAverage(student, marksData.testPercentages), 0
+              ) / marksData.marks.length;
+            }
+
             const lecturerEmail = this.getLecturerEmail(module.moduleCode);
             const lecturerDetails = this.staffDetails.get(lecturerEmail.toLowerCase());
-  
-            // Return the ModuleMentorshipData object
+
+            // Return data for all modules
             return {
               moduleCode: module.moduleCode,
               moduleName: module.moduleName,
               lecturer: module.lecturer || 'Not Assigned',
               lecturerEmail: lecturerEmail,
               lecturerDetails: lecturerDetails,
-              averageMarks: academic.averageMarks,
+              averageMarks: academic?.averageMarks || averageMarks,
               averageAttendance: attendance?.averageAttendance || 0,
-              totalStudents: academic.totalStudents,
+              totalStudents: academic?.totalStudents || (marksData?.marks?.length || 0),
               studentsNeedingMentorship: studentsNeedingMentor.length,
               department: dept.name,
               studentsNeedingMentor: studentsNeedingMentor
-            } as ModuleMentorshipData; // Type assertion to ensure correct type
-          }
-  
-          return null; // If module doesn't meet the condition, return null
-        })
-      );
-  
-      // Filter out null values from the results
-      moduleData.push(...modulesMentorshipData.filter((module) => module !== null) as ModuleMentorshipData[]);
+            } as ModuleMentorshipData;
+          })
+        );
+
+        // Add all modules to moduleData, not just non-null ones
+        moduleData.push(...modulesMentorshipData.filter(module => module !== null) as ModuleMentorshipData[]);
+      }
     }
-  
-    // Filter low-performing modules based on average marks
-    this.lowPerformingModules = moduleData.filter(module => module.averageMarks < 50);
-    this.filteredModules = [...this.lowPerformingModules]; // For UI filtering or additional handling
-  
-    // Calculate total students needing mentorship
-    this.totalStudentsNeedingMentorship = this.lowPerformingModules.reduce(
+
+    // Store all modules
+    this.allModules = [...moduleData];
+    
+    // Filter low-performing modules for specific views
+    this.lowPerformingModules = moduleData.filter(module => module.averageMarks < this.LOW_PERFORMANCE_THRESHOLD);
+    
+    // Initialize filtered modules with all modules instead of just low performing ones
+    this.filteredModules = [...moduleData];
+
+    // Calculate total students needing mentorship across all modules
+    this.totalStudentsNeedingMentorship = moduleData.reduce(
       (sum, module) => sum + module.studentsNeedingMentorship, 0
     );
-  
+
+    // Update charts with complete data
     setTimeout(() => {
-      this.updateCharts(); // Update any relevant charts or UI
+      this.updateCharts();
     }, 0);
+
+  } catch (error) {
+    console.error('Error processing module data:', error);
+  } finally {
+    this.isLoading = false;
+  }
+}
+
+private calculateStudentAverage(mark: StudentMark, testPercentages: any): number {
+  let totalWeightedScore = 0;
+  let totalWeight = 0;
+  
+  // Calculate for all available tests
+  for (let i = 1; i <= 7; i++) {
+    const testKey = `test${i}` as keyof StudentMark;
+    const score = Number(mark[testKey]);
+    const weight = testPercentages[testKey];
+    
+    if (!isNaN(score) && score !== null && weight) {
+      totalWeightedScore += (score * weight);
+      totalWeight += weight;
+    }
   }
   
+  return totalWeight > 0 ? totalWeightedScore / totalWeight : 0;
+}
+
+private chunkArray<T>(array: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < array.length; i += size) {
+    chunks.push(array.slice(i, i + size));
+  }
+  return chunks;
+}
   
   // Process modules for a specific department
   private async processDepartmentModules(modules: Module[], departmentName: string): Promise<ModuleMentorshipData[]> {
