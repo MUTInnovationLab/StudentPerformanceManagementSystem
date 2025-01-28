@@ -161,7 +161,7 @@ export class ModuleMentorshipPage implements OnInit, AfterViewInit {
     }
   }
 
-  
+
   generateFacultyStudentsExcel() {
     if (this.allStudents.length === 0) {
       return; // Silently exit if no students
@@ -204,8 +204,8 @@ export class ModuleMentorshipPage implements OnInit, AfterViewInit {
         'Email': student.email || 'N/A',
         'Department': student.department || 'N/A',
         'Status': risks.length > 0 
-          ? `Risk in ${risks.join(', ')}` 
-          : '' // Empty string if no risks or passing grades
+          ? `Risk in: ${risks.join(', ')}` 
+          : ''  // Empty string if no risks
       };
     });
   
@@ -223,7 +223,10 @@ export class ModuleMentorshipPage implements OnInit, AfterViewInit {
     a.click();
     window.URL.revokeObjectURL(url);
   }
-  
+
+
+
+
   private async loadModuleData() {
     this.isLoading = true;
     try {

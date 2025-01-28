@@ -184,10 +184,7 @@ const routes: Routes = [
     path: 'department-analytics',
     loadChildren: () => import('./pages/department-analytics/department-analytics.module').then( m => m.DepartmentAnalyticsPageModule)
   },
-  {
-    path: 'students-performance',
-    loadChildren: () => import('./students-performance/students-performance.module').then( m => m.StudentsPerformancePageModule)
-  },
+ 
 
 ];
 
