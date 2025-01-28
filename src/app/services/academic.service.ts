@@ -42,7 +42,6 @@ export class AcademicService {
       let totalWeightedScore = 0;
       let totalWeight = 0;
 
-      // Calculate weighted average based on test percentages
       Object.entries(testPercentages).forEach(([testKey, weight]) => {
         const score = Number(mark[testKey as keyof StudentMarks]);
         if (!isNaN(score) && weight) {
