@@ -16,7 +16,6 @@ export class StudentsPerformancePage implements OnInit {
   menuVisible: boolean = false;
   students: DetailedStudentInfo[] = [];
   studentsNeedingAttention: DetailedStudentInfo[] = [];
-  uploadedStudents: DetailedStudentInfo[] = [];
   error: string | null = null;
   errorMessage: string | null = null;
   testOutOf: number[] = Array(7).fill(100); // For testing purposes, each test is out of 100
@@ -32,20 +31,22 @@ export class StudentsPerformancePage implements OnInit {
   openMenu() {
     this.menuVisible = !this.menuVisible;
   }
-  goToCsv(){
+
+  goToCsv() {
     this.router.navigate(['/csv']);  // Ensure you have this route set up
     this.menuVisible = false;  // Hide the menu after selecting
-
   }
+
   goToStudentsManagement() {
     this.router.navigate(['/student-management']);  // Ensure you have this route set up
     this.menuVisible = false;  // Hide the menu after selecting
   }
- 
+
   goToMeeting() {
     this.router.navigate(['/live-meet']);  // Ensure you have this route set up
     this.menuVisible = false;  // Hide the menu after selecting
   }
+
   async logout() {
     try {
       await this.authService.signOut();
@@ -304,7 +305,6 @@ export class StudentsPerformancePage implements OnInit {
     });
 
     this.studentsNeedingAttention = this.getStudentsNeedingAttention(filteredUploadedStudents);
-    this.uploadedStudents = filteredUploadedStudents;
   }
 
   onFileChange(event: any) {

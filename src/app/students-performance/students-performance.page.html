@@ -163,47 +163,6 @@
               <div style="margin-top: 20px; text-align: center;">
                 <button (click)="downloadExcel()">Download Excel</button>
               </div>
-              <!-- Secondary table for uploaded data -->
-              <div *ngIf="uploadedStudents.length > 0" style="margin-top: 40px;">
-                <h2 style="color: blue; text-align: center;">Uploaded Students Data</h2>
-                <div style="text-align: center; margin-bottom: 20px;">
-                  <h3>Total number of uploaded students: {{ uploadedStudents.length }}</h3>
-                </div>
-                <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
-                  <thead>
-                    <tr style="background-color: #f2f2f2;">
-                      <th style="padding: 10px; border: 1px solid #ddd;">Student Number</th>
-                      <th style="padding: 10px; border: 1px solid #ddd;">Student Name</th>
-                      <th style="padding: 10px; border: 1px solid #ddd;">Student Surname</th>
-                      <th style="padding: 10px; border: 1px solid #ddd;">Student Email</th>
-                      <th style="padding: 10px; border: 1px solid #ddd;">Student Module</th>
-                      <th *ngIf="hasTestMarks(1)" style="padding: 10px; border: 1px solid #ddd;">Test 1</th>
-                      <th *ngIf="hasTestMarks(2)" style="padding: 10px; border: 1px solid #ddd;">Test 2</th>
-                      <th *ngIf="hasTestMarks(3)" style="padding: 10px; border: 1px solid #ddd;">Test 3</th>
-                      <th *ngIf="hasTestMarks(4)" style="padding: 10px; border: 1px solid #ddd;">Test 4</th>
-                      <th *ngIf="hasTestMarks(5)" style="padding: 10px; border: 1px solid #ddd;">Test 5</th>
-                      <th *ngIf="hasTestMarks(6)" style="padding: 10px; border: 1px solid #ddd;">Test 6</th>
-                      <th *ngIf="hasTestMarks(7)" style="padding: 10px; border: 1px solid #ddd;">Test 7</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr *ngFor="let student of uploadedStudents" style="text-align: center;">
-                      <td style="padding: 10px; border: 1px solid #ddd;">{{ student.studentNumber }}</td>
-                      <td style="padding: 10px; border: 1px solid #ddd;">{{ student.name }}</td>
-                      <td style="padding: 10px; border: 1px solid #ddd;">{{ student.surname }}</td>
-                      <td style="padding: 10px; border: 1px solid #ddd;">{{ student.email }}</td>
-                      <td style="padding: 10px; border: 1px solid #ddd;">{{ student.moduleName }}</td>
-                      <td *ngIf="student.marks.test1 !== null && student.marks.test1 !== undefined" [ngStyle]="{'color': getScoreColor(student.marks.test1, testOutOf[0])}" style="padding: 10px; border: 1px solid #ddd;">{{ student.marks.test1 }}</td>
-                      <td *ngIf="student.marks.test2 !== null && student.marks.test2 !== undefined" [ngStyle]="{'color': getScoreColor(student.marks.test2, testOutOf[1])}" style="padding: 10px; border: 1px solid #ddd;">{{ student.marks.test2 }}</td>
-                      <td *ngIf="student.marks.test3 !== null && student.marks.test3 !== undefined" [ngStyle]="{'color': getScoreColor(student.marks.test3, testOutOf[2])}" style="padding: 10px; border: 1px solid #ddd;">{{ student.marks.test3 }}</td>
-                      <td *ngIf="student.marks.test4 !== null && student.marks.test4 !== undefined" [ngStyle]="{'color': getScoreColor(student.marks.test4, testOutOf[3])}" style="padding: 10px; border: 1px solid #ddd;">{{ student.marks.test4 }}</td>
-                      <td *ngIf="student.marks.test5 !== null && student.marks.test5 !== undefined" [ngStyle]="{'color': getScoreColor(student.marks.test5, testOutOf[4])}" style="padding: 10px; border: 1px solid #ddd;">{{ student.marks.test5 }}</td>
-                      <td *ngIf="student.marks.test6 !== null && student.marks.test6 !== undefined" [ngStyle]="{'color': getScoreColor(student.marks.test6, testOutOf[5])}" style="padding: 10px; border: 1px solid #ddd;">{{ student.marks.test6 }}</td>
-                      <td *ngIf="student.marks.test7 !== null && student.marks.test7 !== undefined" [ngStyle]="{'color': getScoreColor(student.marks.test7, testOutOf[6])}" style="padding: 10px; border: 1px solid #ddd;">{{ student.marks.test7 }}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
             </div>
           </ion-card-content>
         </ion-card>
