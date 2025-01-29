@@ -285,6 +285,17 @@ export class StudentsPerformancePage implements OnInit {
     }
   }
 
+  getScoreColorClass(score: number, outOf: number): string {
+    const percentage = (score / outOf) * 100;
+    if (percentage >= 75) {
+      return 'good-performance-bg';
+    } else if (percentage >= 50) {
+      return 'moderate-performance-bg';
+    } else {
+      return 'poor-performance-bg';
+    }
+  }
+
   hasTestMarks(testNumber: number): boolean {
     return this.students.some(student => student.marks[`test${testNumber}`] !== null && student.marks[`test${testNumber}`] !== undefined);
   }
