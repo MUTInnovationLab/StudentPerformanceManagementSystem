@@ -88,7 +88,6 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
     }
   }
 
-  
   async showLogoutMessage() {
     const alert = await this.alertController.create({
       header: 'Logged Out',
@@ -98,25 +97,19 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
     await alert.present();
   }
 
-
   async initializeData() {
     try {
       this.staffData = await this.authService.getLoggedInStaff();
-      
-      // Store staff data in localStorage for persistence
       if (this.staffData) {
         localStorage.setItem('staffData', JSON.stringify(this.staffData));
         this.faculty = this.staffData.faculty;
-        
         await this.loadAvailableMonths();
         await this.onFacultyChange();
       } else {
-        // Try to retrieve staff data from localStorage if not from service
         const storedStaffData = localStorage.getItem('staffData');
         if (storedStaffData) {
           this.staffData = JSON.parse(storedStaffData);
           this.faculty = this.staffData.faculty;
-          
           await this.loadAvailableMonths();
           await this.onFacultyChange();
         }
@@ -153,10 +146,7 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
     this.cdr.detectChanges();
   }
 
-
-
- 
-  private async calculateDepartmentPerformance(facultyId: string) {
+ private async calculateDepartmentPerformance(facultyId: string) {
     this.isLoading = true;
     try {
       const facultyDoc = await this.firestore.doc<Faculty>(`faculties/${facultyId}`).get().toPromise();
@@ -209,8 +199,7 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
     await this.onFacultyChange();
   }
 
-  
-  private async getDepartmentPerformance(faculty: Faculty): Promise<DepartmentPerformance[]> {
+   private async getDepartmentPerformance(faculty: Faculty): Promise<DepartmentPerformance[]> {
     const departmentPromises = faculty.departments.map(async (department: Department) => {
       const modules = this.getAllModulesFromDepartment(department);
       const [moduleAcademicPerformances, moduleAttendancePerformances] = await Promise.all([
@@ -418,8 +407,6 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
   if (this.performanceLevelChart) {
     this.performanceLevelChart.destroy();
   }
-
-  // Track departments by performance level
   const highPerformanceDepartments = this.departmentStats
     .filter(dept => (this.selectedPerformanceType === 'academic' ? dept.academicPerformanceLevel : dept.attendancePerformanceLevel) === 'High')
     .map(dept => dept.name);
@@ -429,8 +416,6 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
   const lowPerformanceDepartments = this.departmentStats
     .filter(dept => (this.selectedPerformanceType === 'academic' ? dept.academicPerformanceLevel : dept.attendancePerformanceLevel) === 'Low')
     .map(dept => dept.name);
-
-  // Create pie chart
   this.performanceLevelChart = new Chart(canvas, {
     type: 'pie',
     data: data,
@@ -475,7 +460,6 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
           const index = elements[0].index;
           let departments: string[] = [];
           let performanceLevel = '';
-
           switch (index) {
             case 0:
               departments = highPerformanceDepartments;
@@ -490,12 +474,9 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
               performanceLevel = 'Low';
               break;
           }
-
           const message = departments.length
             ? `${performanceLevel} Performance Departments:\n${departments.join(', ')}`
             : `No departments with ${performanceLevel} performance.`;
-
-          // Show toast
           await this.presentToast(message);
          }
        }

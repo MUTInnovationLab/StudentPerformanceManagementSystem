@@ -160,113 +160,187 @@ export class ModuleMentorshipPage implements OnInit, AfterViewInit {
     }
   }
 
-
   generateFacultyStudentsExcel() {
     if (this.allStudents.length === 0) {
-      return; // Silently exit if no students
+      return;
     }
   
-    // Create a map to track student's module risks with averages
-    const studentRisks = new Map<number, Array<{ moduleCode: string; average: number }>>();
+    // Create workbook
+    const wb = XLSX.utils.book_new();
   
-    // First pass: Collect all modules where students have low performance
+    // Add title worksheet
+    const titleData = [
+      [`Faculty Performance Report: ${this.faculty}`],
+      [`Generated on: ${new Date().toLocaleDateString()}`],
+      [], // Empty row for spacing
+    ];
+    const titleWS = XLSX.utils.aoa_to_sheet(titleData);
+    XLSX.utils.book_append_sheet(wb, titleWS, 'Cover');
+  
+    // Process students needing mentorship
+    const modulesWithAtRiskStudents = new Map<string, {
+      moduleCode: string,
+      moduleName: string,
+      students: {
+        studentNumber: number,
+        average: string,
+        tests: { [key: string]: number | string }
+      }[]
+    }>();
+  
+    // Collect all at-risk students from modules
     this.allModules.forEach(module => {
-      module.studentsNeedingMentor?.forEach(studentMark => {
-        const studentNumber = studentMark.studentNumber;
-        const moduleCode = module.moduleCode.trim();
-        
-        // Get the calculated average for this student in this module
-        const average = parseFloat(studentMark.average);
+      if (module.studentsNeedingMentor && module.studentsNeedingMentor.length > 0) {
+        modulesWithAtRiskStudents.set(module.moduleCode, {
+          moduleCode: module.moduleCode,
+          moduleName: module.moduleName,
+          students: module.studentsNeedingMentor.map(student => ({
+            studentNumber: student.studentNumber,
+            average: student.average,
+            tests: {
+              ['test1']: student['test1'],
+              ['test2']: student['test2'],
+              ['test3']: student['test3'],
+              ['test4']: student['test4'],
+              ['test5']: student['test5'],
+              ['test6']: student['test6'],
+              ['test7']: student['test7']
+            }
+          }))
+        });
+      }
+    });
   
-        // Only track if average is below 50%
-        if (average < 50) {
-          if (!studentRisks.has(studentNumber)) {
-            studentRisks.set(studentNumber, []);
-          }
-          
-          const studentModules = studentRisks.get(studentNumber)!;
-          
-          // Check if module already exists for this student
-          const existingModule = studentModules.find(m => m.moduleCode === moduleCode);
-          
-          if (!existingModule) {
-            studentModules.push({
-              moduleCode: moduleCode,
-              average: average
-            });
-            studentRisks.set(studentNumber, studentModules);
-          }
+    // Create At Risk Students Detail sheet
+    const atRiskDetailData: any[] = [];
+    let totalAtRiskStudents = 0;
+  
+    modulesWithAtRiskStudents.forEach((moduleData, moduleCode) => {
+      // Add module header
+      atRiskDetailData.push([]);
+      atRiskDetailData.push([
+        `Module: ${moduleData.moduleCode} - ${moduleData.moduleName}`,
+        `Total Students at Risk: ${moduleData.students.length}`
+      ]);
+      atRiskDetailData.push([
+        'Student Number',
+        'Average',
+        'Test 1',
+        'Test 2',
+        'Test 3',
+        'Test 4',
+        'Test 5',
+        'Test 6',
+        'Test 7'
+      ]);
+  
+      // Add student details
+      moduleData.students.forEach(student => {
+        atRiskDetailData.push([
+          student.studentNumber,
+          `${student.average}%`,
+          `${student.tests['test1'] || 'N/A'}%`,
+          `${student.tests['test2'] || 'N/A'}%`,
+          `${student.tests['test3'] || 'N/A'}%`,
+          `${student.tests['test4'] || 'N/A'}%`,
+          `${student.tests['test5'] || 'N/A'}%`,
+          `${student.tests['test6'] || 'N/A'}%`,
+          `${student.tests['test7'] || 'N/A'}%`
+        ]);
+        totalAtRiskStudents++;
+      });
+  
+      // Add spacing between modules
+      atRiskDetailData.push([]);
+    });
+  
+    // Create At Risk Details worksheet
+    if (atRiskDetailData.length > 0) {
+      const atRiskDetailWS = XLSX.utils.aoa_to_sheet(atRiskDetailData);
+      
+      // Set column widths
+      atRiskDetailWS['!cols'] = [
+        { wch: 15 },  // Student Number
+        { wch: 10 },  // Average
+        { wch: 10 },  // Test 1
+        { wch: 10 },  // Test 2
+        { wch: 10 },  // Test 3
+        { wch: 10 },  // Test 4
+        { wch: 10 },  // Test 5
+        { wch: 10 },  // Test 6
+        { wch: 10 }   // Test 7
+      ];
+      
+      XLSX.utils.book_append_sheet(wb, atRiskDetailWS, 'Students At Risk Detail');
+    }
+
+    // Create All Students worksheet
+    const allStudentsData: any[] = [
+      ['All Students in Faculty'],
+      [],
+      ['Student Number', 'Name', 'Department', 'Email', ]
+    ];
+
+    // Add all students with their risk status
+    this.allStudents.forEach(student => {
+      // Check if student is at risk in any module
+      const atRiskModules: string[] = [];
+      modulesWithAtRiskStudents.forEach((moduleData) => {
+        if (moduleData.students.some(s => s.studentNumber === student.studentNumber)) {
+          atRiskModules.push(moduleData.moduleCode);
         }
       });
+
+      allStudentsData.push([
+        student.studentNumber,
+        student.name,
+        student.department || 'N/A',
+        student.email || 'N/A',
+        //atRiskModules.length > 0 ? `At Risk in: ${atRiskModules.join(', ')}` : 'Good Standing'
+      ]);
     });
-  
-    // Generate Excel data with detailed risk status
-    const excelData = this.allStudents.map(student => {
-      // Get all risk modules for this student
-      const riskModules = studentRisks.get(student.studentNumber) || [];
-      
-      // Sort modules by code for consistent display
-      riskModules.sort((a, b) => a.moduleCode.localeCompare(b.moduleCode));
-  
-      // Create status string with module codes and averages
-      const status = riskModules.length > 0
-        ? `Risk in: ${riskModules.map(m => 
-            `${m.moduleCode}(${m.average.toFixed(1)}%)`
-          ).join(', ')}`
-        : 'No Risk'; // Or '' if you prefer empty for no risk
-  
-      return {
-        'Student Number': student.studentNumber,
-        'Name': student.name.split(' ')[0],
-        'Surname': student.surname.split(' ').slice(1).join(' ') || student.surname.split(' ')[0],
-        'Email': student.email || 'N/A',
-        'Department': student.department || 'N/A',
-        'Total Risk Modules': riskModules.length,
-        'Status': status
-      };
-    });
-  
-    // Sort the data by number of risk modules (descending) then by student number
-    excelData.sort((a, b) => {
-      if (b['Total Risk Modules'] !== a['Total Risk Modules']) {
-        return b['Total Risk Modules'] - a['Total Risk Modules'];
-      }
-      return a['Student Number'] - b['Student Number'];
-    });
-  
-    // Create worksheet with custom column widths
-    const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(excelData);
+
+    const allStudentsWS = XLSX.utils.aoa_to_sheet(allStudentsData);
     
-    // Set column widths for better readability
-    ws['!cols'] = [
+    // Set column widths for all students sheet
+    allStudentsWS['!cols'] = [
       { wch: 15 },  // Student Number
-      { wch: 15 },  // Name
-      { wch: 20 },  // Surname
-      { wch: 30 },  // Email
+      { wch: 25 },  // Name
       { wch: 20 },  // Department
-      { wch: 15 },  // Total Risk Modules
-      { wch: 50 }   // Status
+      { wch: 30 },  // Email
+     // { wch: 40 }   // Risk Status
     ];
+    
+    XLSX.utils.book_append_sheet(wb, allStudentsWS, 'All Students');
   
-    // Create workbook and add the worksheet
-    const wb: XLSX.WorkBook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Faculty Students');
+    // Add summary sheet
+    const summaryData = [
+      ['Performance Summary'],
+      [],
+      ['Category', 'Count', 'Percentage'],
+      ['Total Students Needing Mentorship', totalAtRiskStudents, 
+       `${((totalAtRiskStudents / this.allStudents.length) * 100).toFixed(1)}%`],
+      ['Total Students', this.allStudents.length, '100%'],
+      [],
+      ['Modules with At-Risk Students', modulesWithAtRiskStudents.size],
+      [],
+      ['Module Breakdown:'],
+      ...Array.from(modulesWithAtRiskStudents.values()).map(module => [
+        `${module.moduleCode} - ${module.moduleName}`,
+        module.students.length,
+        `${((module.students.length / this.allStudents.length) * 100).toFixed(1)}%`
+      ]),
+      [],
+      ['* At Risk: Students with module averages below 50%']
+    ];
+      
+    const summaryWS = XLSX.utils.aoa_to_sheet(summaryData);
+    XLSX.utils.book_append_sheet(wb, summaryWS, 'Summary');
   
-    // Generate Excel file
-    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-    const blob = new Blob([wbout], { type: 'application/octet-stream' });
-  
-    // Download the file
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${this.faculty}_students_at_risk.xlsx`;
-    a.click();
-    window.URL.revokeObjectURL(url);
-  }
-
-
-
+    // Generate and download Excel file
+    const fileName = `${this.faculty}_students_report_${new Date().toISOString().split('T')[0]}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+}
 
   private async loadModuleData() {
     this.isLoading = true;
