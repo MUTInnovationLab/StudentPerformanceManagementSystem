@@ -136,6 +136,24 @@
                     </tr>
                   </tbody>
                 </table>
+                <!-- Display attendance data -->
+                <div style="margin-top: 20px;">
+                  <h2 style="text-align: center;">Student Attendance</h2>
+                  <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+                    <thead>
+                      <tr style="background-color: #f2f2f2;">
+                        <th style="padding: 10px; border: 1px solid #ddd;">Student Number</th>
+                        <th style="padding: 10px; border: 1px solid #ddd;">Attendance (Scan Time)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let student of studentsNeedingAttention" style="text-align: center;">
+                        <td style="padding: 10px; border: 1px solid #ddd;">{{ student.studentNumber }}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">{{ studentsAttendance[student.studentNumber] || 'N/A' }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
               <!-- File input for uploading Excel files -->
               <div style="margin-top: 20px; text-align: center;">
