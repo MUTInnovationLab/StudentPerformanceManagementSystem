@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { AuthenticationService } from '../services/auths.service';
 import { AcademicService } from '../services/academic.service';
+import { Router } from '@angular/router';
 import { ModuleMarksDocument, DetailedStudentInfo } from '../models/studentsMarks.model';
 import { Faculty, Department, Module } from '../models/faculty.model';
 import * as XLSX from 'xlsx';
@@ -12,23 +13,57 @@ import * as XLSX from 'xlsx';
   styleUrls: ['./students-performance.page.scss'],
 })
 export class StudentsPerformancePage implements OnInit {
+  menuVisible: boolean = false;
   students: DetailedStudentInfo[] = [];
   studentsNeedingAttention: DetailedStudentInfo[] = [];
   error: string | null = null;
   errorMessage: string | null = null;
   testOutOf: number[] = Array(7).fill(100); // For testing purposes, each test is out of 100
+  isLoading: boolean = true; // Add loading state
+  studentsAttendance: { [studentNumber: string]: any } = {}; // Add this property to store attendance data
 
   constructor(
+    private router: Router,
     private firestore: AngularFirestore,
     private authService: AuthenticationService,
     private academicService: AcademicService
   ) {}
+
+  openMenu() {
+    this.menuVisible = !this.menuVisible;
+  }
+
+  goToCsv() {
+    this.router.navigate(['/csv']);  // Ensure you have this route set up
+    this.menuVisible = false;  // Hide the menu after selecting
+  }
+
+  goToStudentsManagement() {
+    this.router.navigate(['/student-management']);  // Ensure you have this route set up
+    this.menuVisible = false;  // Hide the menu after selecting
+  }
+
+  goToMeeting() {
+    this.router.navigate(['/live-meet']);  // Ensure you have this route set up
+    this.menuVisible = false;  // Hide the menu after selecting
+  }
+
+  async logout() {
+    try {
+      await this.authService.signOut();
+      this.router.navigate(['/login']); // Redirect to login page after logout
+      this.menuVisible = false;  // Hide the menu after logging out
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  }
 
   ngOnInit() {
     this.loadStudentMarks();
   }
 
   private async loadStudentMarks() {
+    this.isLoading = true; // Set loading state to true
     try {
       // Bypass authentication for testing purposes
       const faculty = 'Faculty of Applied and Health Science';
@@ -45,6 +80,7 @@ export class StudentsPerformancePage implements OnInit {
         return acc.concat(this.getAllModulesFromDepartment(dept));
       }, []);
       this.students = await this.retrieveStudentMarks(allModules);
+      await this.loadAttendanceData(); // Load attendance data
       this.studentsNeedingAttention = this.getStudentsNeedingAttention(this.students);
       console.log('Students needing attention:', this.studentsNeedingAttention); // Debug log
     } catch (error) {
@@ -54,6 +90,28 @@ export class StudentsPerformancePage implements OnInit {
         console.error('Error loading student marks:', error);
         this.error = 'Failed to load student marks';
       }
+    } finally {
+      this.isLoading = false; // Set loading state to false
+    }
+  }
+
+  private async loadAttendanceData() {
+    try {
+      const attendanceCollection = this.firestore.collection('Attended');
+      const attendanceDocs = await attendanceCollection.get().toPromise();
+
+      attendanceDocs?.forEach(doc => {
+        const data = doc.data();
+        if (data && Array.isArray(data)) {
+          data.forEach((attendanceRecord: any) => {
+            if (attendanceRecord.studentNumber && attendanceRecord.scanTime) {
+              this.studentsAttendance[attendanceRecord.studentNumber] = attendanceRecord.scanTime;
+            }
+          });
+        }
+      });
+    } catch (error) {
+      console.error('Error loading attendance data:', error);
     }
   }
 
@@ -143,7 +201,8 @@ export class StudentsPerformancePage implements OnInit {
                   test4: mark.test4 ?? 0,
                   test5: mark.test5 ?? 0,
                   test6: mark.test6 ?? 0,
-                  test7: mark.test7 ?? 0
+                  test7: mark.test7 ?? 0,
+                  scanTime: mark.scanTime ?? null // Ensure scanTime is included
                 }
               };
               students.push(studentDetail);
@@ -237,11 +296,13 @@ export class StudentsPerformancePage implements OnInit {
   processExcelData(data: any[]) {
     const headers = data[0];
     const rows = data.slice(1);
-    const students: DetailedStudentInfo[] = rows.map(row => {
+    const uploadedStudents: DetailedStudentInfo[] = rows.map(row => {
       const student: any = {};
       headers.forEach((header: string, index: number) => {
         student[header] = row[index];
       });
+      // Store attendance data using scanTime
+      this.studentsAttendance[student.studentNumber] = student.scanTime;
       return {
         studentNumber: student.studentNumber,
         name: student.name,
@@ -253,17 +314,23 @@ export class StudentsPerformancePage implements OnInit {
         marks: {
           studentNumber: student.studentNumber,
           average: student.average,
-          test1: student.test1 ?? 0,
-          test2: student.test2 ?? 0,
-          test3: student.test3 ?? 0,
-          test4: student.test4 ?? 0,
-          test5: student.test5 ?? 0,
-          test6: student.test6 ?? 0,
-          test7: student.test7 ?? 0
+          test1: student.test1 ?? null,
+          test2: student.test2 ?? null,
+          test3: student.test3 ?? null,
+          test4: student.test4 ?? null,
+          test5: student.test5 ?? null,
+          test6: student.test6 ?? null,
+          test7: student.test7 ?? null,
+          scanTime: student.scanTime ?? null // Ensure scanTime is included
         }
       };
     });
-    this.studentsNeedingAttention = this.getStudentsNeedingAttention(students);
+
+    const filteredUploadedStudents = uploadedStudents.filter(student => {
+      return this.students.some(existingStudent => existingStudent.studentNumber === student.studentNumber);
+    });
+
+    this.studentsNeedingAttention = this.getStudentsNeedingAttention(filteredUploadedStudents);
   }
 
   onFileChange(event: any) {
@@ -271,28 +338,50 @@ export class StudentsPerformancePage implements OnInit {
   }
 
   downloadExcel() {
-    const filteredStudents = this.students.map(student => {
-      const filteredMarks = Object.keys(student.marks)
-        .filter(key => student.marks[key] !== null && typeof student.marks[key] === 'number')
-        .reduce((obj, key) => {
-          obj[key] = student.marks[key];
-          return obj;
-        }, {} as any);
+    try {
+      const filteredStudents = this.students.map(student => {
+        const filteredMarks = Object.keys(student.marks)
+          .filter(key => student.marks[key] !== null && typeof student.marks[key] === 'number')
+          .reduce((obj, key) => {
+            obj[key] = student.marks[key];
+            return obj;
+          }, {} as any);
 
-      return {
-        studentNumber: student.studentNumber,
-        name: student.name,
-        surname: student.surname,
-        email: student.email,
-        department: student.department,
-        moduleName: student.moduleName,
-        average: student.average,
-        ...filteredMarks
-      };
-    });
+        return {
+          studentNumber: student.studentNumber,
+          name: student.name,
+          surname: student.surname,
+          email: student.email,
+          department: student.department,
+          moduleName: student.moduleName,
+          average: student.average,
+          scanTime: this.studentsAttendance[student.studentNumber] || 'N/A', // Include scanTime
+          ...filteredMarks
+        };
+      });
 
-    const worksheet: XLSX.WorkSheet = XLSX.utils.json_to_sheet(filteredStudents);
-    const workbook: XLSX.WorkBook = { Sheets: { 'data': worksheet }, SheetNames: ['data'] };
-    XLSX.writeFile(workbook, 'StudentMarks.xlsx');
+      const worksheet: XLSX.WorkSheet = XLSX.utils.json_to_sheet(filteredStudents);
+      const workbook: XLSX.WorkBook = { Sheets: { 'data': worksheet }, SheetNames: ['data'] };
+      const excelBuffer: any = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+
+      // Create a Blob from the buffer
+      const data: Blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = window.URL.createObjectURL(data);
+
+      // Create a link element
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'StudentMarks.xlsx';
+
+      // Append the link to the document body and click it to trigger the download
+      document.body.appendChild(link);
+      link.click();
+
+      // Clean up and remove the link
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Error downloading Excel file:', error);
+      this.error = 'Failed to download Excel file. Please check your permissions and try again.';
+    }
   }
 }

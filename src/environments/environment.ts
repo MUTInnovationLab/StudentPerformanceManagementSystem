@@ -6,6 +6,7 @@ export const environment = {
   production: false,
   emailjsPublicKey: 'mnYtu2o7JhKqb73XH',
   firebaseConfig : {
+<<<<<<< HEAD
     //apiKey: "AIzaSyD7u_jf9-wQ_Mth7uy6cRzG97urfJvtRpU",
     //authDomain: "attendify-6202e.firebaseapp.com",
    // projectId: "attendify-6202e",
@@ -20,6 +21,14 @@ export const environment = {
    storageBucket: "scholarship-832f3.firebasestorage.app",
    messagingSenderId: "1024819620337",
    appId: "1:1024819620337:web:2cacde86cdabfe8d9cbc50"
+=======
+    apiKey: "AIzaSyDVQp5oQSJsD_0gQ88IdbRAiF733-bvaWU",
+    authDomain: "scholarship-832f3.firebaseapp.com",
+    projectId: "scholarship-832f3",
+    storageBucket: "scholarship-832f3.firebasestorage.app",
+    messagingSenderId: "1024819620337",
+    appId: "1:1024819620337:web:2cacde86cdabfe8d9cbc50"
+>>>>>>> 8be0eb14d003fcb8e56c73e1de16c3e0e3d8f591
   }
 };
 
