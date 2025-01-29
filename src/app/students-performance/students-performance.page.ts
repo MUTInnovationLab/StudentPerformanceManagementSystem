@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { AuthenticationService } from '../services/auths.service';
 import { AcademicService } from '../services/academic.service';
+import { AttendanceService } from '../services/attendance.service';
 import { Router } from '@angular/router';
 import { ModuleMarksDocument, DetailedStudentInfo } from '../models/studentsMarks.model';
 import { Faculty, Department, Module } from '../models/faculty.model';
@@ -26,7 +27,8 @@ export class StudentsPerformancePage implements OnInit {
     private router: Router,
     private firestore: AngularFirestore,
     private authService: AuthenticationService,
-    private academicService: AcademicService
+    private academicService: AcademicService,
+    private attendanceService: AttendanceService // Inject AttendanceService
   ) {}
 
   openMenu() {
@@ -80,7 +82,7 @@ export class StudentsPerformancePage implements OnInit {
         return acc.concat(this.getAllModulesFromDepartment(dept));
       }, []);
       this.students = await this.retrieveStudentMarks(allModules);
-      await this.loadAttendanceData(); // Load attendance data
+      await this.loadAttendanceData(allModules); // Load attendance data
       this.studentsNeedingAttention = this.getStudentsNeedingAttention(this.students);
       console.log('Students needing attention:', this.studentsNeedingAttention); // Debug log
     } catch (error) {
@@ -95,21 +97,31 @@ export class StudentsPerformancePage implements OnInit {
     }
   }
 
-  private async loadAttendanceData() {
+  private async loadAttendanceData(modules: Module[]) {
     try {
-      const attendanceCollection = this.firestore.collection('Attended');
-      const attendanceDocs = await attendanceCollection.get().toPromise();
+      for (const module of modules) {
+        const attendanceDoc = await this.firestore
+          .collection('Attended')
+          .doc(module.moduleCode.trim())
+          .get()
+          .toPromise();
 
-      attendanceDocs?.forEach(doc => {
-        const data = doc.data();
-        if (data && Array.isArray(data)) {
-          data.forEach((attendanceRecord: any) => {
-            if (attendanceRecord.studentNumber && attendanceRecord.scanTime) {
-              this.studentsAttendance[attendanceRecord.studentNumber] = attendanceRecord.scanTime;
+        if (attendanceDoc?.exists) {
+          const attendanceData = attendanceDoc.data();
+          if (attendanceData) {
+            for (const date in attendanceData) {
+              const dailyAttendance = (attendanceData as { [key: string]: any })[date];
+              dailyAttendance.forEach((record: any) => {
+                if (!this.studentsAttendance[record.studentNumber]) {
+                  this.studentsAttendance[record.studentNumber] = {};
+                }
+                this.studentsAttendance[record.studentNumber][module.moduleCode] = record.scanTime;
+              });
             }
-          });
+          }
         }
-      });
+      }
+      console.log('Attendance data:', this.studentsAttendance); // Debug log
     } catch (error) {
       console.error('Error loading attendance data:', error);
     }
@@ -301,8 +313,14 @@ export class StudentsPerformancePage implements OnInit {
       headers.forEach((header: string, index: number) => {
         student[header] = row[index];
       });
-      // Store attendance data using scanTime
-      this.studentsAttendance[student.studentNumber] = student.scanTime;
+
+      // Parse attendance data
+      const attendanceEntries = student.attendance.split('\n').map((entry: string) => entry.split(': '));
+      const attendanceData: { [module: string]: string } = {};
+      attendanceEntries.forEach(([module, time]: [string, string]) => {
+        attendanceData[module] = time;
+      });
+
       return {
         studentNumber: student.studentNumber,
         name: student.name,
@@ -322,7 +340,8 @@ export class StudentsPerformancePage implements OnInit {
           test6: student.test6 ?? null,
           test7: student.test7 ?? null,
           scanTime: student.scanTime ?? null // Ensure scanTime is included
-        }
+        },
+        attendance: attendanceData // Include parsed attendance data
       };
     });
 
@@ -347,6 +366,10 @@ export class StudentsPerformancePage implements OnInit {
             return obj;
           }, {} as any);
 
+        const attendance = this.getObjectKeys(this.studentsAttendance[student.studentNumber])
+          .map(module => `${module}: ${this.studentsAttendance[student.studentNumber][module]}`)
+          .join('\n');
+
         return {
           studentNumber: student.studentNumber,
           name: student.name,
@@ -355,7 +378,7 @@ export class StudentsPerformancePage implements OnInit {
           department: student.department,
           moduleName: student.moduleName,
           average: student.average,
-          scanTime: this.studentsAttendance[student.studentNumber] || 'N/A', // Include scanTime
+          attendance, // Include formatted attendance
           ...filteredMarks
         };
       });
@@ -383,5 +406,9 @@ export class StudentsPerformancePage implements OnInit {
       console.error('Error downloading Excel file:', error);
       this.error = 'Failed to download Excel file. Please check your permissions and try again.';
     }
+  }
+
+  getObjectKeys(obj: any): string[] {
+    return obj ? Object.keys(obj) : [];
   }
 }

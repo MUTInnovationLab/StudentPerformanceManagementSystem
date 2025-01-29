@@ -31,6 +31,7 @@ export interface DetailedStudentInfo {
   marks: StudentMarks;
   moduleName: string;
   average: number;
+  attendance?: { [module: string]: string }; // Add this property
 }
 
 export interface ModuleMarksDocument {

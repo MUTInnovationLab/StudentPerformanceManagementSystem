@@ -1,4 +1,3 @@
-
 <ion-header>
   <ion-toolbar color="primary">
     <ion-title>Struggling student management</ion-title>
@@ -95,9 +94,9 @@
                   <tr *ngFor="let student of filteredStudents">
                     <td >{{ student.studentNumber }}</td>
                     <td >{{ student.test1 }}</td>
-                    <td >{{ student?.test2 }}</td>
-                    <td >{{ student?.test3 }}</td>
-                    <td >{{ student?.test4 }}</td>
+                    <td >{{ student.test2 }}</td>
+                    <td >{{ student.test3 }}</td>
+                    <td >{{ student.test4 }}</td>
                     <td>{{ student.average.toFixed(1) }}%</td>
                     <td>
                       <ion-button color="secondary" size="small" (click)="openViewModal(student)">
@@ -208,7 +207,7 @@
     <ion-header class="ion-no-border">
       <ion-toolbar>
         <ion-title>
-          Assign Mentor to {{ studentDetails?.name+'  '+studentDetails?.surname  || selectedStudent?.studentNumber  }}
+          Assign Mentor to {{ studentDetails.name+'  '+studentDetails.surname  || selectedStudent?.studentNumber  }}
         </ion-title>
         <ion-buttons slot="end">
           <ion-button (click)="closeModal()">

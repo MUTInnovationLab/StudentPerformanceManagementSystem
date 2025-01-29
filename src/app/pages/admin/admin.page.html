@@ -73,12 +73,12 @@
               </ion-label>
               <ion-buttons slot="end">
                 <ion-button 
-                  (click)="editItem(getCollectionPathForCard(selectedCard.title ?? ''), item)"
+                  (click)="editItem(getCollectionPathForCard(selectedCard.title), item)"
                 >
                   <ion-icon name="create-outline" slot="icon-only"></ion-icon>
                 </ion-button>
                 <ion-button 
-                  (click)="deleteItem(getCollectionPathForCard(selectedCard.title ?? ''), item?.id ?? '')" 
+                  (click)="deleteItem(getCollectionPathForCard(selectedCard.title), item?.id ?? '')" 
                   color="danger"
                 >
                   <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
@@ -165,4 +165,3 @@
     </ion-card-content>
   </ion-card>
   </ion-content>
-  
