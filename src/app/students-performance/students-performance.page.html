@@ -9,7 +9,6 @@
     </ion-buttons>
   </ion-toolbar>
 </ion-header>
- 
 
 <ion-content [fullscreen]="true">
   <div *ngIf="menuVisible" class="menu">
@@ -23,7 +22,7 @@
       <ion-title size="large">students-performance</ion-title>
     </ion-toolbar>
   </ion-header>
-  <div class="score-inputs" style="padding: 20px;">
+  <div class="score-inputs">
     <ion-grid>
       <ion-row>
         <!-- <ion-col size="1" *ngFor="let i of [1, 2, 3, 4, 5, 6, 7]">
@@ -41,108 +40,157 @@
             <ion-card-title>Student Marks</ion-card-title>
           </ion-card-header>
           <ion-card-content>
-            <div *ngFor="let i of [1, 2, 3, 4, 5, 6, 7]; let idx = index" style="margin-bottom: 15px;">
-              <label for="testOutOf{{ i }}" style="display: inline-block; width: 200px; font-weight: bold; margin-right: 10px;">Test {{ i }} :Out Of / (*<i>Note:</i> 100 is by Default*)</label>
-              <input 
-                [(ngModel)]="testOutOf[i - 1]" 
-                placeholder="Type what Test {{ i }} was Out Of" 
-                style="padding: 3px; border: 1px solid #ccc; border-radius: 4px; width: 250px;"
-              />
+            <!-- Loading spinner -->
+            <div *ngIf="isLoading" class="loading-spinner">
+              <ion-spinner name="crescent"></ion-spinner>
+              <p>Loading data, please wait...</p>
             </div>
-            <!-- Indicate what the colors mean -->
-            <div style="margin-top: 20px; text-align: center;">
-              <span style="color: green; font-weight: bold; text-shadow: rgb(99, 211, 99);">Green:</span> 75% and above = <b style="background-color: rgb(203, 250, 203);"> Good Performance</b> <br>
-              <span style="color: orange; font-weight: bold; text-shadow: rgb(231, 184, 97);">Orange:</span> 50% to 74% = <b style="background-color: rgb(241, 210, 152);"> Moderate Performance</b> <br>
-              <span style="color: red; font-weight: bold; text-shadow: rgb(239, 135, 135);">Red:</span> Below 50% = <b style="background-color: rgb(227, 171, 171);"> Poor Performance </b>
-            </div>
-            <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
-              <thead>
-                <tr style="background-color: #f2f2f2;">
-                  <th style="padding: 10px; border: 1px solid #ddd;">Student Number</th>
-                  <th *ngIf="hasTestMarks(1)" style="padding: 10px; border: 1px solid #ddd;">Test 1</th>
-                  <th *ngIf="hasTestMarks(2)" style="padding: 10px; border: 1px solid #ddd;">Test 2</th>
-                  <th *ngIf="hasTestMarks(3)" style="padding: 10px; border: 1px solid #ddd;">Test 3</th>
-                  <th *ngIf="hasTestMarks(4)" style="padding: 10px; border: 1px solid #ddd;">Test 4</th>
-                  <th *ngIf="hasTestMarks(5)" style="padding: 10px; border: 1px solid #ddd;">Test 5</th>
-                  <th *ngIf="hasTestMarks(6)" style="padding: 10px; border: 1px solid #ddd;">Test 6</th>
-                  <th *ngIf="hasTestMarks(7)" style="padding: 10px; border: 1px solid #ddd;">Test 7</th>
-                  <!-- <th>Average</th>  -->
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let student of students" style="text-align: center;">
-                  <td style="padding: 10px; border: 1px solid #ddd;">{{ student.studentNumber }}</td>
-                  <td *ngIf="student.marks.test1 !== null && student.marks.test1 !== undefined" [ngStyle]="{'color': getScoreColor(student.marks.test1, testOutOf[0])}" style="padding: 10px; border: 1px solid #ddd;">{{ student.marks.test1 }}</td>
-                  <td *ngIf="student.marks.test2 !== null && student.marks.test2 !== undefined" [ngStyle]="{'color': getScoreColor(student.marks.test2, testOutOf[1])}" style="padding: 10px; border: 1px solid #ddd;">{{ student.marks.test2 }}</td>
-                  <td *ngIf="student.marks.test3 !== null && student.marks.test3 !== undefined" [ngStyle]="{'color': getScoreColor(student.marks.test3, testOutOf[2])}" style="padding: 10px; border: 1px solid #ddd;">{{ student.marks.test3 }}</td>
-                  <td *ngIf="student.marks.test4 !== null && student.marks.test4 !== undefined" [ngStyle]="{'color': getScoreColor(student.marks.test4, testOutOf[3])}" style="padding: 10px; border: 1px solid #ddd;">{{ student.marks.test4 }}</td>
-                  <td *ngIf="student.marks.test5 !== null && student.marks.test5 !== undefined" [ngStyle]="{'color': getScoreColor(student.marks.test5, testOutOf[4])}" style="padding: 10px; border: 1px solid #ddd;">{{ student.marks.test5 }}</td>
-                  <td *ngIf="student.marks.test6 !== null && student.marks.test6 !== undefined" [ngStyle]="{'color': getScoreColor(student.marks.test6, testOutOf[5])}" style="padding: 10px; border: 1px solid #ddd;">{{ student.marks.test6 }}</td>
-                  <td *ngIf="student.marks.test7 !== null && student.marks.test7 !== undefined" [ngStyle]="{'color': getScoreColor(student.marks.test7, testOutOf[6])}" style="padding: 10px; border: 1px solid #ddd;">{{ student.marks.test7 }}</td>
-                  <!-- <td>{{ student.average }}</td> -->
-                </tr>
-              </tbody>
-            </table>
-            <!-- Table for students who need critical attention -->
-            <div *ngIf="studentsNeedingAttention.length > 0" style="margin-top: 40px;">
-              <h2 style="color: red; text-align: center;">Students who need critical attention</h2>
-              <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+            <!-- Data content -->
+            <div *ngIf="!isLoading">
+              <div *ngFor="let i of [1, 2, 3, 4, 5, 6, 7]; let idx = index" class="test-input">
+                <label for="testOutOf{{ i }}">Test {{ i }} :Out Of / (*<i>Note:</i> 100 is by Default*)</label>
+                <input 
+                  [(ngModel)]="testOutOf[i - 1]" 
+                  placeholder="Type what Test {{ i }} was Out Of" 
+                />
+              </div>
+              <!-- Indicate what the colors mean -->
+              <div class="performance-indicators">
+                <span class="good-performance">Green:</span> 75% and above = <b class="good-performance-bg"> Good Performance</b> <br>
+                <span class="moderate-performance">Orange:</span> 50% to 74% = <b class="moderate-performance-bg"> Moderate Performance</b> <br>
+                <span class="poor-performance">Red:</span> Below 50% = <b class="poor-performance-bg"> Poor Performance </b>
+              </div><br>
+              <!-- Total number of students -->
+              <div class="total-students">
+                <h3>Total number of students: {{ students.length }}</h3>
+              </div>
+              <table>
                 <thead>
-                  <tr style="background-color: #f2f2f2;">
-                    <th style="padding: 10px; border: 1px solid #ddd;">Student Number</th>
-                    <th style="padding: 10px; border: 1px solid #ddd;">Student Name</th>
-                    <th style="padding: 10px; border: 1px solid #ddd;">Student Surname</th>
-                    <th style="padding: 10px; border: 1px solid #ddd;">Student Email</th>
-                    <th *ngIf="hasTestMarks(1)" style="padding: 10px; border: 1px solid #ddd;">Test 1</th>
-                    <th *ngIf="hasTestMarks(2)" style="padding: 10px; border: 1px solid #ddd;">Test 2</th>
-                    <th *ngIf="hasTestMarks(3)" style="padding: 10px; border: 1px solid #ddd;">Test 3</th>
-                    <th *ngIf="hasTestMarks(4)" style="padding: 10px; border: 1px solid #ddd;">Test 4</th>
-                    <th *ngIf="hasTestMarks(5)" style="padding: 10px; border: 1px solid #ddd;">Test 5</th>
-                    <th *ngIf="hasTestMarks(6)" style="padding: 10px; border: 1px solid #ddd;">Test 6</th>
-                    <th *ngIf="hasTestMarks(7)" style="padding: 10px; border: 1px solid #ddd;">Test 7</th>
+                  <tr>
+                    <th>Student Number</th>
+                    <th>Student Module</th>
+                    <th *ngIf="hasTestMarks(1)">Test 1</th>
+                    <th *ngIf="hasTestMarks(2)">Test 2</th>
+                    <th *ngIf="hasTestMarks(3)">Test 3</th>
+                    <th *ngIf="hasTestMarks(4)">Test 4</th>
+                    <th *ngIf="hasTestMarks(5)">Test 5</th>
+                    <th *ngIf="hasTestMarks(6)">Test 6</th>
+                    <th *ngIf="hasTestMarks(7)">Test 7</th>
+                    <!-- <th>Average</th>  -->
                   </tr>
                 </thead>
                 <tbody>
-                  <tr *ngFor="let student of studentsNeedingAttention" style="text-align: center;">
-                    <td style="padding: 10px; border: 1px solid #ddd;">{{ student.studentNumber }}</td>
-                    <td style="padding: 10px; border: 1px solid #ddd;">{{ student.name }}</td>
-                    <td style="padding: 10px; border: 1px solid #ddd;">{{ student.surname }}</td>
-                    <td style="padding: 10px; border: 1px solid #ddd;">{{ student.email }}</td>
-                    <td *ngIf="student.marks.test1 !== null && student.marks.test1 !== undefined" [ngStyle]="{'color': getScoreColor(student.marks.test1, testOutOf[0])}" style="padding: 10px; border: 1px solid #ddd;">{{ student.marks.test1 }}</td>
-                    <td *ngIf="student.marks.test2 !== null && student.marks.test2 !== undefined" [ngStyle]="{'color': getScoreColor(student.marks.test2, testOutOf[1])}" style="padding: 10px; border: 1px solid #ddd;">{{ student.marks.test2 }}</td>
-                    <td *ngIf="student.marks.test3 !== null && student.marks.test3 !== undefined" [ngStyle]="{'color': getScoreColor(student.marks.test3, testOutOf[2])}" style="padding: 10px; border: 1px solid #ddd;">{{ student.marks.test3 }}</td>
-                    <td *ngIf="student.marks.test4 !== null && student.marks.test4 !== undefined" [ngStyle]="{'color': getScoreColor(student.marks.test4, testOutOf[3])}" style="padding: 10px; border: 1px solid #ddd;">{{ student.marks.test4 }}</td>
-                    <td *ngIf="student.marks.test5 !== null && student.marks.test5 !== undefined" [ngStyle]="{'color': getScoreColor(student.marks.test5, testOutOf[4])}" style="padding: 10px; border: 1px solid #ddd;">{{ student.marks.test5 }}</td>
-                    <td *ngIf="student.marks.test6 !== null && student.marks.test6 !== undefined" [ngStyle]="{'color': getScoreColor(student.marks.test6, testOutOf[5])}" style="padding: 10px; border: 1px solid #ddd;">{{ student.marks.test6 }}</td>
-                    <td *ngIf="student.marks.test7 !== null && student.marks.test7 !== undefined" [ngStyle]="{'color': getScoreColor(student.marks.test7, testOutOf[6])}" style="padding: 10px; border: 1px solid #ddd;">{{ student.marks.test7 }}</td>
+                  <tr *ngFor="let student of students">
+                    <td>{{ student.studentNumber }}</td>
+                    <td>{{ student.moduleName }}</td>
+                    <td *ngIf="student.marks.test1 !== null" [ngClass]="getScoreColorClass(student.marks.test1 ?? 0, testOutOf[0] ?? 100)">{{ student.marks.test1 }}</td>
+                    <td *ngIf="student.marks.test2 !== null" [ngClass]="getScoreColorClass(student.marks.test2 ?? 0, testOutOf[1] ?? 100)">{{ student.marks.test2 }}</td>
+                    <td *ngIf="student.marks.test3 !== null" [ngClass]="getScoreColorClass(student.marks.test3 ?? 0, testOutOf[2] ?? 100)">{{ student.marks.test3 }}</td>
+                    <td *ngIf="student.marks.test4 !== null && student.marks.test4 !== undefined" [ngClass]="getScoreColorClass(student.marks.test4 ?? 0, testOutOf[3] ?? 100)">{{ student.marks.test4 }}</td>
+                    <td *ngIf="student.marks.test5 !== null && student.marks.test5 !== undefined" [ngClass]="getScoreColorClass(student.marks.test5 ?? 0, testOutOf[4] ?? 100)">{{ student.marks.test5 }}</td>
+                    <td *ngIf="student.marks.test6 !== null && student.marks.test6 !== undefined" [ngClass]="getScoreColorClass(student.marks.test6 ?? 0, testOutOf[5] ?? 100)">{{ student.marks.test6 }}</td>
+                    <td *ngIf="student.marks.test7 !== null && student.marks.test7 !== undefined" [ngClass]="getScoreColorClass(student.marks.test7 ?? 0, testOutOf[6] ?? 100)">{{ student.marks.test7 }}</td>
+                    <!-- <td>{{ student.average }}</td> -->
                   </tr>
                 </tbody>
               </table>
-            </div>
-            <!-- File input for uploading Excel files -->
-            <div style="margin-top: 20px; text-align: center;">
-              <input type="file" (change)="onFileChange($event)" accept=".xlsx, .xls" />
-            </div>
-            <!-- Display error messages -->
-            <div *ngIf="error" style="color: red; text-align: center; margin-top: 20px;">
-              {{ error }}
-            </div>
-            <!-- Instructions for the user -->
-            <div *ngIf="error" style="margin-top: 20px;">
-              <h3 style="color: red; text-align: center;">Quota Exceeded</h3>
-              <p style="text-align: center;">
-                The Firestore quota has been exceeded. This means that the data from the first table cannot be read from the database.
-                To resolve this issue, please follow these steps:
-              </p>
-              <ol style="text-align: left; margin-left: 20px;">
-                <li>Download the data from the first table as an Excel file.</li>
-                <li>Upload the Excel file using the file input below.</li>
-                <li>The data will be read, processed, and displayed in the second table.</li>
-              </ol>
-            </div>
-            <!-- Download button for the user to download the data displayed in the first table as an Excel file -->
-            <div style="margin-top: 20px; text-align: center;">
-              <button (click)="downloadExcel()">Download Excel</button>
+              <!-- Table for students who need critical attention -->
+              <div *ngIf="studentsNeedingAttention.length > 0" class="students-needing-attention">
+                <h2>Students who need attention are processed into the excel file</h2>
+                <div class="total-students-needing-attention">
+                  <h3>Total number of students needing attention: {{ studentsNeedingAttention.length }}</h3>
+                  <h2>Download and Upload the excel file</h2>
+                </div>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Student Number</th>
+                      <th>Student Name</th>
+                      <th>Student Surname</th>
+                      <th>Student Email</th>
+                      <th>Student Module</th>
+                      <th *ngIf="hasTestMarks(1)">Test 1</th>
+                      <th *ngIf="hasTestMarks(2)">Test 2</th>
+                      <th *ngIf="hasTestMarks(3)">Test 3</th>
+                      <th *ngIf="hasTestMarks(4)">Test 4</th>
+                      <th *ngIf="hasTestMarks(5)">Test 5</th>
+                      <th *ngIf="hasTestMarks(6)">Test 6</th>
+                      <th *ngIf="hasTestMarks(7)">Test 7</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let student of studentsNeedingAttention">
+                      <td>{{ student.studentNumber }}</td>
+                      <td>{{ student.name }}</td>
+                      <td>{{ student.surname }}</td>
+                      <td>{{ student.email }}</td>
+                      <td>{{ student.moduleName }}</td>
+                      <td *ngIf="student.marks.test1 !== null && student.marks.test1 !== undefined" [ngClass]="getScoreColorClass(student.marks.test1 ?? 0, testOutOf[0] ?? 100)">{{ student.marks.test1 }}</td>
+                      <td *ngIf="student.marks.test2 !== null && student.marks.test2 !== undefined" [ngClass]="getScoreColorClass(student.marks.test2 ?? 0, testOutOf[1] ?? 100)">{{ student.marks.test2 }}</td>
+                      <td *ngIf="student.marks.test3 !== null && student.marks.test3 !== undefined" [ngClass]="getScoreColorClass(student.marks.test3 ?? 0, testOutOf[2] ?? 100)">{{ student.marks.test3 }}</td>
+                      <td *ngIf="student.marks.test4 !== null && student.marks.test4 !== undefined" [ngClass]="getScoreColorClass(student.marks.test4 ?? 0, testOutOf[3] ?? 100)">{{ student.marks.test4 }}</td>
+                      <td *ngIf="student.marks.test5 !== null && student.marks.test5 !== undefined" [ngClass]="getScoreColorClass(student.marks.test5 ?? 0, testOutOf[4] ?? 100)">{{ student.marks.test5 }}</td>
+                      <td *ngIf="student.marks.test6 !== null && student.marks.test6 !== undefined" [ngClass]="getScoreColorClass(student.marks.test6 ?? 0, testOutOf[5] ?? 100)">{{ student.marks.test6 }}</td>
+                      <td *ngIf="student.marks.test7 !== null && student.marks.test7 !== undefined" [ngClass]="getScoreColorClass(student.marks.test7 ?? 0, testOutOf[6] ?? 100)">{{ student.marks.test7 }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+                <!-- Display attendance data -->
+                <div class="attendance-data">
+                  <h2>Student Attendance</h2>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Student Number</th>
+                        <th>Student Name</th>
+                        <th>Student Surname</th>
+                        <th>Student Email</th>
+                        <th>Student Module</th>
+                        <th>Attendance (Scan Time)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let student of studentsNeedingAttention">
+                        <td>{{ student.studentNumber }}</td>
+                        <td>{{ student.name }}</td>
+                        <td>{{ student.surname }}</td>
+                        <td>{{ student.email }}</td>
+                        <td>{{ student.moduleName }}</td>
+                        <td>
+                          <div *ngFor="let module of getObjectKeys(student.attendance)">
+                            {{ module }}: {{ student.attendance?.[module] }}
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <!-- File input for uploading Excel files -->
+              <div class="file-input">
+                <input type="file" (change)="onFileChange($event)" accept=".xlsx, .xls" />
+              </div>
+              <!-- Display error messages -->
+              <div *ngIf="error" class="error">
+                {{ error }}
+              </div>
+              <!-- Instructions for the user -->
+              <div *ngIf="error" class="quota-exceeded">
+                <h3>Quota Exceeded</h3>
+                <p>
+                  The Firestore quota has been exceeded. This means that the data from the first table cannot be read from the database.
+                  To resolve this issue, please follow these steps:
+                </p>
+                <ol>
+                  <li>Download the data from the first table as an Excel file.</li>
+                  <li>Upload the Excel file using the file input below.</li>
+                  <li>The data will be read, processed, and displayed in the second table.</li>
+                </ol>
+              </div>
+              <!-- Download button for the user to download the data displayed in the first table as an Excel file -->
+              <div class="download-button">
+                <button (click)="downloadExcel()">Download Excel</button>
+              </div>
             </div>
           </ion-card-content>
         </ion-card>

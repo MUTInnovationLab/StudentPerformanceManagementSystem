@@ -179,4 +179,30 @@ export class AttendanceService {
 
     return Array.from(uniqueMonths).sort();
   }
+
+  async getStudentAttendanceForModules(studentNumber: string, modules: Module[]): Promise<{ [moduleCode: string]: string }> {
+    const attendanceMap: { [moduleCode: string]: string } = {};
+
+    for (const module of modules) {
+      const attendanceDoc = await this.firestore
+        .collection('Attended')
+        .doc(module.moduleCode.trim())
+        .get()
+        .toPromise();
+
+      if (attendanceDoc?.exists) {
+        const attendance = attendanceDoc.data() as DailyAttendance;
+        for (const date in attendance) {
+          const dailyAttendance = attendance[date];
+          const record = dailyAttendance.find(record => record.studentNumber === studentNumber);
+          if (record) {
+            attendanceMap[module.moduleCode] = record.scanTime;
+            break;
+          }
+        }
+      }
+    }
+
+    return attendanceMap;
+  }
 }
