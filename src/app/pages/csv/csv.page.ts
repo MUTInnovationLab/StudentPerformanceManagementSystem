@@ -39,6 +39,10 @@ export class CsvPage implements OnInit {
   openMenu() {
     this.menuVisible = !this.menuVisible;
   }
+  Dashboard() {
+    this.router.navigate(['/dashboard']);  // Ensure you have this route set up
+    this.menuVisible = false;  // Hide the menu after selecting
+  }
   supportfeedback(){
     this.router.navigate(['/supportfeedback']);  // Ensure you have this route set up
     this.menuVisible = false;  // Hide the menu after selecting

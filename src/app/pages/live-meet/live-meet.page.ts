@@ -89,8 +89,8 @@ export class LiveMeetPage implements OnInit, OnDestroy {
   openMenu() {
     this.menuVisible = !this.menuVisible;
   }
-  goToCsv() {
-    this.router.navigate(['/csv']);  // Ensure you have this route set up
+  Dashboard() {
+    this.router.navigate(['/dashboard']);  // Ensure you have this route set up
     this.menuVisible = false;  // Hide the menu after selecting
   }
   async logout() {

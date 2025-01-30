@@ -1,5 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { FirestoreService } from 'src/app/services/firestore.service';
+import { Router } from '@angular/router';
+import { AuthenticationService } from '../../services/auths.service';
+import { AlertController } from '@ionic/angular';
 import { Student, Feedback } from 'src/app/models/feedback.model';
 @Component({
   selector: 'app-supportfeedback',
@@ -7,6 +10,7 @@ import { Student, Feedback } from 'src/app/models/feedback.model';
   styleUrls: ['./supportfeedback.page.scss'],
 })
 export class SupportfeedbackPage implements OnInit {
+  menuVisible: boolean = false;
   students: Student[] = [];
   feedbackHistory: Record<number, Feedback[]> = {};
 
@@ -25,10 +29,40 @@ export class SupportfeedbackPage implements OnInit {
 
   newFeedback: Feedback = this.getEmptyFeedbackForm();
 
-  constructor(private firestoreService: FirestoreService) {}
+  constructor(private firestoreService: FirestoreService,private router: Router,private authService: AuthenticationService,    private alertController: AlertController,
+
+  ) {}
 
   ngOnInit() {
     this.loadStudents();
+  }
+
+  openMenu() {
+    this.menuVisible = !this.menuVisible;
+  }
+ 
+  goToMeeting() {
+    this.router.navigate(['/live-meet']);  // Ensure you have this route set up
+    this.menuVisible = false;  // Hide the menu after selecting
+  }
+  async logout() {
+    try {
+      await this.authService.signOut();
+      this.router.navigate(['/login']); // Redirect to login page after logout
+      this.menuVisible = false;  // Hide the menu after logging out
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  }
+
+  
+  async showLogoutMessage() {
+    const alert = await this.alertController.create({
+      header: 'Logged Out',
+      message: 'You have been successfully logged out.',
+      buttons: ['OK']
+    });
+    await alert.present();
   }
 
   loadStudents(): void {

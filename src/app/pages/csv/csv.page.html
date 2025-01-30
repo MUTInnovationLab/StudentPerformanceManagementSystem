@@ -16,6 +16,7 @@
 
 <ion-content class="ion-padding custom-content">
   <div *ngIf="menuVisible" class="menu">
+    <ion-item (click)="Dashboard()">Dashboard</ion-item>
     <ion-item (click)="goToMeeting()">Go to Meeting</ion-item>
     <ion-item (click)="goToStudentManagement()">Go to student management</ion-item>
     <ion-item (click)="supportfeedback()">Support Feedback</ion-item>

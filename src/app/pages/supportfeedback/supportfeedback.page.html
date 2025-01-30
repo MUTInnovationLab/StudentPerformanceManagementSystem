@@ -1,11 +1,21 @@
-<!--Container-->
-<!--Header with Icon-->
-
-<!>
+<!-- Container -->
 <div class="container">
+  <!-- Header with Icon -->
   <div class="header-with-icon">
     <ion-icon name="people-circle" class="title-icon"></ion-icon>
     <h1>Student Feedback Management</h1>
+  </div>
+
+  <ion-buttons slot="start">
+    <!-- Menu Button (3 dots) -->
+    <ion-button (click)="openMenu()">
+      <ion-icon name="ellipsis-vertical-outline"></ion-icon>
+    </ion-button>
+  </ion-buttons>
+
+  <div *ngIf="menuVisible" class="menu">
+    <ion-item (click)="goToMeeting()">Go to Meeting</ion-item>
+    <ion-item (click)="logout()">Logout</ion-item>
   </div>
 
   <!-- Student List View -->
@@ -17,11 +27,11 @@
     <ion-list>
       <ion-item *ngFor="let student of filteredStudents" (click)="selectStudent(student)" button>
         <ion-label>
-          <h2>{{student.name}}</h2>
-          <p>{{student.department}}</p>
-          <p>{{student.faculty}}</p>
-          <p>{{student.studentNumber}}</p>
-          <p class="enrollment-date">Enrolled: {{formatDate(student.enrollmentDate)}}</p>
+          <h2>{{ student.name }}</h2>
+          <p>{{ student.department }}</p>
+          <p>{{ student.faculty }}</p>
+          <p>{{ student.studentNumber }}</p>
+          <p class="enrollment-date">Enrolled: {{ formatDate(student.enrollmentDate) }}</p>
         </ion-label>
         <ion-icon name="chevron-forward" slot="end"></ion-icon>
       </ion-item>
@@ -41,7 +51,7 @@
             <ion-icon name="arrow-back"></ion-icon>
           </ion-button>
         </ion-buttons>
-        <ion-title>{{selectedStudent.name}}</ion-title>
+        <ion-title>{{ selectedStudent.name }}</ion-title>
         <ion-buttons slot="end">
           <ion-button (click)="showFeedbackForm()" color="primary">
             Add Feedback
@@ -68,42 +78,42 @@
         <ion-card-header>
           <ion-card-subtitle>
             <ion-icon name="calendar"></ion-icon>
-            {{formatDate(feedback.date)}}
+            {{ formatDate(feedback.date) }}
           </ion-card-subtitle>
         </ion-card-header>
         <ion-card-content>
           <ion-badge [class]="getAttendanceClass(feedback.attendance)">
-            {{feedback.attendance}}
+            {{ feedback.attendance }}
           </ion-badge>
-          
+
           <div class="feedback-section">
             <h3>Technical Progress</h3>
-            <p>{{feedback.technicalProgress}}</p>
+            <p>{{ feedback.technicalProgress }}</p>
           </div>
 
           <div class="feedback-section" *ngIf="feedback.softSkills">
             <h3>Soft Skills</h3>
-            <p>{{feedback.softSkills}}</p>
+            <p>{{ feedback.softSkills }}</p>
           </div>
 
           <div class="feedback-section" *ngIf="feedback.completedTasks">
             <h3>Completed Tasks</h3>
-            <p>{{feedback.completedTasks}}</p>
+            <p>{{ feedback.completedTasks }}</p>
           </div>
 
           <div class="feedback-section" *ngIf="feedback.areasForImprovement">
             <h3>Areas for Improvement</h3>
-            <p>{{feedback.areasForImprovement}}</p>
+            <p>{{ feedback.areasForImprovement }}</p>
           </div>
 
           <div class="feedback-section" *ngIf="feedback.supportNeeded">
             <h3>Support Needed</h3>
-            <p>{{feedback.supportNeeded}}</p>
+            <p>{{ feedback.supportNeeded }}</p>
           </div>
 
           <div class="feedback-section" *ngIf="feedback.recommendations">
             <h3>Recommendations</h3>
-            <p>{{feedback.recommendations}}</p>
+            <p>{{ feedback.recommendations }}</p>
           </div>
         </ion-card-content>
       </ion-card>
@@ -121,19 +131,19 @@
             <ion-item>
               <ion-label>
                 <h2>Enrollment Date</h2>
-                <p>{{formatDate(selectedStudent.enrollmentDate)}}</p>
+                <p>{{ formatDate(selectedStudent.enrollmentDate) }}</p>
               </ion-label>
             </ion-item>
             <ion-item>
               <ion-label>
                 <h2>Course</h2>
-                <p>{{selectedStudent.course}}</p>
+                <p>{{ selectedStudent.course }}</p>
               </ion-label>
             </ion-item>
             <ion-item>
               <ion-label>
                 <h2>Student ID</h2>
-                <p>{{selectedStudent.id}}</p>
+                <p>{{ selectedStudent.id }}</p>
               </ion-label>
             </ion-item>
           </ion-list>
@@ -151,33 +161,13 @@
           <form (ngSubmit)="submitFeedback()">
             <ion-item>
               <ion-label position="stacked">Date</ion-label>
-              <ion-datetime
-                [(ngModel)]="newFeedback.date"
-                name="date"
-                display-format="MMM DD, YYYY"
-                picker-format="MMM DD YYYY"
-                required>
+              <ion-datetime [(ngModel)]="newFeedback.date" name="date" display-format="MMM DD, YYYY" picker-format="MMM DD YYYY" required>
               </ion-datetime>
             </ion-item>
 
             <ion-item>
               <ion-label position="stacked">Technical Progress *</ion-label>
-              <ion-textarea
-                [(ngModel)]="newFeedback.technicalProgress"
-                name="technicalProgress"
-                required
-                rows="3"
-                placeholder="Describe technical progress...">
-              </ion-textarea>
-            </ion-item>
-
-            <ion-item>
-              <ion-label position="stacked">Soft Skills</ion-label>
-              <ion-textarea
-                [(ngModel)]="newFeedback.softSkills"
-                name="softSkills"
-                rows="3"
-                placeholder="Describe soft skills...">
+              <ion-textarea [(ngModel)]="newFeedback.technicalProgress" name="technicalProgress" required rows="3" placeholder="Describe technical progress...">
               </ion-textarea>
             </ion-item>
 
@@ -191,46 +181,6 @@
               </ion-select>
             </ion-item>
 
-            <ion-item>
-              <ion-label position="stacked">Completed Tasks</ion-label>
-              <ion-textarea
-                [(ngModel)]="newFeedback.completedTasks"
-                name="completedTasks"
-                rows="3"
-                placeholder="List completed tasks...">
-              </ion-textarea>
-            </ion-item>
-
-            <ion-item>
-              <ion-label position="stacked">Areas for Improvement</ion-label>
-              <ion-textarea
-                [(ngModel)]="newFeedback.areasForImprovement"
-                name="areasForImprovement"
-                rows="3"
-                placeholder="Suggest areas for improvement...">
-              </ion-textarea>
-            </ion-item>
-
-            <ion-item>
-              <ion-label position="stacked">Support Needed</ion-label>
-              <ion-textarea
-                [(ngModel)]="newFeedback.supportNeeded"
-                name="supportNeeded"
-                rows="3"
-                placeholder="Describe support needed...">
-              </ion-textarea>
-            </ion-item>
-
-            <ion-item>
-              <ion-label position="stacked">Recommendations</ion-label>
-              <ion-textarea
-                [(ngModel)]="newFeedback.recommendations"
-                name="recommendations"
-                rows="3"
-                placeholder="Provide recommendations...">
-              </ion-textarea>
-            </ion-item>
-
             <div class="form-buttons ion-padding">
               <ion-button expand="block" type="submit">Submit Feedback</ion-button>
             </div>
@@ -240,11 +190,7 @@
     </div>
 
     <div *ngIf="showSuccessMessage" class="success-message">
-      <ion-toast
-        isOpen="true"
-        message="Feedback submitted successfully!"
-        duration="3000"
-        color="success">
+      <ion-toast [isOpen]="true" message="Feedback submitted successfully!" duration="3000" color="success">
       </ion-toast>
     </div>
   </div>

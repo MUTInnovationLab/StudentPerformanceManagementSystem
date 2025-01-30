@@ -1,10 +1,21 @@
 <ion-header>
   <ion-toolbar>
     <ion-title>Analytics</ion-title>
+    <ion-buttons slot="start">
+      <!-- Menu Button (3 dots) -->
+      <ion-button (click)="openMenu()">
+        <ion-icon name="ellipsis-vertical-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
 <ion-content>
+  <div *ngIf="menuVisible" class="menu">
+    <ion-item (click)="goToMeeting()">Go to Meeting</ion-item>
+    <ion-item (click)="Dashboard()">Dashboard</ion-item>
+    <ion-item (click)="logout()">Logout</ion-item>
+  </div>
   <!-- Loop through modules -->
   <div *ngFor="let module of attendedModules">
     <h3>{{ module.moduleName }}</h3> <!-- Module name (e.g., CA100, CF100) -->

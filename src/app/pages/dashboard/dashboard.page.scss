@@ -1,0 +1,51 @@
+.dashboard-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 15px;
+  padding: 20px;
+  justify-content: center;
+}
+
+ion-title {
+  text-align: center;
+  font-weight: 700;
+  font-size: 1.8rem;
+  letter-spacing: 2px;
+  color: white;
+}
+
+.disabled-card {
+  pointer-events: none; /* Prevent clicks */
+  opacity: 0.5; /* Dim the card */
+}
+
+.dashboard-card {
+  background: var(--ion-color-light);
+  text-align: center;
+  padding: 20px;
+  border-radius: 15px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.card-icon {
+  font-size: 50px;
+  color: var(--ion-color-primary);
+  margin-bottom: 10px;
+}
+
+h2 {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: var(--ion-color-dark);
+}
+
+p {
+  font-size: 0.9rem;
+  color: var(--ion-color-medium);
+}

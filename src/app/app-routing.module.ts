@@ -192,6 +192,11 @@ const routes: Routes = [
     path: 'students-performance',
     loadChildren: () => import('./students-performance/students-performance.module').then( m => m.StudentsPerformancePageModule)
   },
+  {
+    path: 'dashboard',
+    loadChildren: () => import('./pages/dashboard/dashboard.module').then( m => m.DashboardPageModule)
+  },
+
 
 ];
 

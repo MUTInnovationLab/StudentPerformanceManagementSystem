@@ -62,36 +62,25 @@ export class LoginPage implements OnInit {
   
         // Fetch user data from Firestore based on the email
         const userDoc = await this.firestore
-          .collection('staff') // Ensure your collection name matches
+          .collection('staff') // Ensure collection name is correct
           .ref.where('email', '==', email)
           .limit(1)
           .get();
   
         if (!userDoc.empty) {
-          const userData = userDoc.docs[0].data() as User; // Cast to User interface
+          const userData = userDoc.docs[0].data() as User; 
   
           // Check if the staff number matches
           if (userData.staffNumber === staffNumber) {
-            // Navigate based on the user's position
-            switch (userData.position) {
-              case 'Dean':
-                this.router.navigate(['/faculty-analytic']); // Navigate to faculty-analytics page
-                break;
-              case 'dept-admin':
-                this.router.navigate(['/admin']); // Navigate to AdminPage
-                break;
-              case 'Lecturer':
-                this.router.navigate(['/csv']); // Navigate to CSV Page
-                break;
-              default:
-                this.router.navigate(['/hod-analytics']); // Navigate to HOD's analytics
-            }
+            // Store user position in localStorage
+            localStorage.setItem('userPosition', userData.position);
+  
+            // Navigate to the DashboardPage for all users
+            this.router.navigate(['/dashboard']);
           } else {
-            // If staff number is incorrect, show an alert
             this.showAlert('Login Failed', 'Incorrect staff number');
           }
         } else {
-          // If no user found, show an alert
           this.showAlert('Login Failed', 'No user found with this email');
         }
   
