@@ -17,6 +17,14 @@ interface Module {
   moduleLevel: string;
 }
 
+interface RangeStatistics {
+  range: string;
+  count: number;
+  percentage: number;
+  students: StudentMark[];
+}
+
+
 interface StaffDetails {
   fullName: string;
   department: string;
@@ -78,7 +86,8 @@ interface AssignedModule {
   styleUrls: ['./module-mentorship.page.scss']
 })
 export class ModuleMentorshipPage implements OnInit, AfterViewInit {
-  lowPerformingModules: ModuleMentorshipData[] = [];
+
+   lowPerformingModules: ModuleMentorshipData[] = [];
   filteredModules: ModuleMentorshipData[] = [];
   totalStudentsNeedingMentorship: number = 0;
   moduleComparisonChart: Chart | null = null;
@@ -95,8 +104,17 @@ export class ModuleMentorshipPage implements OnInit, AfterViewInit {
   totalStudents: number = 0;
   allStudents: any[] = [];
   allModules: ModuleMentorshipData[] = [];
- 
+  private rangePieCharts: { [key: string]: Chart } = {};
 
+  // Add missing properties
+  selectedRange: string = 'all';
+  rangeStatistics: RangeStatistics[] = [];
+  ranges = [
+    { label: 'All', value: 'all' },
+    { label: '0 - 49%', value: '0-49' },
+    { label: '50 - 74%', value: '50-74' },
+    { label: '75 - 100%', value: '75-100' }
+  ];
 
   private readonly LOW_PERFORMANCE_THRESHOLD = 50;
   private readonly CHART_COLORS = {
@@ -147,9 +165,100 @@ export class ModuleMentorshipPage implements OnInit, AfterViewInit {
     });
   }
 
+  private createRangePieCharts() {
+    // Destroy existing charts
+    Object.values(this.rangePieCharts).forEach((chart: Chart) => chart.destroy());
+    this.rangePieCharts = {};
+
+    // Create pie chart for each range
+    this.ranges.forEach(range => {
+      const canvas = document.getElementById(`pieChart${range.value}`) as HTMLCanvasElement;
+      if (!canvas) return;
+
+      const [min, max] = range.value === 'all' 
+        ? [0, 100] 
+        : range.value.split('-').map(Number);
+
+      const modulesInRange = this.allModules.filter(module => {
+        if (range.value === 'all') return true;
+        return module.averageMarks >= min && module.averageMarks <= max;
+      });
+
+      const totalStudents = this.allModules.reduce((sum, module) => 
+        sum + module.totalStudents, 0);
+      const studentsInRange = modulesInRange.reduce((sum, module) => 
+        sum + module.totalStudents, 0);
+
+      const config: ChartConfiguration = {
+        type: 'pie',
+        data: {
+          labels: ['In Range', 'Outside Range'],
+          datasets: [{
+            data: [studentsInRange, totalStudents - studentsInRange],
+            backgroundColor: ['#4CAF50', '#F44336']
+          }]
+        },
+        options: {
+          plugins: {
+            title: {
+              display: true,
+              text: `Students in ${range.label} Range`
+            }
+          }
+        }
+      };
+
+      this.rangePieCharts[range.value] = new Chart(canvas, config);
+    });
+  }
+
+  onRangeChange(event: any) {
+    this.selectedRange = event.detail.value;
+    
+    if (this.selectedRange === 'all') {
+      this.filteredModules = [...this.allModules];
+    } else {
+      const [min, max] = this.selectedRange.split('-').map(Number);
+      this.filteredModules = this.allModules.filter(module => {
+        return module.averageMarks >= min && module.averageMarks <= max;
+      });
+    }
+    
+    this.updateCharts();
+  }
 
 
+  calculateRangeStatistics() {
+    const allStudentMarks: StudentMark[] = [];
+    
+    // Collect all student marks across modules
+    this.allModules.forEach(module => {
+      if (module.studentsNeedingMentor) {
+        allStudentMarks.push(...module.studentsNeedingMentor);
+      }
+    });
 
+    // Calculate statistics for each range
+    this.rangeStatistics = [
+      this.calculateRangeData(allStudentMarks, 0, 49),
+      this.calculateRangeData(allStudentMarks, 50, 74),
+      this.calculateRangeData(allStudentMarks, 75, 100)
+    ];
+  }
+
+  private calculateRangeData(marks: StudentMark[], min: number, max: number): RangeStatistics {
+    const studentsInRange = marks.filter(student => {
+      const avg = parseFloat(student.average);
+      return avg >= min && avg <= max;
+    });
+
+    return {
+      range: `${min} - ${max}`,
+      count: studentsInRange.length,
+      percentage: (studentsInRange.length / marks.length) * 100,
+      students: studentsInRange
+    };
+  }
   showAllStudents() {
     this.selectedView = 'allStudents';
     this.filteredModules = []; // Clear module filters
@@ -358,9 +467,6 @@ export class ModuleMentorshipPage implements OnInit, AfterViewInit {
     }
   }
 
-
-  
-  
 private async loadTotalStudents(faculty: Faculty) {
   try {
     const studentsSnapshot = await this.firestore
@@ -382,7 +488,6 @@ private async loadTotalStudents(faculty: Faculty) {
     this.allStudents = [];
   }
 }
-
 
 private async processModuleData(faculty: Faculty) {
   this.isLoading = true;
@@ -427,7 +532,6 @@ private async processModuleData(faculty: Faculty) {
               // Calculate and update each student's average
               studentsNeedingMentor = marksData.marks.map(student => {
                 const calculatedAverage = this.calculateStudentAverage(student, marksData.testPercentages);
-                // Update the student's average in the mark object
                 return {
                   ...student,
                   average: calculatedAverage.toFixed(1) // Store as string with 1 decimal place
@@ -468,17 +572,28 @@ private async processModuleData(faculty: Faculty) {
           })
         );
 
-        moduleData.push(...modulesMentorshipData.filter(module => module !== null) as ModuleMentorshipData[]);
+        moduleData.push(...modulesMentorshipData.filter(module => module !== null));
       }
     }
 
+    // Store all modules
     this.allModules = [...moduleData];
-    this.lowPerformingModules = moduleData.filter(module => module.averageMarks < this.LOW_PERFORMANCE_THRESHOLD);
+    // Filter low performing modules
+    this.lowPerformingModules = moduleData.filter(module => 
+      module.averageMarks < this.LOW_PERFORMANCE_THRESHOLD
+    );
+    // Set filtered modules to show all by default
     this.filteredModules = [...moduleData];
+    
+    // Calculate total students needing mentorship
     this.totalStudentsNeedingMentorship = moduleData.reduce(
       (sum, module) => sum + module.studentsNeedingMentorship, 0
     );
 
+    // Calculate range statistics
+    this.calculateRangeStatistics();
+
+    // Update charts after a brief delay to ensure DOM is ready
     setTimeout(() => {
       this.updateCharts();
     }, 0);
@@ -521,10 +636,6 @@ private chunkArray<T>(array: T[], size: number): T[][] {
   }
   return chunks;
 }
-
-
-
-
 
   // Process modules for a specific department
   private async processDepartmentModules(modules: Module[], departmentName: string): Promise<ModuleMentorshipData[]> {
@@ -570,7 +681,6 @@ private chunkArray<T>(array: T[], size: number): T[][] {
     return modulesMentorshipData.filter(module => module !== null) as ModuleMentorshipData[];
   }
   
-  
   // Ensure charts render only after data is loaded
   private updateCharts() {
     if (this.filteredModules.length > 0) {
@@ -579,7 +689,6 @@ private chunkArray<T>(array: T[], size: number): T[][] {
     }
   }
   
-
   // Add new method to load staff details
   private async loadStaffDetails() {
     try {
@@ -602,7 +711,6 @@ private chunkArray<T>(array: T[], size: number): T[][] {
     }
   }
 
-  
   async showModuleStudents(module: ModuleMentorshipData) {
     this.selectedModule = module;
     this.showStudentList = true;
@@ -613,9 +721,6 @@ private chunkArray<T>(array: T[], size: number): T[][] {
     this.selectedModule = null;
   }
 
-
-
-  
   ngAfterViewInit() {
     if (this.lowPerformingModules.length > 0) {
       this.updateCharts();
@@ -674,7 +779,6 @@ private chunkArray<T>(array: T[], size: number): T[][] {
 
     return modules;
   }
-
 
   private createModuleComparisonChart() {
     const canvas = document.getElementById('moduleComparisonChart') as HTMLCanvasElement;

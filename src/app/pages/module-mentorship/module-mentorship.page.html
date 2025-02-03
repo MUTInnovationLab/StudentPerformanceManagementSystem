@@ -52,6 +52,27 @@
     <!-- Search Bar for Department -->
     <ion-searchbar [(ngModel)]="searchQuery" placeholder="Search by Department" (ionInput)="filterModules()"></ion-searchbar>
 
+
+    <div class="range-selector ion-padding">
+      <ion-list>
+        <ion-item>
+          <ion-label>Select Performance Range</ion-label>
+          <ion-select 
+            [(ngModel)]="selectedRange" 
+            (ionChange)="onRangeChange($event)"
+            interface="popover"
+            placeholder="Choose range">
+            <ion-select-option 
+              *ngFor="let range of ranges" 
+              [value]="range.value">
+              {{range.label}}
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
+      </ion-list>
+    </div>
+    
+
     <!-- Module List -->
     <ion-list *ngIf="filteredModules.length > 0">
       <ion-item *ngFor="let module of filteredModules" button (click)="showModuleStudents(module)">
