@@ -1,8 +1,10 @@
 <ion-header>
   <ion-toolbar>
-    <ion-title >Dashboard</ion-title>
+    <ion-title>Dashboard</ion-title>
     <ion-buttons slot="end">
-      <ion-button (click)="logout()">Logout</ion-button>
+      <ion-button (click)="logout()">
+        Logout
+      </ion-button>
     </ion-buttons>
   </ion-toolbar>
 </ion-header>
@@ -10,17 +12,13 @@
 <ion-content class="ion-padding">
   <ion-grid>
     <ion-row>
-      <ion-col size="6" *ngFor="let page of pages">
-        <ion-card 
-          [ngClass]="{'disabled-card': !isAuthorized(page.roles)}"
-          (click)="navigateTo(page.path, page.roles)"
-        >
+      <ion-col size="6" *ngFor="let page of authorizedPages">
+        <ion-card class="dashboard-card" (click)="navigateTo(page.path)">
           <ion-card-header>
             <ion-icon [name]="page.icon"></ion-icon>
             <ion-card-title>{{ page.title }}</ion-card-title>
           </ion-card-header>
           <ion-card-content>{{ page.description }}</ion-card-content>
-          <ion-icon *ngIf="!isAuthorized(page.roles)" name="lock-closed-outline"></ion-icon>
         </ion-card>
       </ion-col>
     </ion-row>

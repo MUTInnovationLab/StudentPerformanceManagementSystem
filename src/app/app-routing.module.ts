@@ -23,10 +23,7 @@ const routes: Routes = [
     path: 'analytics',
     loadChildren: () => import('./pages/analytics/analytics.module').then( m => m.AnalyticsPageModule)
   },
-  {
-    path: 'add-lecturer',
-    loadChildren: () => import('./pages/add-lecturer/add-lecturer.module').then( m => m.AddLecturerPageModule)
-  },
+
   {
     path: 'mentors',
     children: [
@@ -110,10 +107,7 @@ const routes: Routes = [
     path: 'analytics',
     loadChildren: () => import('./pages/analytics/analytics.module').then( m => m.AnalyticsPageModule)
   },
-  {
-    path: 'add-lecturer',
-    loadChildren: () => import('./pages/add-lecturer/add-lecturer.module').then( m => m.AddLecturerPageModule)
-  },
+  
   {
     path: 'mentors',
     children: [
