@@ -30,11 +30,13 @@ export class AuthenticationService {
 
   // Login method using Firebase Authentication
   login(email: string, password: string) {
+    this.cachedStaff = null; // Clear cache on new login
     return this.afAuth.signInWithEmailAndPassword(email, password);
   }
 
   async getLoggedInStaff(): Promise<Staff> {
     if (this.cachedStaff) {
+      console.log('Using cached staff:', this.cachedStaff); // Log the cached staff
       return this.cachedStaff;
     }
 
@@ -54,6 +56,7 @@ export class AuthenticationService {
     }
 
     this.cachedStaff = staffDataSnapshot.docs[0].data() as Staff;
+    console.log('Fetched staff data:', this.cachedStaff); // Log the fetched staff data
     return this.cachedStaff;
   }
 
@@ -72,9 +75,8 @@ export class AuthenticationService {
     return staff.department;
   }
 
-signOut() {
-  return this.afAuth.signOut();
+  signOut() {
+    this.cachedStaff = null; // Clear cache on logout
+    return this.afAuth.signOut();
+  }
 }
-}
-
-

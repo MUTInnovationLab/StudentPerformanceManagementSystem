@@ -2,6 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { FirestoreService } from 'src/app/services/firestore.service';
 import { AuthenticationService } from '../../services/auths.service';
 import { Router } from '@angular/router';
+import { Module } from '../../models/assignedModules.model';
+import { switchMap } from 'rxjs/operators';
+import { ModuleAttendance } from '../../models/attendancePerfomance.model';
 
 
 
@@ -12,7 +15,8 @@ import { Router } from '@angular/router';
 })
 export class AnalyticsPage implements OnInit {
   menuVisible: boolean = false;
-  attendedModules: any[] = [];
+  attendedModules: ModuleAttendance[] = [];
+  assignedModules: Module[] = [];
 
   constructor(
     private firestoreService: FirestoreService,private router: Router, private authService: AuthenticationService,
@@ -21,11 +25,45 @@ export class AnalyticsPage implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.firestoreService.getAttendedModules().subscribe(data => {
-      this.attendedModules = data;
-      console.log(this.attendedModules); // Check the structure
+    this.loadModules();
+  }
+
+  private loadModules() {
+    this.authService.getLoggedInStaff().then(staff => {
+      console.log('Staff number:', staff.staffNumber);
+      if (!staff.staffNumber) {
+        console.error('No staff number found!');
+        return;
+      }
+
+      this.firestoreService.getAssignedModules(staff.staffNumber)
+        .pipe(
+          switchMap(modules => {
+            console.log('Retrieved modules:', modules);
+            this.assignedModules = modules;
+            const moduleCodes = modules.map(m => m.moduleCode);
+            console.log('Module codes to search:', moduleCodes);
+            if (moduleCodes.length === 0) {
+              console.warn('No module codes found for staff member');
+              return [];
+            }
+            return this.firestoreService.getAttendedModules(moduleCodes);
+          })
+        )
+        .subscribe({
+          next: (data: ModuleAttendance[]) => {
+            this.attendedModules = data;
+            console.log('Final attendance data:', this.attendedModules);
+          },
+          error: (error) => {
+            console.error('Error loading modules:', error);
+          }
+        });
+    }).catch(error => {
+      console.error('Error getting staff details:', error);
     });
   }
+
   openMenu() {
     this.menuVisible = !this.menuVisible;
   }
@@ -42,6 +80,7 @@ export class AnalyticsPage implements OnInit {
   async logout() {
     try {
       await this.authService.signOut();
+      this.loadModules(); // Ensure the loadModules method is called after a new login to fetch the correct data
       this.router.navigate(['/login']); // Redirect to login page after logout
       this.menuVisible = false;  // Hide the menu after logging out
     } catch (error) {
