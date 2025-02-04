@@ -9,6 +9,7 @@ export interface Student {
     faculty: string;
     department: string;
     enrollmentDate: string;
+    scanTime?: string | null; // Add scanTime property
     [key: string]: any;
   }
   

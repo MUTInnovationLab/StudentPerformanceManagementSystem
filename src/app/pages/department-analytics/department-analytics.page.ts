@@ -18,13 +18,15 @@ interface Marks {
   [key: `test${number}`]: number | null;
   studentNumber: string;
   average: number;
-  test1: number | null;
-  test2: number | null;
-  test3: number | null;
-  test4: number | null;
-  test5: number | null;
-  test6: number | null;
-  test7: number | null;
+  test1: number;
+  test2: number;
+  test3: number;
+  test4: number;
+  test5: number;
+  test6: number;
+  test7: number;
+  moduleCode: string;
+  scanTime: string | null;
 }
 
 interface DetailedStudentInfo {
@@ -35,6 +37,7 @@ interface DetailedStudentInfo {
   department: string;
   average: number;
   moduleName: string;
+  moduleCode: string;
   marks: Marks;
 }
 
@@ -268,6 +271,7 @@ export class DepartmentAnalyticsPage implements OnInit {
                 department: studentData.department ?? 'N/A',
                 average,
                 moduleName: module.moduleName,
+                moduleCode: moduleCode,
                 marks: {
                   studentNumber: mark.studentNumber,
                   average: mark.average,
@@ -277,7 +281,9 @@ export class DepartmentAnalyticsPage implements OnInit {
                   test4: mark.test4 ?? undefined,
                   test5: mark.test5 ?? undefined,
                   test6: mark.test6 ?? undefined,
-                  test7: mark.test7 ?? undefined
+                  test7: mark.test7 ?? undefined,
+                  moduleCode: moduleCode,
+                  scanTime: mark.scanTime ?? null
                 }
               };
 

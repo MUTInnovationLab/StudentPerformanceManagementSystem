@@ -28,9 +28,23 @@ export interface DetailedStudentInfo {
   surname: string;
   department: string;
   email: string;
-  marks: StudentMarks;
   moduleName: string;
+  moduleCode: string;
   average: number;
+  marks: {
+    studentNumber: string;
+    average: number;
+    test1: number;
+    test2: number;
+    test3: number;
+    test4: number;
+    test5: number;
+    test6: number;
+    test7: number;
+    moduleCode: string;
+    scanTime: string | null;
+    [key: string]: any; // Index signature to allow string indexing
+  };
   attendance?: { [module: string]: string }; // Add this property
 }
 

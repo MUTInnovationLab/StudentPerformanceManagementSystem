@@ -31,58 +31,73 @@ export class StudentsPerformancePage implements OnInit {
     private attendanceService: AttendanceService // Inject AttendanceService
   ) {}
 
+  ngOnInit() {
+    this.loadStudentMarks();
+  }
+
   openMenu() {
     this.menuVisible = !this.menuVisible;
   }
 
+  goToMeeting() {
+    this.router.navigate(['/meeting']);
+  }
+
   goToCsv() {
-    this.router.navigate(['/csv']);  // Ensure you have this route set up
-    this.menuVisible = false;  // Hide the menu after selecting
+    this.router.navigate(['/csv']);
   }
 
   goToStudentsManagement() {
-    this.router.navigate(['/student-management']);  // Ensure you have this route set up
-    this.menuVisible = false;  // Hide the menu after selecting
+    this.router.navigate(['/students-management']);
   }
 
-  goToMeeting() {
-    this.router.navigate(['/live-meet']);  // Ensure you have this route set up
-    this.menuVisible = false;  // Hide the menu after selecting
-  }
-
-  async logout() {
-    try {
-      await this.authService.signOut();
-      this.router.navigate(['/login']); // Redirect to login page after logout
-      this.menuVisible = false;  // Hide the menu after logging out
-    } catch (error) {
-      console.error('Logout failed:', error);
-    }
-  }
-
-  ngOnInit() {
-    this.loadStudentMarks();
+  logout() {
+    this.authService.signOut().then(() => {
+      this.router.navigate(['/login']);
+    });
   }
 
   private async loadStudentMarks() {
     this.isLoading = true; // Set loading state to true
     try {
-      // Bypass authentication for testing purposes
-      const faculty = 'Faculty of Applied and Health Science';
-      const facultyRef = this.firestore.collection('faculties').doc(faculty);
-      const facultyDoc = await facultyRef.get().toPromise();
-
-      if (!facultyDoc?.exists) {
-        this.error = 'Faculty not found';
+      const user = await this.authService.getLoggedInStaff();
+      if (!user || !user.email || !user.staffNumber) {
+        this.error = 'User not authenticated';
         return;
       }
-
-      const facultyData = facultyDoc.data() as Faculty;
-      const allModules = facultyData.departments.reduce((acc: Module[], dept: Department) => {
-        return acc.concat(this.getAllModulesFromDepartment(dept));
-      }, []);
-      this.students = await this.retrieveStudentMarks(allModules);
-      await this.loadAttendanceData(allModules); // Load attendance data
+  
+      console.log('Logged in user:', user);
+  
+      const staffSnapshot = await this.firestore.collection('staff')
+        .ref.where('email', '==', user.email)
+        .get();
+  
+      if (staffSnapshot.empty) {
+        this.error = 'User not found in staff collection';
+        return;
+      }
+  
+      console.log('User found in staff collection:', staffSnapshot.docs.map(doc => doc.data()));
+  
+      const assignedLecturesDoc = await this.firestore.collection('assignedLectures')
+        .doc(user.staffNumber)
+        .get()
+        .toPromise();
+  
+      if (!assignedLecturesDoc || !assignedLecturesDoc.exists) {
+        this.error = 'User not found in assignedLectures collection';
+        console.log('Assigned lectures document not found for staffNumber:', user.staffNumber);
+        return;
+      }
+  
+      const assignedLecturesData = assignedLecturesDoc.data();
+      console.log('User found in assignedLectures collection:', assignedLecturesData);
+  
+      const assignedModules = (assignedLecturesData as { modules: any[] })?.modules || [];
+      const moduleCodes = assignedModules.map((module: { moduleCode: string }) => module.moduleCode);
+  
+      this.students = await this.retrieveStudentMarks(moduleCodes);
+      await this.loadAttendanceData(moduleCodes); // Load attendance data
       this.studentsNeedingAttention = this.getStudentsNeedingAttention(this.students);
       console.log('Students needing attention:', this.studentsNeedingAttention); // Debug log
     } catch (error) {
@@ -97,15 +112,15 @@ export class StudentsPerformancePage implements OnInit {
     }
   }
 
-  private async loadAttendanceData(modules: Module[]) {
+  private async loadAttendanceData(moduleCodes: string[]) {
     try {
-      for (const module of modules) {
+      for (const moduleCode of moduleCodes) {
         const attendanceDoc = await this.firestore
           .collection('Attended')
-          .doc(module.moduleCode.trim())
+          .doc(moduleCode.trim())
           .get()
           .toPromise();
-
+  
         if (attendanceDoc?.exists) {
           const attendanceData = attendanceDoc.data();
           if (attendanceData) {
@@ -115,7 +130,7 @@ export class StudentsPerformancePage implements OnInit {
                 if (!this.studentsAttendance[record.studentNumber]) {
                   this.studentsAttendance[record.studentNumber] = {};
                 }
-                this.studentsAttendance[record.studentNumber][module.moduleCode] = record.scanTime;
+                this.studentsAttendance[record.studentNumber][moduleCode] = record.scanTime;
               });
             }
           }
@@ -127,36 +142,19 @@ export class StudentsPerformancePage implements OnInit {
     }
   }
 
-  private getAllModulesFromDepartment(department: Department): Module[] {
-    const modules: Module[] = [...(department.modules || [])];
-    
-    if (department.streams) {
-      Object.values(department.streams).forEach(streams => {
-        streams.forEach(stream => {
-          if (stream.modules) {
-            modules.push(...stream.modules);
-          }
-        });
-      });
-    }
-
-    return modules;
-  }
-
-  private async retrieveStudentMarks(modules: Module[]): Promise<DetailedStudentInfo[]> {
+  private async retrieveStudentMarks(moduleCodes: string[]): Promise<DetailedStudentInfo[]> {
     const students: DetailedStudentInfo[] = [];
     try {
-      const moduleChunks = this.chunkArray(modules, 10);
+      const moduleChunks = this.chunkArray(moduleCodes, 10);
       for (const moduleChunk of moduleChunks) {
-        const moduleCodes = moduleChunk.map(m => m.moduleCode);
         const marksQuery = await this.firestore
           .collection('marks')
-          .ref.where('moduleCode', 'in', moduleCodes)
+          .ref.where('moduleCode', 'in', moduleChunk)
           .get();
-
+  
         const studentNumbers = new Set<string>();
         const moduleMarks = new Map<string, any>();
-
+  
         marksQuery.docs.forEach(doc => {
           const data = doc.data() as ModuleMarksDocument;
           moduleMarks.set(doc.id, data);
@@ -168,33 +166,33 @@ export class StudentsPerformancePage implements OnInit {
             });
           }
         });
-
+  
         const studentChunks = this.chunkArray(Array.from(studentNumbers), 10);
         const studentMap = new Map<string, any>();
-
+  
         for (const studentChunk of studentChunks) {
           const studentsQuery = await this.firestore
             .collection('students')
             .ref.where('studentNumber', 'in', studentChunk)
             .get();
-
+  
           studentsQuery.docs.forEach(doc => {
             studentMap.set(doc.id, doc.data());
           });
         }
-
+  
         moduleMarks.forEach((moduleData, moduleCode) => {
-          const module = modules.find(m => m.moduleCode === moduleCode);
+          const module = moduleCodes.find(m => m === moduleCode);
           if (!module) return;
-
+  
           moduleData.marks.forEach((mark: any) => {
             if (!mark.studentNumber) return;
-
+  
             const average = mark.average ? Number(mark.average) : 
                            this.calculateStudentAverage(mark, moduleData.testPercentages);
-
+  
             const studentData = studentMap.get(mark.studentNumber.toString());
-
+  
             if (studentData) {
               const studentDetail: DetailedStudentInfo = {
                 studentNumber: mark.studentNumber,
@@ -203,7 +201,8 @@ export class StudentsPerformancePage implements OnInit {
                 email: studentData.email ?? 'N/A',
                 department: studentData.department ?? 'N/A',
                 average,
-                moduleName: module.moduleName,
+                moduleName: moduleData.moduleName,
+                moduleCode: moduleCode,
                 marks: {
                   studentNumber: mark.studentNumber,
                   average: mark.average,
@@ -214,8 +213,10 @@ export class StudentsPerformancePage implements OnInit {
                   test5: mark.test5 ?? 0,
                   test6: mark.test6 ?? 0,
                   test7: mark.test7 ?? 0,
+                  moduleCode: moduleCode,
                   scanTime: mark.scanTime ?? null // Ensure scanTime is included
-                }
+                },
+                attendance: studentData.attendance ?? {}
               };
               students.push(studentDetail);
             }
@@ -261,7 +262,7 @@ export class StudentsPerformancePage implements OnInit {
       const testKey = `test${i}`;
       const score = Number(mark[testKey]);
       const weight = testPercentages[testKey];
-      
+  
       if (!isNaN(score) && score !== null && weight) {
         totalWeightedScore += (score * weight);
         totalWeight += weight;
@@ -297,7 +298,7 @@ export class StudentsPerformancePage implements OnInit {
   }
 
   hasTestMarks(testNumber: number): boolean {
-    return this.students.some(student => student.marks[`test${testNumber}`] !== null && student.marks[`test${testNumber}`] !== undefined);
+    return this.students.some(student => student.marks[`test${testNumber}`] !== null && student.marks[`test${testNumber}`] !== undefined && student.marks[`test${testNumber}`] !== 0);
   }
 
   handleFileInput(event: any) {
@@ -340,6 +341,7 @@ export class StudentsPerformancePage implements OnInit {
         department: student.department,
         average: student.average,
         moduleName: student.moduleName,
+        moduleCode: student.moduleCode, // Add moduleCode property
         marks: {
           studentNumber: student.studentNumber,
           average: student.average,
@@ -350,6 +352,7 @@ export class StudentsPerformancePage implements OnInit {
           test5: student.test5 ?? null,
           test6: student.test6 ?? null,
           test7: student.test7 ?? null,
+          moduleCode: student.moduleCode, // Ensure moduleCode is included
           scanTime: student.scanTime ?? null // Ensure scanTime is included
         },
         attendance: attendanceData // Include parsed attendance data
