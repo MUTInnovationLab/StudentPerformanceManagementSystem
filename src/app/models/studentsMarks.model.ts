@@ -1,15 +1,15 @@
 export interface StudentMarks {
   studentNumber: string;
-  test1?: number | null;
-  test2?: number | null;
-  test3?: number | null;
-  test4?: number | null;
-  test5?: number | null;
-  test6?: number | null;
-  test7?: number | null;
+  test1: number | null | undefined;
+  test2: number | null | undefined;
+  test3: number | null | undefined;
+  test4: number | null | undefined;
+  test5: number | null | undefined;
+  test6: number | null | undefined;
+  test7: number | null | undefined;
   average: number;
-  scanTime?: string | null; // Add scanTime property
-  [key: string]: any; // Index signature to allow string indexing
+  moduleCode: string; // Change from optional to required
+  riskCategory?: RiskCategory;
 }
 
 export interface TestPercentages {
@@ -52,4 +52,11 @@ export interface ModuleMarksDocument {
   moduleCode: string;
   marks: StudentMarks[];
   testPercentages: TestPercentages;
+}
+
+export enum RiskCategory {
+  AT_RISK = 'At Risk',
+  PARTIALLY_AT_RISK = 'Partially At Risk',
+  INTERMEDIATE = 'Intermediate',
+  DISTINCTION = 'Distinction'
 }
