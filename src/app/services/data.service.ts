@@ -11,7 +11,7 @@ import { collection } from 'firebase/firestore';
 import * as firebase from 'firebase/app';
 import 'firebase/firestore';
 import { AssignedLectures,Module } from 'src/app/models/assignedModules.model';
-import { StudentMarks,TestPercentages,ModuleMarksDocument} from '../models/studentsMarks.model';
+import { StudentMarks,TestPercentages,ModuleMarksDocument, RiskCategory} from '../models/studentsMarks.model';
 import { EmailService } from './email.service';
 
 @Injectable({
@@ -99,6 +99,8 @@ export class DataService {
 
             // Create a properly typed StudentMarks object
             return {
+              ...mark,
+              moduleCode, // Add this line to include the module code
               studentNumber: mark.studentNumber,
               test1: mark.test1 !== undefined ? Number(mark.test1) : null,
               test2: mark.test2 !== undefined ? Number(mark.test2) : null,
@@ -185,5 +187,36 @@ async createAssignment(assignment: any) {
         })
       );
   }
-  
+
+  getDepartmentModuleMarks(department: string): Observable<ModuleMarksDocument[]> {
+    return this.firestore
+      .collection('marks', ref => ref.where('department', '==', department))
+      .valueChanges()
+      .pipe(
+        map(documents => {
+          return documents.map((doc: any) => {
+            const marks = this.processMarksWithRiskCategories(doc.marks);
+            return {
+              ...doc,
+              marks
+            };
+          });
+        })
+      );
+  }
+
+  private processMarksWithRiskCategories(marks: StudentMarks[]): StudentMarks[] {
+    return marks.map(mark => ({
+      ...mark,
+      riskCategory: this.calculateRiskCategory(mark.average)
+    }));
+  }
+
+  private calculateRiskCategory(average: number): RiskCategory {
+    if (average < 40) return RiskCategory.AT_RISK;
+    if (average < 50) return RiskCategory.PARTIALLY_AT_RISK;
+    if (average < 75) return RiskCategory.INTERMEDIATE;
+    return RiskCategory.DISTINCTION;
+  }
 }
+
