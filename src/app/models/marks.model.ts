@@ -11,6 +11,8 @@ export interface Marks {
   test7: number | string; // Test 7 marks
   moduleCode?: string; // Optional module code
   testPercentages?: { [key: string]: number }; // Optional test percentages
+  moduleName: string;
+
 }
 
 
