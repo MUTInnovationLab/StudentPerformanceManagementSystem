@@ -15,9 +15,9 @@
           <ion-item>
             <ion-label position="stacked">Select Module</ion-label>
             <ion-select [(ngModel)]="selectedModule" (ionChange)="loadStudents()">
-              <ion-select-option value="MOD1">Programming 101</ion-select-option>
-              <ion-select-option value="MOD2">Database Systems</ion-select-option>
-              <ion-select-option value="MOD3">Web Development</ion-select-option>
+              <ion-select-option *ngFor="let module of assignedModules" [value]="module.moduleCode">
+                {{ module.moduleName }}
+              </ion-select-option>
             </ion-select>
           </ion-item>
         </ion-col>
@@ -47,26 +47,24 @@
       <ion-card-content>
         <ion-list>
           <ion-item class="header-row">
-            <!-- <ion-label> -->
-              <ion-grid>
-                <ion-row>
-                  <ion-col size="2">
-                    <ion-button fill="clear" (click)="sortStudents('studentNumber')">
-                      Student No.
-                      <ion-icon name="arrow-up-down-outline"></ion-icon>
-                    </ion-button>
-                  </ion-col>
-                  <ion-col size="3">
-                    <ion-button fill="clear" (click)="sortStudents('lastName')">
-                      Name
-                      <ion-icon name="arrow-up-down-outline"></ion-icon>
-                    </ion-button>
-                  </ion-col>
-                  <ion-col size="2">Average</ion-col>
-                  <ion-col size="5">Actions</ion-col>
-                </ion-row>
-              </ion-grid>
-            <!-- </ion-label> -->
+            <ion-grid>
+              <ion-row>
+                <ion-col size="2">
+                  <ion-button fill="clear" (click)="sortStudents('studentNumber')">
+                    Student No.
+                    <ion-icon name="arrow-up-down-outline"></ion-icon>
+                  </ion-button>
+                </ion-col>
+                <ion-col size="3">
+                  <ion-button fill="clear" (click)="sortStudents('lastName')">
+                    Name
+                    <ion-icon name="arrow-up-down-outline"></ion-icon>
+                  </ion-button>
+                </ion-col>
+                <ion-col size="2">Average</ion-col>
+                <ion-col size="5">Actions</ion-col>
+              </ion-row>
+            </ion-grid>
           </ion-item>
 
           <ion-item *ngFor="let student of filterStudents()">
