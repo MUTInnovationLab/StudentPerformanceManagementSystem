@@ -136,7 +136,7 @@ export class StrugglingStudentsPage implements OnInit {
     }
   }
 
-  async loadStudents() {
+   async loadStudents() {
     if (!this.selectedModule) {
       this.presentToast('Please select a module', 'warning');
       return;
@@ -261,6 +261,7 @@ export class StrugglingStudentsPage implements OnInit {
 
   filterStudents(): Student[] {
     return this.students
+      .filter(student => student.average < this.minAverage)
       .sort((a, b) => {
         const factor = this.sortDirection === 'asc' ? 1 : -1;
         if (this.sortField === 'lastName') {

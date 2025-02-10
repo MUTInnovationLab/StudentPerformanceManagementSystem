@@ -253,6 +253,7 @@ export class AddMentorPage implements OnInit, OnDestroy {
   private prepareMentorData(): Omit<Mentor, 'mentorID'> {
     const formValue = this.mentorForm.value;
     return {
+      id: this.mentorID || '', // Add the id property
       name: formValue.name.trim(),
       surname: formValue.surname.trim(),
       email: formValue.email.trim().toLowerCase(),

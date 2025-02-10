@@ -17,61 +17,90 @@
     <ion-item (click)="goToStudentPerformance()">Go to student perfomance</ion-item>
     <ion-item (click)="logout()">Logout</ion-item>
   </div>
-  <ion-grid>
-    <ion-row class="filter-controls ion-padding">
-      <ion-col size="12" size-md="4">
+  
+  <div class="filters-container">
+    <div class="search-bar">
+      <ion-searchbar [(ngModel)]="searchText" 
+                     (ionInput)="handleSearch($event)" 
+                     placeholder="Search students..." 
+                     animated="true">
+      </ion-searchbar>
+    </div>
+
+    <div class="filters-row">
+      <div class="filter-item">
         <ion-item lines="full" class="custom-dropdown">
-          <ion-label position="stacked" color="medium">Modules</ion-label>
+          <ion-label position="stacked">Module</ion-label>
           <select [(ngModel)]="selectedModule" (ngModelChange)="onModuleChange()" class="form-select">
-            <option value="" disabled>Select Module</option>
+            <option value="">All Modules</option>
             <option *ngFor="let module of modules" [value]="module.moduleCode">
-              {{ module.moduleName }}
+              {{ module.moduleName }} ({{ module.moduleCode }})
             </option>
           </select>
         </ion-item>
-      </ion-col>
-   
-      <ion-col size="12" size-md="4">
-        <ion-item lines="full" class="custom-dropdown">
-          <ion-label position="stacked" color="medium">Range</ion-label>
-          <select [(ngModel)]="selectedRange" (ngModelChange)="onRangeChange()" class="form-select">
-            <option value="0-40">0 - 40</option>
-            <option value="41-59">41 - 59</option>
-            <option value="60-69">60 - 69</option>
-            <option value="70-79">70 - 79</option>
-            <option value="80-89">80 - 89</option>
-            <option value="90-100">90 - 100</option>
-          </select>
-        </ion-item>
-      </ion-col>
-   
-      <ion-col size="12" size-md="4">
-        <ion-item lines="full" class="custom-dropdown">
-          <ion-label position="stacked" color="medium">Order</ion-label>
-          <select [(ngModel)]="selectedOrder" (ngModelChange)="onOrderChange()" class="form-select">
-            <option value="ascending">Ascending</option>
-            <option value="descending">Descending</option>
-          </select>
-        </ion-item>
-      </ion-col>
-    </ion-row>
+      </div>
 
+      <div class="filter-item">
+        <ion-item lines="full" class="custom-dropdown">
+          <ion-label position="stacked">Mark Range</ion-label>
+          <select [(ngModel)]="selectedRange" (ngModelChange)="onRangeChange()" class="form-select">
+            <option value="0-100">All Marks</option>
+            <option value="0-40">Below 40%</option>
+            <option value="41-59">41% - 59%</option>
+            <option value="60-69">60% - 69%</option>
+            <option value="70-79">70% - 79%</option>
+            <option value="80-89">80% - 89%</option>
+            <option value="90-100">90% - 100%</option>
+          </select>
+        </ion-item>
+      </div>
+
+      <div class="filter-item">
+        <ion-item lines="full" class="custom-dropdown">
+          <ion-label position="stacked">Sort Order</ion-label>
+          <select [(ngModel)]="selectedOrder" (ngModelChange)="onOrderChange()" class="form-select">
+            <option value="ascending">Lowest to Highest</option>
+            <option value="descending">Highest to Lowest</option>
+          </select>
+        </ion-item>
+      </div>
+
+      <div class="filter-item" *ngIf="isHOD">
+        <ion-item lines="full" class="custom-dropdown">
+          <ion-label position="stacked">Risk Level</ion-label>
+          <select [(ngModel)]="selectedRiskCategory" (ngModelChange)="filterByRiskCategory($event)" class="form-select">
+            <option value="ALL">All Students</option>
+            <option value="At Risk">At Risk</option>
+            <option value="Partially At Risk">Partially At Risk</option>
+            <option value="Intermediate">Intermediate</option>
+            <option value="Distinction">Distinction</option>
+          </select>
+        </ion-item>
+      </div>
+
+      <div class="filter-item">
+        <ion-item lines="full" class="custom-dropdown">
+          <ion-label position="stacked">Performance Level</ion-label>
+          <select [(ngModel)]="selectedPerformance" (ngModelChange)="onPerformanceChange()" class="form-select">
+            <option *ngFor="let level of performanceLevels" [value]="level.value">
+              {{ level.label }}
+            </option>
+          </select>
+        </ion-item>
+      </div>
+    </div>
+  </div>
+
+  <ion-grid>
     <ion-row>
       <ion-col>
         <ion-card>
           <ion-card-header>
             <div class="header-cont">
               <ion-card-subtitle class="subtitle">Students Marks for {{selectedModule}}</ion-card-subtitle>
-              <div class="filters">
-                <ion-input
-                  [(ngModel)]="searchText"
-                  (ionInput)="handleSearch($event)"
-                  placeholder="Search">
-                </ion-input>
-              </div>
             </div>
           </ion-card-header>
-         
+
           <ion-card-content>
             <div class="table-container">
               <table *ngIf="filteredStudents.length > 0; else noData">
@@ -84,39 +113,38 @@
                     <th>Test4</th>
                     <th>Average</th>
                     <th>Action</th>
-                    <th>  <ion-button color="primary" size="small" (click)="openPerfomance()">
-                      Attendance
-                    </ion-button></th>
+                    <th> <ion-button color="primary" size="small" (click)="openPerfomance()">
+                        Attendance
+                      </ion-button></th>
                     <!-- <th>Statistics</th> -->
+                    <th *ngIf="isHOD">Risk Category</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr *ngFor="let student of filteredStudents">
-                    <td >{{ student.studentNumber }}</td>
-                    <td >{{ student.test1 }}</td>
-                    <td >{{ student.test2 }}</td>
-                    <td >{{ student.test3 }}</td>
-                    <td >{{ student.test4 }}</td>
+                    <td>{{ student.studentNumber }}</td>
+                    <td>{{ formatMarkValue(student.test1) }}</td>
+                    <td>{{ formatMarkValue(student.test2) }}</td>
+                    <td>{{ formatMarkValue(student.test3) }}</td>
+                    <td>{{ formatMarkValue(student.test4) }}</td>
                     <td>{{ student.average.toFixed(1) }}%</td>
                     <td>
                       <ion-button color="secondary" size="small" (click)="openViewModal(student)">
-                       view
+                        View
                       </ion-button>
-                      <ion-button color="primary" size="small" (click)="openAssignMentorModal(student)">
-                        assign
-                      </ion-button>
-                    
                     </td>
                     <td>
-                      <div class="progress-bar" [style.background-image]="getProgressBarStyle(student.average)">
-                      </div>
+                      <ion-button color="primary" size="small" (click)="viewStudentAttendance(student.studentNumber)">
+                        View Attendance
+                      </ion-button>
                     </td>
+                    <td *ngIf="isHOD">{{ student.riskCategory }}</td>
                   </tr>
                 </tbody>
               </table>
               <ng-template #noData>
                 <p>No data available for this module.</p>
-              </ng-template>      
+              </ng-template>
             </div>
           </ion-card-content>
         </ion-card>
@@ -125,10 +153,7 @@
   </ion-grid>
 </ion-content>
 
-<ion-modal 
-  [isOpen]="isAttendanceModalOpen" 
-  (didDismiss)="closeAttendanceModal()" 
-  class="attendance-modal">
+<ion-modal [isOpen]="isAttendanceModalOpen" (didDismiss)="closeAttendanceModal()" class="attendance-modal">
   <ng-template>
     <ion-header>
       <ion-toolbar color="primary">
@@ -150,10 +175,7 @@
                 <ion-label>
                   Student {{ studentNumber }}: {{ summary.attendeeDetails[studentNumber] }} attendance(s)
                 </ion-label>
-                <ion-button 
-                  color="primary" 
-                  size="small" 
-                  (click)="viewStudentAttendance(studentNumber)">
+                <ion-button color="primary" size="small" (click)="viewStudentAttendance(studentNumber)">
                   View Details
                 </ion-button>
               </ion-item>
@@ -167,9 +189,7 @@
 </ion-modal>
 
 <!-- New modal for individual student attendance -->
-<ion-modal 
-  [isOpen]="isStudentAttendanceModalOpen" 
-  (didDismiss)="closeStudentAttendanceModal()" 
+<ion-modal [isOpen]="isStudentAttendanceModalOpen" (didDismiss)="closeStudentAttendanceModal()"
   class="student-attendance-modal">
   <ng-template>
     <ion-header>
@@ -197,165 +217,61 @@
   </ng-template>
 </ion-modal>
 
-
-<ion-modal 
-  #mentorModal 
-  [isOpen]="isModalOpen" 
-  (didDismiss)="closeModal()" 
-  class="mentor-modal">
+<!-- Student Details Modal -->
+<ion-modal [isOpen]="openSelectedStudent" class="student-details-modal">
   <ng-template>
-    <ion-header class="ion-no-border">
-      <ion-toolbar>
-        <ion-title>
-          Assign Mentor to {{ studentDetails.name+'  '+studentDetails.surname  || selectedStudent?.studentNumber  }}
-        </ion-title>
+    <ion-header>
+      <ion-toolbar color="primary">
+        <ion-title>Student Details</ion-title>
         <ion-buttons slot="end">
-          <ion-button (click)="closeModal()">
-            <ion-icon name="close-outline"></ion-icon>
-          </ion-button>
+          <ion-button (click)="openSelectedStudent = false">Close</ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
 
     <ion-content class="ion-padding">
-      <ng-container *ngIf="availableMentors.length > 0; else noMentors">
-        <ion-list lines="none">
-          <ion-list-header>
-            <ion-label>Select a Mentor</ion-label>
-          </ion-list-header>
+      <ion-card *ngIf="studentDetails && fullstudentDetails">
+        <ion-card-header>
+          <ion-card-title>{{ studentDetails.name }} {{ studentDetails.surname }}</ion-card-title>
+          <ion-card-subtitle>{{ studentDetails.studentNumber }}</ion-card-subtitle>
+        </ion-card-header>
 
-          <ion-radio-group [(ngModel)]="selectedMentor">
-            <ion-item *ngFor="let mentor of availableMentors">
-              <ion-radio slot="start" [value]="mentor"></ion-radio>
+        <ion-card-content>
+          <ion-list>
+            <ion-item>
               <ion-label>
-                <h2>{{ mentor.name }}</h2>
-                <p>{{ mentor.email }}</p>
+                <h2>Contact Information</h2>
+                <p>Email: {{ studentDetails.email }}</p>
+                <p>Department: {{ studentDetails.department }}</p>
               </ion-label>
             </ion-item>
-          </ion-radio-group>
-        </ion-list>
 
-        <ion-button 
-          class="assign-button" 
-          expand="block"
-          [disabled]="!selectedMentor"
-          (click)="assignMentorToStudent(selectedMentor!)">
-          Assign Mentor
-        </ion-button>
-      </ng-container>
-
-      <ng-template #noMentors>
-        <div class="no-mentors">
-          <ion-icon name="alert-circle-outline" size="large"></ion-icon>
-          <p>No mentors are currently available for this module.</p>
-        </div>
-      </ng-template>
+            <ion-item>
+              <ion-label>
+                <h2>Academic Performance</h2>
+                <ion-grid>
+                  <ion-row>
+                    <ion-col size="6">Test 1: {{ formatMarkValue(fullstudentDetails.test1) }}%</ion-col>
+                    <ion-col size="6">Test 2: {{ formatMarkValue(fullstudentDetails.test2) }}%</ion-col>
+                  </ion-row>
+                  <ion-row>
+                    <ion-col size="6">Test 3: {{ formatMarkValue(fullstudentDetails.test3) }}%</ion-col>
+                    <ion-col size="6">Test 4: {{ formatMarkValue(fullstudentDetails.test4) }}%</ion-col>
+                  </ion-row>
+                  <ion-row>
+                    <ion-col size="6">Test 5: {{ formatMarkValue(fullstudentDetails.test5) }}%</ion-col>
+                    <ion-col size="6">Test 6: {{ formatMarkValue(fullstudentDetails.test6) }}%</ion-col>
+                  </ion-row>
+                  <ion-row>
+                    <ion-col size="6">Test 7: {{ formatMarkValue(fullstudentDetails.test7) }}%</ion-col>
+                    <ion-col size="6">Average: {{ fullstudentDetails.studentavg.toFixed(1) }}%</ion-col>
+                  </ion-row>
+                </ion-grid>
+              </ion-label>
+            </ion-item>
+          </ion-list>
+        </ion-card-content>
+      </ion-card>
     </ion-content>
   </ng-template>
 </ion-modal>
-
-
-<ion-modal
- 
- #mentorModal 
- [isOpen]="openSelectedStudent "
- class="mentor-modal"
->
-  <ng-template>
-    <ion-header>
-      <ion-toolbar color="primary">
-        <ion-title>Student Performance Details</ion-title>
-        <ion-buttons slot="end">
-          <ion-button (click)="openSelectedStudent = false">Close</ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
-
-    <ion-content class="ion-padding" *ngIf="fullstudentDetails">
-      <ion-list>
-        <ion-item>
-          <ion-label>
-            <h2>{{ fullstudentDetails.name }} {{ fullstudentDetails.surname }}</h2>
-            <p>Student Number: {{ fullstudentDetails.studentNumber }}</p>
-          </ion-label>
-        </ion-item>
-
-        <ion-item>
-          <ion-label>
-            <h3>Test Results</h3>
-            <ion-grid>
-              <ion-row>
-                <ion-col>Test 1: {{ fullstudentDetails.test1 }}%</ion-col>
-                <ion-col>Test 2: {{ fullstudentDetails.test2 }}%</ion-col>
-                <ion-col>Test 3: {{ fullstudentDetails.test3 }}%</ion-col>
-                <ion-col>Test 4: {{ fullstudentDetails.test4 }}%</ion-col>
-              </ion-row>
-              <hr>
-              <ion-row>
-                <ion-col>Test 5: {{ fullstudentDetails.test5 }}%</ion-col>
-                <ion-col>Test 6: {{ fullstudentDetails.test6 }}%</ion-col>
-                <ion-col>Test 7: {{ fullstudentDetails.test7 }}%</ion-col>
-                <ion-col>Average: {{ fullstudentDetails.studentavg }}%</ion-col>
-              </ion-row>
-            </ion-grid>
-          </ion-label>
-        </ion-item>
-      </ion-list>
-    </ion-content>
-  </ng-template>
-</ion-modal>
-
-
-
-
-
-<ion-modal
- 
- #mentorModal 
- [isOpen]="openSelectedStudent "
- class="mentor-modal"
->
-  <ng-template>
-    <ion-header>
-      <ion-toolbar color="primary">
-        <ion-title>Student Performance Details</ion-title>
-        <ion-buttons slot="end">
-          <ion-button (click)="openSelectedStudent = false">Close</ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
-
-    <ion-content class="ion-padding" *ngIf="fullstudentDetails">
-      <ion-list>
-        <ion-item>
-          <ion-label>
-            <h2>{{ fullstudentDetails.name }} {{ fullstudentDetails.surname }}</h2>
-            <p>Student Number: {{ fullstudentDetails.studentNumber }}</p>
-          </ion-label>
-        </ion-item>
-
-        <ion-item>
-          <ion-label>
-            <h3>Test Results</h3>
-            <ion-grid>
-              <ion-row>
-                <ion-col>Test 1: {{ fullstudentDetails.test1 }}%</ion-col>
-                <ion-col>Test 2: {{ fullstudentDetails.test2 }}%</ion-col>
-                <ion-col>Test 3: {{ fullstudentDetails.test3 }}%</ion-col>
-                <ion-col>Test 4: {{ fullstudentDetails.test4 }}%</ion-col>
-              </ion-row>
-              <hr>
-              <ion-row>
-                <ion-col>Test 5: {{ fullstudentDetails.test5 }}%</ion-col>
-                <ion-col>Test 6: {{ fullstudentDetails.test6 }}%</ion-col>
-                <ion-col>Test 7: {{ fullstudentDetails.test7 }}%</ion-col>
-                <ion-col>Average: {{ fullstudentDetails.studentavg }}%</ion-col>
-              </ion-row>
-            </ion-grid>
-          </ion-label>
-        </ion-item>
-      </ion-list>
-    </ion-content>
-  </ng-template>
-</ion-modal>
-
