@@ -1,4 +1,3 @@
-// src/app/pages/struggling-students/struggling-students.page.html
 <ion-header [translucent]="true">
   <ion-toolbar color="primary">
     <ion-title>
@@ -9,6 +8,15 @@
 
 <ion-content [fullscreen]="true">
   <div class="ion-padding">
+    
+    <!-- Loading Indicator -->
+    <ion-progress-bar *ngIf="loading" type="indeterminate"></ion-progress-bar>
+
+    <!-- Error Message -->
+    <ion-text color="danger" *ngIf="error">
+      <p>{{ error }}</p>
+    </ion-text>
+
     <ion-grid>
       <ion-row>
         <ion-col size="12" size-md="4">
