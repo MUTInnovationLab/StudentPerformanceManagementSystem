@@ -136,7 +136,7 @@ export class StrugglingStudentsPage implements OnInit {
     }
   }
 
-   async loadStudents() {
+  async loadStudents() {
     if (!this.selectedModule) {
       this.presentToast('Please select a module', 'warning');
       return;
@@ -157,20 +157,17 @@ export class StrugglingStudentsPage implements OnInit {
       }
 
       const enrolledData = enrolledDoc.data() as EnrolledModule;
+      
+      // Make sure we're accessing the Enrolled array correctly
+      if (!enrolledData.Enrolled || !Array.isArray(enrolledData.Enrolled)) {
+        console.error('Enrolled data is not in expected format:', enrolledData);
+        this.students = [];
+        return;
+      }
+
       const enrolledStudents = enrolledData.Enrolled.filter(
         student => student.status === 'Enrolled'
       );
-
-      console.log('Total enrolled students:', enrolledStudents.length);
-      console.log('Enrolled students details:', enrolledStudents);
-
-      // Verbose logging of each student number
-      enrolledStudents.forEach((student, index) => {
-        console.log(`Student ${index + 1}:`, {
-          studentNumber: student.studentNumber,
-          status: student.status
-        });
-      });
 
       // Get marks data
       const marksDoc = await this.firestore
@@ -180,9 +177,6 @@ export class StrugglingStudentsPage implements OnInit {
         .toPromise();
 
       const marksData = marksDoc?.data() as { marks: StudentMarks[] } || { marks: [] };
-
-      // Log marks data
-      console.log('Marks data:', marksData);
 
       // Get all student details in parallel
       const studentPromises = enrolledStudents.map(async (enrolled) => {
@@ -205,36 +199,30 @@ export class StrugglingStudentsPage implements OnInit {
             studentNumber: string;
           };
 
-          // Verbose logging of individual student retrieval
-          console.log(`Student data for ${enrolled.studentNumber}:`, studentData);
-
           // Find marks for this student
           const studentMarks = marksData.marks?.find(
             mark => mark.studentNumber.toString() === enrolled.studentNumber
           );
 
-          // Log student marks
-          console.log(`Marks for ${enrolled.studentNumber}:`, studentMarks);
-
-          // Create tests object
+          // Create tests object with default values
           const tests = {
-            test1: studentMarks?.test1 || 0,
-            test2: studentMarks?.test2 || 0,
-            test3: studentMarks?.test3 || 0,
-            test4: studentMarks?.test4 || 0
+            test1: studentMarks?.test1 ?? 0,
+            test2: studentMarks?.test2 ?? 0,
+            test3: studentMarks?.test3 ?? 0,
+            test4: studentMarks?.test4 ?? 0
           };
 
           // Calculate average from marks or use provided average
           const average = studentMarks 
             ? parseFloat(studentMarks.average)
-            : (tests.test1 + tests.test2 + tests.test3 + tests.test4) / 4;
+            : ((tests.test1 + tests.test2 + tests.test3 + tests.test4) / 4) || 0;
 
           return {
             studentNumber: studentData.studentNumber,
             firstName: studentData.name,
             lastName: studentData.surname,
             email: studentData.email,
-            average,
+            average: Number(average.toFixed(2)), // Ensure average is a number with 2 decimal places
             tests
           } as Student;
         } catch (error) {
@@ -247,11 +235,11 @@ export class StrugglingStudentsPage implements OnInit {
       const loadedStudents = await Promise.all(studentPromises);
       
       // Filter out any null values and assign to students array
-      this.students = loadedStudents.filter((student): student is Student => student !== null);
+      this.students = loadedStudents.filter((student): student is Student => 
+        student !== null && typeof student.average === 'number' && !isNaN(student.average)
+      );
       
-      // Verbose logging of final loaded students
-      console.log('Total students loaded:', this.students.length);
-      console.log('Loaded students details:', this.students);
+      console.log('Loaded students:', this.students);
       
     } catch (error) {
       console.error('Error loading students:', error);
@@ -260,8 +248,9 @@ export class StrugglingStudentsPage implements OnInit {
   }
 
   filterStudents(): Student[] {
+    // Remove the minimum average filter if you want to show all students
     return this.students
-      .filter(student => student.average < this.minAverage)
+      // .filter(student => student.average < this.minAverage) // Comment this line to show all students
       .sort((a, b) => {
         const factor = this.sortDirection === 'asc' ? 1 : -1;
         if (this.sortField === 'lastName') {
@@ -271,7 +260,6 @@ export class StrugglingStudentsPage implements OnInit {
         }
       });
   }
-
   sortStudents(field: 'lastName' | 'studentNumber') {
     if (this.sortField === field) {
       this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
