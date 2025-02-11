@@ -137,13 +137,11 @@ export class ModuleMentorshipPage implements OnInit, AfterViewInit {
   async ngOnInit() {
     this.afAuth.onAuthStateChanged(async (user) => {
       if (user) {
-        // Try to get staff data from local storage first
         const storedStaffData = localStorage.getItem('staffData');
         if (storedStaffData) {
           this.staffData = JSON.parse(storedStaffData);
           this.faculty = this.staffData?.faculty || '';
         } else {
-          // If no local storage, fetch from authentication service
           this.staffData = await this.authService.getLoggedInStaff();
           if (this.staffData) {
             localStorage.setItem('staffData', JSON.stringify(this.staffData));
@@ -152,18 +150,180 @@ export class ModuleMentorshipPage implements OnInit, AfterViewInit {
         }
 
         if (this.faculty) {
-          // Load data in parallel
           await Promise.all([
-            this.loadLecturerEmails(), 
+            this.loadLecturerEmails(),
             this.loadStaffDetails()
           ]);
           await this.loadModuleData();
+          this.updateViewBasedOnSelection();
         }
-      } else {
-        console.error('No user logged in');
       }
     });
   }
+
+
+  private updateViewBasedOnSelection() {
+    switch (this.selectedView) {
+      case 'all':
+        this.showAllModules();
+        break;
+      case 'needingMentorship':
+        this.showStudentsNeedingMentorship();
+        break;
+      default:
+        this.showAllModules();
+    }
+  }
+  showAllModules() {
+    this.selectedView = 'all';
+    this.filteredModules = [...this.allModules];
+    this.updateChartsForAllModules();
+  }
+  private updateChartsForAllModules() {
+    // Create department-based bar chart
+    this.createModuleComparisonChart();
+    
+    // Create pie chart showing student distribution by department
+    this.createDepartmentDistributionPieChart();
+  }
+
+  private createDepartmentDistributionPieChart() {
+    const canvas = document.getElementById('departmentMentorshipChart') as HTMLCanvasElement;
+    if (!canvas) return;
+
+    if (this.departmentMentorshipChart) {
+      this.departmentMentorshipChart.destroy();
+    }
+
+    // Group students by department
+    const departmentCounts = new Map<string, number>();
+    this.allModules.forEach(module => {
+      const currentCount = departmentCounts.get(module.department) || 0;
+      departmentCounts.set(module.department, currentCount + module.totalStudents);
+    });
+
+    const config: ChartConfiguration = {
+      type: 'pie',
+      data: {
+        labels: Array.from(departmentCounts.keys()),
+        datasets: [{
+          data: Array.from(departmentCounts.values()),
+          backgroundColor: Array.from(departmentCounts.keys()).map((_, index) => 
+            `hsl(${(index * 360) / departmentCounts.size}, 70%, 50%)`)
+        }]
+      },
+      options: {
+        plugins: {
+          title: {
+            display: true,
+            text: 'Student Distribution by Department'
+          },
+          legend: {
+            position: 'right'
+          }
+        }
+      }
+    };
+
+    this.departmentMentorshipChart = new Chart(canvas, config);
+  }
+
+
+  howStudentsNeedingMentorship() {
+    this.selectedView = 'needingMentorship';
+    
+    // Filter modules with students needing mentorship
+    const modulesWithAtRiskStudents = this.allModules.filter(
+      module => module.studentsNeedingMentorship > 0
+    );
+    
+    this.filteredModules = modulesWithAtRiskStudents;
+    this.updateChartsForMentorship();
+  }
+  private updateChartsForMentorship() {
+    this.createModuleComparisonChart();
+    this.createMentorshipPieChart();
+  }
+  private createMentorshipPieChart() {
+    const canvas = document.getElementById('departmentMentorshipChart') as HTMLCanvasElement;
+    if (!canvas) return;
+
+    if (this.departmentMentorshipChart) {
+      this.departmentMentorshipChart.destroy();
+    }
+
+    // Get students in selected range
+    const [minRange, maxRange] = this.selectedRange === 'all' 
+      ? [0, 100] 
+      : this.selectedRange.split('-').map(Number);
+
+    // Count students in range by department
+    const departmentRangeCounts = new Map<string, number>();
+    
+    this.allModules.forEach(module => {
+      if (module.studentsNeedingMentor) {
+        const studentsInRange = module.studentsNeedingMentor.filter(student => {
+          const avg = parseFloat(student.average);
+          return avg >= minRange && avg <= maxRange;
+        });
+
+        const currentCount = departmentRangeCounts.get(module.department) || 0;
+        departmentRangeCounts.set(module.department, currentCount + studentsInRange.length);
+      }
+    });
+
+    const config: ChartConfiguration = {
+      type: 'pie',
+      data: {
+        labels: Array.from(departmentRangeCounts.keys()),
+        datasets: [{
+          data: Array.from(departmentRangeCounts.values()),
+          backgroundColor: Array.from(departmentRangeCounts.keys()).map((_, index) => 
+            `hsl(${(index * 360) / departmentRangeCounts.size}, 70%, 50%)`)
+        }]
+      },
+      options: {
+        plugins: {
+          title: {
+            display: true,
+            text: `Students in ${this.selectedRange} Range by Department`
+          },
+          legend: {
+            position: 'right'
+          }
+        }
+      }
+    };
+
+    this.departmentMentorshipChart = new Chart(canvas, config);
+  }
+
+
+  onRangeChange(event: any) {
+    this.selectedRange = event.detail.value;
+    
+    if (this.selectedView === 'needingMentorship') {
+      // Filter modules based on the selected range
+      const [minRange, maxRange] = this.selectedRange === 'all' 
+        ? [0, 100] 
+        : this.selectedRange.split('-').map(Number);
+
+      this.filteredModules = this.allModules.filter(module => {
+        if (!module.studentsNeedingMentor) return false;
+        
+        // Check if module has students in the selected range
+        return module.studentsNeedingMentor.some(student => {
+          const avg = parseFloat(student.average);
+          return avg >= minRange && avg <= maxRange;
+        });
+      });
+
+      this.updateChartsForMentorship();
+    }
+  }
+
+
+  
 
   private createRangePieCharts() {
     // Destroy existing charts
@@ -212,7 +372,7 @@ export class ModuleMentorshipPage implements OnInit, AfterViewInit {
     });
   }
 
-  onRangeChange(event: any) {
+ /* onRangeChange(event: any) {
     this.selectedRange = event.detail.value;
     
     if (this.selectedRange === 'all') {
@@ -225,7 +385,7 @@ export class ModuleMentorshipPage implements OnInit, AfterViewInit {
     }
     
     this.updateCharts();
-  }
+  }*/
 
 
   calculateRangeStatistics() {

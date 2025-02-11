@@ -1,67 +1,63 @@
-interface StudentMarks {
-  moduleCode: string;
-  testPercentages: {
-    [key: string]: number;
-  };
-  marks: Array<{
-    studentNumber: string;
-    test1?: number;
-    test2?: number;
-    test3?: number;
-    test4?: number;
-    test5?: number;
-    test6?: number;
-    average?: string;
-  }>;
-}
-interface DisplayStudent extends Student {
-  name: string;
-  surname: string;
-  course: string;
-  year: string;
-  average: number;
-  tests: {
-    test1: number;
-    test2: number;
-    test3: number;
-    test4?: number;
-    test5?: number;
-    test6?: number;
-  };
-}
-interface AssignedLecture {
-  userEmail: string;
-  moduleCode: string;
-  moduleName: string;
-}
-
-// src/app/models/student.model.ts
 
 
-// src/app/pages/struggling-students/struggling-students.page.ts
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
-import { Observable, Subject, combineLatest, from, of } from 'rxjs';
-import { FirestoreService } from '../../services/firestore.service';
-import { catchError, finalize, map, switchMap, takeUntil, tap } from 'rxjs/operators';
-import { Student } from 'src/app/models/student.model';
+import { ToastController } from '@ionic/angular';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
-import { Mentor } from '../../models/mentor.model';
+import{Router} from '@angular/router';
+import { DocumentData } from 'firebase/firestore';
 
-interface DisplayStudent extends Student {
-  name: string;
-  surname: string;
-  course: string;
-  year: string;
+// Interfaces
+interface Student {
+  firstName: string;
+  lastName: string;
+  email: string;
   average: number;
   tests: {
     test1: number;
     test2: number;
     test3: number;
-    test4?: number;
-    test5?: number;
-    test6?: number;
+    test4: number;
   };
+}
+
+interface Module {
+  moduleCode: string;
+  moduleName: string;
+  department: string;
+  moduleLevel: string;
+  faculty?: string;
+  scannerOpenCount?: number;
+  userEmail?: string;
+}
+
+interface Mentor {
+  id: string;
+  name: string;
+  email: string;
+  module: string;
+  currentStudents: number;
+}
+
+interface StudentMarks {
+  studentNumber: number;
+  average: string;
+  test1: number;
+  test2: number;
+  test3: number;
+  test4: number;
+}
+
+interface EnrolledModule {
+  Enrolled: Array<{
+    status: string;
+    studentNumber: string;
+  }>;
+  moduleCode: string;
+}
+
+interface AssignedLectureData {
+  modules: Module[];
 }
 
 @Component({
@@ -69,71 +65,81 @@ interface DisplayStudent extends Student {
   templateUrl: './struggling-students.page.html',
   styleUrls: ['./struggling-students.page.scss']
 })
-export class StrugglingStudentsPage implements OnInit {
-  private destroy$ = new Subject<void>();
-  
+export class StrugglingStudentsPage implements OnInit {  
   selectedModule: string = '';
   minAverage: number = 50;
   sortDirection: 'asc' | 'desc' = 'asc';
   sortField: 'lastName' | 'studentNumber' = 'lastName';
-  selectedStudent: DisplayStudent | null = null;
+  selectedStudent: Student | null = null;
   showMentorModal = false;
-  loading = false;
-  error: string | null = null;
-
-  students$: Observable<DisplayStudent[]>;
-  mentors$: Observable<Mentor[]>;
-  modules$: Observable<{ moduleCode: string; moduleName: string; }[]>;
+  students: Student[] = [];
+  mentors: Mentor[] = [];
+  assignedModules: Module[] = [];
+  staffIds: string[] = ['22446688', '33557799', '987001'];
 
   constructor(
-    private firestore: AngularFirestore, 
-    private afAuth: AngularFireAuth,
-    private firestoreService: FirestoreService
-  ) {
-    this.students$ = of([]);
-    this.mentors$ = of([]);
-    this.modules$ = of([]);
-  }
+    private firestore: AngularFirestore,
+    private auth: AngularFireAuth,
+    private toastController: ToastController,
+    private router: Router
+  ) {}
 
-  ngOnInit() {
-    this.modules$ = this.loadModulesAlternative();
-    
-    // Subscribe to see results
-    this.modules$.subscribe(
-      modules => {
-        console.log('Modules loaded:', modules);
-        if (modules.length === 0) {
-          // Check the collection directly
-          this.firestore
-            .collection('assignedLectures')
-            .get()
-            .subscribe(snapshot => {
-              console.log('Direct collection check - total documents:', snapshot.size);
-              snapshot.forEach(doc => {
-                console.log('Document:', doc.id, doc.data());
-              });
-            });
-        }
-      },
-      error => {
-        console.error('Error subscribing to modules:', error);
-        this.error = 'Error loading modules: ' + error.message;
+  async ngOnInit() {
+    this.auth.onAuthStateChanged((user) => {
+      if (user && user.email) {
+        this.getStaffNumberAndModules(user.email);
+      } else {
+        this.presentToast('Please login first', 'warning');
+        this.router.navigate(['/login']);
       }
-    );
+    });
   }
 
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
-  private loadInitialData() {
-    this.loadStudents();
-    this.loadMentors();
+  async getStaffNumberAndModules(userEmail: string) {
+    try {
+      const staffPromises = this.staffIds.map(async (staffId) => {
+        const docRef = this.firestore.collection('assignedLectures').doc(staffId);
+        const doc = await docRef.get().toPromise();
+        
+        if (doc?.exists) {
+          const data = doc.data() as AssignedLectureData;
+          if (data && Array.isArray(data.modules)) {
+            const hasUserModule = data.modules.some(
+              (module: Module) => module.userEmail === userEmail
+            );
+            
+            if (hasUserModule) {
+              return {
+                staffNumber: staffId,
+                modules: data.modules.filter(
+                  (module: Module) => module.userEmail === userEmail
+                )
+              };
+            }
+          }
+        }
+        return null;
+      });
+
+      const results = await Promise.all(staffPromises);
+      const staffData = results.find(result => result !== null);
+
+      if (staffData) {
+        this.assignedModules = staffData.modules;
+        console.log('Assigned modules:', this.assignedModules);
+      } else {
+        console.log('No modules found for this lecturer');
+        this.assignedModules = [];
+      }
+    } catch (error) {
+      console.error('Error getting staff data:', error);
+      this.presentToast('Error loading modules', 'danger');
+    }
   }
 
-  onModuleChange() {
+  async loadStudents() {
     if (!this.selectedModule) {
-      this.error = 'Please select a module';
+      this.presentToast('Please select a module', 'warning');
       return;
     }
     this.error = null;
@@ -229,176 +235,189 @@ export class StrugglingStudentsPage implements OnInit {
     this.loading = true;
     this.error = null;
 
-    this.students$ = this.firestore
-      .collection<StudentMarks>('marks', ref =>
-        ref.where('moduleCode', '==', this.selectedModule)
-      )
-      .valueChanges()
-      .pipe(
-        takeUntil(this.destroy$),
-        switchMap(marks => {
-          if (!marks?.[0]?.marks?.length) {
-            return of([]);
-          }
+    try {
+      // Get enrolled students
+      const enrolledDoc = await this.firestore
+        .collection('enrolledModules')
+        .doc(this.selectedModule)
+        .get()
+        .toPromise();
 
-          const studentNumbers = marks[0].marks
-            .filter(mark => mark?.studentNumber)
-            .map(mark => mark.studentNumber);
+      if (!enrolledDoc?.exists) {
+        console.log('No enrolled students found');
+        this.students = [];
+        return;
+      }
 
-          return combineLatest([
-            this.firestore
-              .collection<Student>('students', ref =>
-                ref.where('studentNumber', 'in', studentNumbers)
-              )
-              .valueChanges(),
-            of(marks[0])
-          ]);
-        }),
-        map(([students, moduleMarks]) => {
-          if (!students?.length) {
-            return [];
-          }
+      const enrolledData = enrolledDoc.data() as EnrolledModule;
+      
+      // Make sure we're accessing the Enrolled array correctly
+      if (!enrolledData.Enrolled || !Array.isArray(enrolledData.Enrolled)) {
+        console.error('Enrolled data is not in expected format:', enrolledData);
+        this.students = [];
+        return;
+      }
 
-          return this.processStudents(students, moduleMarks);
-        }),
-        tap(() => this.loading = false),
-        catchError(error => {
-          this.error = 'Error loading students: ' + error.message;
-          this.loading = false;
-          return of([]);
-        })
+      const enrolledStudents = enrolledData.Enrolled.filter(
+        student => student.status === 'Enrolled'
       );
-  }
-  private processStudents(students: Student[], moduleMarks: StudentMarks): DisplayStudent[] {
-    return students
-      .map((student: Student) => {
-        const studentMarks = moduleMarks.marks.find(
-          mark => mark.studentNumber === student.studentNumber
-        );
 
-        if (!studentMarks) {
+      // Get marks data
+      const marksDoc = await this.firestore
+        .collection('marks')
+        .doc(this.selectedModule)
+        .get()
+        .toPromise();
+
+      const marksData = marksDoc?.data() as { marks: StudentMarks[] } || { marks: [] };
+
+      // Get all student details in parallel
+      const studentPromises = enrolledStudents.map(async (enrolled) => {
+        try {
+          const studentSnapshot = await this.firestore
+            .collection('students')
+            .doc(enrolled.studentNumber)
+            .get()
+            .toPromise();
+
+          if (!studentSnapshot?.exists) {
+            console.log(`No student data found for ${enrolled.studentNumber}`);
+            return null;
+          }
+
+          const studentData = studentSnapshot.data() as {
+            name: string;
+            surname: string;
+            email: string;
+            studentNumber: string;
+          };
+
+          // Find marks for this student
+          const studentMarks = marksData.marks?.find(
+            mark => mark.studentNumber.toString() === enrolled.studentNumber
+          );
+
+          // Create tests object with default values
+          const tests = {
+            test1: studentMarks?.test1 ?? 0,
+            test2: studentMarks?.test2 ?? 0,
+            test3: studentMarks?.test3 ?? 0,
+            test4: studentMarks?.test4 ?? 0
+          };
+
+          // Calculate average from marks or use provided average
+          const average = studentMarks 
+            ? parseFloat(studentMarks.average)
+            : ((tests.test1 + tests.test2 + tests.test3 + tests.test4) / 4) || 0;
+
+          return {
+            studentNumber: studentData.studentNumber,
+            firstName: studentData.name,
+            lastName: studentData.surname,
+            email: studentData.email,
+            average: Number(average.toFixed(2)), // Ensure average is a number with 2 decimal places
+            tests
+          } as Student;
+        } catch (error) {
+          console.error(`Error loading student ${enrolled.studentNumber}:`, error);
           return null;
         }
+      });
 
-        const tests = {
-          test1: this.parseMarkValue(studentMarks.test1),
-          test2: this.parseMarkValue(studentMarks.test2),
-          test3: this.parseMarkValue(studentMarks.test3),
-          test4: this.parseMarkValue(studentMarks.test4),
-          test5: this.parseMarkValue(studentMarks.test5),
-          test6: this.parseMarkValue(studentMarks.test6)
-        };
-
-        return {
-          ...student,
-          average: this.calculateAverage(tests),
-          tests,
-          name: student.name || '',
-          surname: student.surname || '',
-          course: student.course || 'Unknown',
-          year: student.year || '1'
-        } as DisplayStudent;
-      })
-      .filter((student): student is DisplayStudent => 
-        student !== null && student.average < this.minAverage
-      )
-      .sort(this.sortStudentsComparator.bind(this));
-  }
-  private parseMarkValue(mark: any): number {
-    if (typeof mark === 'string' && mark.trim() === '') {
-      return 0;
+      // Wait for all student data to be loaded
+      const loadedStudents = await Promise.all(studentPromises);
+      
+      // Filter out any null values and assign to students array
+      this.students = loadedStudents.filter((student): student is Student => 
+        student !== null && typeof student.average === 'number' && !isNaN(student.average)
+      );
+      
+      console.log('Loaded students:', this.students);
+      
+    } catch (error) {
+      console.error('Error loading students:', error);
+      this.presentToast('Error loading students', 'danger');
     }
-    const parsed = Number(mark);
-    return isNaN(parsed) ? 0 : parsed;
   }
 
-  private calculateAverage(marks: { [key: string]: number }): number {
-    const values = Object.values(marks).filter(mark => mark > 0);
-    return values.length ? 
-      Number((values.reduce((acc, val) => acc + val, 0) / values.length).toFixed(1)) : 
-      0;
-  }
-  private sortStudentsComparator(a: DisplayStudent, b: DisplayStudent): number {
-    const getValue = (student: DisplayStudent) =>
-      this.sortField === 'lastName' ? student.surname : student.studentNumber;
-    return (this.sortDirection === 'asc' ? 1 : -1) * 
-           getValue(a).localeCompare(getValue(b));
+  filterStudents(): Student[] {
+    // Remove the minimum average filter if you want to show all students
+    return this.students
+      // .filter(student => student.average < this.minAverage) // Comment this line to show all students
+      .sort((a, b) => {
+        const factor = this.sortDirection === 'asc' ? 1 : -1;
+        if (this.sortField === 'lastName') {
+          return factor * a.lastName.localeCompare(b.lastName);
+        } else {
+          return factor * a.studentNumber.localeCompare(b.studentNumber);
+        }
+      });
   }
   sortStudents(field: 'lastName' | 'studentNumber') {
-    this.sortField = field;
-    this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
-    this.loadStudents();
-  }
-
-  
-
-  private chunkArray<T>(array: T[], size: number): T[][] {
-    const chunked: T[][] = [];
-    for (let i = 0; i < array.length; i += size) {
-      chunked.push(array.slice(i, i + size));
+    if (this.sortField === field) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortField = field;
+      this.sortDirection = 'asc';
     }
-    return chunked;
   }
- 
 
-  viewStudentDetails(student: DisplayStudent) {
+  async loadMentors() {
+    try {
+      const mentorsSnapshot = await this.firestore
+        .collection('mentors')
+        .ref.where('module', '==', this.selectedModule)
+        .get();
+
+      this.mentors = mentorsSnapshot.docs.map(doc => {
+        const data = doc.data() as DocumentData;
+        return {
+          id: doc.id,
+          name: data['name'],
+          email: data['email'],
+          module: data['module'],
+          currentStudents: data['currentStudents']
+        } as Mentor;
+      });
+    } catch (error) {
+      console.error('Error loading mentors:', error);
+      this.presentToast('Error loading mentors', 'danger');
+    }
+  }
+
+  async assignMentor(student: Student, mentor: Mentor) {
+    try {
+      await this.firestore.collection('mentorships').add({
+        studentNumber: student.studentNumber,
+        mentorId: mentor.id,
+        moduleCode: this.selectedModule,
+        assignedDate: new Date(),
+        status: 'active'
+      });
+
+      await this.firestore.collection('mentors').doc(mentor.id).update({
+        currentStudents: mentor.currentStudents + 1
+      });
+
+      this.presentToast(`Mentor assigned successfully`, 'success');
+      this.showMentorModal = false;
+    } catch (error) {
+      console.error('Error assigning mentor:', error);
+      this.presentToast('Error assigning mentor', 'danger');
+    }
+  }
+
+  viewStudentDetails(student: Student) {
     this.selectedStudent = student;
   }
 
-  closeStudentDetails() {
-    this.selectedStudent = null;
-  }
-  loadMentors() {
-    if (!this.selectedModule) {
-      this.mentors$ = of([]);
-      return;
-    }
-
-    this.loading = true;
-    this.mentors$ = this.firestore
-      .collection<Mentor>('mentors', ref =>
-        ref.where('module', '==', this.selectedModule)
-      )
-      .valueChanges()
-      .pipe(
-        takeUntil(this.destroy$),
-        tap(() => this.loading = false),
-        catchError(error => {
-          this.error = 'Error loading mentors: ' + error.message;
-          this.loading = false;
-          return of([]);
-        })
-      );
-  }
-
-
-  async assignMentor() {
-    if (!this.selectedStudent) {
-      this.error = 'No student selected';
-      return;
-    }
-
-    try {
-      this.loading = true;
-      const mentor = {
-        id: '',
-        mentorID: '',
-        name: this.selectedStudent.name,
-        surname: this.selectedStudent.surname,
-        email: this.selectedStudent.email || '',
-        faculty: this.selectedStudent.faculty || '',
-        department: this.selectedStudent.department || '',
-        stream: this.selectedStudent['stream'] || '',
-        modules: this.selectedStudent['modules'] || [],
-      };
-
-      await this.firestoreService.assignMentor(mentor);
-      this.showMentorModal = false;
-      // Optional: Show success message
-    } catch (error: any) {
-      this.error = 'Error assigning mentor: ' + error.message;
-    } finally {
-      this.loading = false;
-    }
+  async presentToast(message: string, color: string) {
+    const toast = await this.toastController.create({
+      message,
+      color,
+      duration: 2000,
+      position: 'top'
+    });
+    toast.present();
   }
 }
