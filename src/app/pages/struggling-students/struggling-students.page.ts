@@ -1,14 +1,13 @@
-
-
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
-import { ToastController } from '@ionic/angular';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
-import{Router} from '@angular/router';
-import { DocumentData } from 'firebase/firestore';
+import { ToastController } from '@ionic/angular';
+import { Router } from '@angular/router';
+import { DocumentData } from '@angular/fire/compat/firestore';
 
 // Interfaces
 interface Student {
+  studentNumber: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -65,7 +64,7 @@ interface AssignedLectureData {
   templateUrl: './struggling-students.page.html',
   styleUrls: ['./struggling-students.page.scss']
 })
-export class StrugglingStudentsPage implements OnInit {  
+export class StrugglingStudentsPage implements OnInit {
   selectedModule: string = '';
   minAverage: number = 50;
   sortDirection: 'asc' | 'desc' = 'asc';
@@ -142,98 +141,6 @@ export class StrugglingStudentsPage implements OnInit {
       this.presentToast('Please select a module', 'warning');
       return;
     }
-    this.error = null;
-    this.loadInitialData();
-  }
-  
-  loadModules(): Observable<{ moduleCode: string; moduleName: string }[]> {
-    this.loading = true;
-    
-    // First, let's just get ALL documents in the collection
-    return this.firestore
-      .collection('assignedLectures')
-      .get()
-      .pipe(
-        map(snapshot => {
-          console.log('Total documents found:', snapshot.size);
-          
-          // Log every document
-          snapshot.forEach(doc => {
-            console.log('Document data:', doc.data());
-          });
-          
-          return snapshot.docs
-            .map(doc => {
-              const data = doc.data() as AssignedLecture;
-              return {
-                moduleCode: data.moduleCode,
-                moduleName: data.moduleName
-              };
-            });
-        }),
-        tap(results => {
-          console.log('Processed results:', results);
-        }),
-        catchError(error => {
-          console.error('Error:', error);
-          this.error = 'Error loading modules: ' + error.message;
-          this.loading = false;
-          return of([]);
-        }),
-        finalize(() => {
-          this.loading = false;
-        })
-      );
-  }  loadModulesAlternative(): Observable<{ moduleCode: string; moduleName: string }[]> {
-    this.loading = true;
-    
-    return this.afAuth.authState.pipe(
-      takeUntil(this.destroy$),
-      switchMap(user => {
-        if (!user?.email) {
-          throw new Error('User not authenticated');
-        }
-
-        return from(
-          this.firestore
-            .collection<AssignedLecture>('assignedLectures')
-            .ref
-            .where('userEmail', '==', user.email)
-            .get()
-        ).pipe(
-          map(querySnapshot => {
-            console.log('Raw query snapshot:', querySnapshot);
-            const modules = querySnapshot.docs.map(doc => {
-              const data = doc.data();
-              console.log('Document data:', data);
-              return {
-                moduleCode: data.moduleCode,
-                moduleName: data.moduleName
-              };
-            });
-            console.log('Processed modules:', modules);
-            return modules;
-          })
-        );
-      }),
-      catchError(error => {
-        console.error('Error in loadModulesAlternative:', error);
-        this.error = 'Error loading modules: ' + error.message;
-        return of([]);
-      }),
-      finalize(() => {
-        this.loading = false;
-      })
-    );
-  }
-  loadStudents() {
-    if (!this.selectedModule) {
-      this.error = 'No module selected';
-      return;
-    }
-
-    this.loading = true;
-    this.error = null;
 
     try {
       // Get enrolled students
@@ -399,7 +306,7 @@ export class StrugglingStudentsPage implements OnInit {
         currentStudents: mentor.currentStudents + 1
       });
 
-      this.presentToast(`Mentor assigned successfully`, 'success');
+      this.presentToast('Mentor assigned successfully', 'success');
       this.showMentorModal = false;
     } catch (error) {
       console.error('Error assigning mentor:', error);
