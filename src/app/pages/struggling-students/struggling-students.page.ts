@@ -352,7 +352,11 @@ export class StrugglingStudentsPage implements OnInit {
         currentStudents: (mentor.currentStudents || 0) + 1
       });
 
+<<<<<<< HEAD
       this.presentToast(`Mentor ${mentor.name} assigned successfully`, 'success');
+=======
+      this.presentToast('Mentor assigned successfully', 'success');
+>>>>>>> 12c2eea84dcd94d374a63b2fca88030231ae3ec0
       this.showMentorModal = false;
       this.selectedStudent = null;
       
