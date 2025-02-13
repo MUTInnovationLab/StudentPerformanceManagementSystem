@@ -1,36 +1,106 @@
 <ion-header>
-  <ion-toolbar>
-    <ion-title>Analytics</ion-title>
+  <ion-toolbar color="primary">
+    <ion-title class="ion-text-center">
+      <strong>Analytics</strong>
+    </ion-title>
     <ion-buttons slot="start">
-      <!-- Menu Button (3 dots) -->
-      <ion-button (click)="openMenu()">
-        <ion-icon name="ellipsis-vertical-outline"></ion-icon>
+      <ion-button (click)="toggleMenu()">
+        <ion-icon name="menu-outline"></ion-icon>
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
 <ion-content>
+  <!-- Side Menu -->
   <div *ngIf="menuVisible" class="menu">
-    <ion-item (click)="goToMeeting()">Go to Meeting</ion-item>
-    <ion-item (click)="Dashboard()">Dashboard</ion-item>
-    <ion-item (click)="logout()">Logout</ion-item>
+    <ion-list>
+      <!-- Show these items for all users -->
+      <ion-item (click)="navigateTo('/dashboard')">
+        <ion-icon name="home-outline" slot="start"></ion-icon>
+        Dashboard
+      </ion-item>
+      <ion-item (click)="navigateTo('/live-meet')">
+        <ion-icon name="videocam-outline" slot="start"></ion-icon>
+        Go to Meeting
+      </ion-item>
+      <ion-item (click)="logout()">
+        <ion-icon name="log-out-outline" slot="start"></ion-icon>
+        Logout
+      </ion-item>
+    </ion-list>
   </div>
-  <!-- Loop through modules -->
-  <div *ngFor="let module of attendedModules">
-    <h3>{{ module.moduleName }}</h3> <!-- Module name (e.g., CA100, CF100) -->
 
-    <!-- Loop through each date within the module -->
-    <div *ngFor="let dateKey of objectKeys(module.dates)">
-      <h4>Date: {{ dateKey }}</h4> <!-- Display the date (e.g., 2024-10-14) -->
-      
-      <ul>
-        <!-- Loop through each attendance record for that date -->
-        <li *ngFor="let attendance of module.dates[dateKey]">
-          <span class="student-number">Student Number: {{ attendance.studentNumber }}</span>
-          <span class="scan-time"> - Scan Time: {{ attendance.scanTime }}</span>
-        </li>
-      </ul>
+  <ng-container *ngIf="state$ | async as state">
+    <!-- Loading State -->
+    <div *ngIf="state.loading" class="loading-container">
+      <ion-spinner name="circular"></ion-spinner>
+      <ion-text>
+        <p>Loading attendance data...</p>
+      </ion-text>
     </div>
-  </div>
+
+    <!-- Error State -->
+    <div *ngIf="state.error" class="error-container">
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title color="danger">
+            <ion-icon name="alert-circle-outline"></ion-icon>
+            Error
+          </ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <p>{{ state.error }}</p>
+          <ion-button expand="block" (click)="logout()">
+            Return to Login
+          </ion-button>
+        </ion-card-content>
+      </ion-card>
+    </div>
+
+    <!-- Main Content -->
+    <div *ngIf="!state.loading && !state.error" class="main-content">
+      <!-- User Role Info -->
+      <ion-item lines="none" class="user-role-info">
+        <ion-label>
+          <h2>Viewing as: {{ userPosition$ | async }}</h2>
+        </ion-label>
+      </ion-item>
+
+      <!-- No Data State -->
+      <div *ngIf="!state.loading && state.attendedModules.length === 0" class="no-data">
+        <ion-card>
+          <ion-card-content>
+            <div class="empty-state">
+              <ion-icon name="document-outline" size="large"></ion-icon>
+              <h2>No Data Available</h2>
+              <p>No attendance records have been found for your modules.</p>
+            </div>
+          </ion-card-content>
+        </ion-card>
+      </div>
+    </div>
+
+<ion-content>
+  <ng-container *ngIf="state$ | async as state">
+    <!-- Main Content -->
+    <div *ngIf="!state.loading && !state.error" class="main-content">
+      <div *ngFor="let module of state.attendedModules" class="module-container">
+        <h2 class="module-title">{{ module.moduleName }}</h2>
+
+        <div *ngFor="let dateKey of objectKeys(module.dates)" class="date-section">
+          <p class="date-text">Date: {{ dateKey }}</p>
+          
+          <ion-list>
+            <ion-item *ngFor="let attendance of module.dates[dateKey]" class="student-item">
+              <ion-label>
+                <h3 class="student-number">Student Number: <strong>{{ attendance.studentNumber }}</strong></h3>
+              </ion-label>
+              <ion-text class="scan-time">- Scan Time: {{ attendance.scanTime }}</ion-text>
+            </ion-item>
+          </ion-list>
+        </div>
+      </div>
+    </div>
+  </ng-container>
 </ion-content>
