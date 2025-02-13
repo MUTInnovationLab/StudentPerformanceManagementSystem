@@ -19,6 +19,9 @@ interface Student {
     test2: number;
     test3: number;
     test4: number;
+    test5: number;
+    test6: number;
+    test7: number;
   };
 }
 
@@ -35,9 +38,14 @@ interface Module {
 interface Mentor {
   id: string;
   name: string;
+  surname: string;
   email: string;
-  module: string;
-  currentStudents: number;
+  department: string;
+  faculty: string;
+  modules: string[];
+  mentorID: string;
+  currentStudents?: number;
+  stream: string;
 }
 
 interface StudentMarks {
@@ -47,6 +55,9 @@ interface StudentMarks {
   test2: number;
   test3: number;
   test4: number;
+  test5: number;
+  test6: number;
+  test7: number;
 }
 
 interface EnrolledModule {
@@ -78,6 +89,7 @@ export class StrugglingStudentsPage implements OnInit {
   mentors: Mentor[] = [];
   assignedModules: Module[] = [];
   staffIds: string[] = ['22446688', '33557799', '987001'];
+  currentDepartment: string = '';
 
   constructor(
     private authService: AuthenticationService,
@@ -230,11 +242,16 @@ export class StrugglingStudentsPage implements OnInit {
           );
 
           // Create tests object with default values
+      
+
           const tests = {
             test1: studentMarks?.test1 ?? 0,
             test2: studentMarks?.test2 ?? 0,
             test3: studentMarks?.test3 ?? 0,
-            test4: studentMarks?.test4 ?? 0
+            test4: studentMarks?.test4 ?? 0,  // Test 4 is properly mapped here
+            test5: studentMarks?.test5 ?? 0,
+            test6: studentMarks?.test6 ?? 0,
+            test7: studentMarks?.test7 ?? 0
           };
 
           // Calculate average from marks or use provided average
@@ -273,9 +290,8 @@ export class StrugglingStudentsPage implements OnInit {
   }
 
   filterStudents(): Student[] {
-    // Remove the minimum average filter if you want to show all students
     return this.students
-      // .filter(student => student.average < this.minAverage) // Comment this line to show all students
+      .filter(student => student.average < this.minAverage) // Uncomment and modify this line
       .sort((a, b) => {
         const factor = this.sortDirection === 'asc' ? 1 : -1;
         if (this.sortField === 'lastName') {
@@ -285,6 +301,8 @@ export class StrugglingStudentsPage implements OnInit {
         }
       });
   }
+
+
   sortStudents(field: 'lastName' | 'studentNumber') {
     if (this.sortField === field) {
       this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
@@ -294,50 +312,87 @@ export class StrugglingStudentsPage implements OnInit {
     }
   }
 
-  async loadMentors() {
-    try {
-      const mentorsSnapshot = await this.firestore
-        .collection('mentors')
-        .ref.where('module', '==', this.selectedModule)
-        .get();
 
-      this.mentors = mentorsSnapshot.docs.map(doc => {
-        const data = doc.data() as DocumentData;
-        return {
-          id: doc.id,
-          name: data['name'],
-          email: data['email'],
-          module: data['module'],
-          currentStudents: data['currentStudents']
-        } as Mentor;
-      });
-    } catch (error) {
-      console.error('Error loading mentors:', error);
-      this.presentToast('Error loading mentors', 'danger');
+
+  async loadMentors() {
+  try {
+    const querySnapshot = await this.firestore
+      .collection<Mentor>('mentors')
+      .get()
+      .toPromise();
+
+    if (!querySnapshot) {
+      this.mentors = [];
+      return;
     }
+
+    this.mentors = querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        name: data.name,
+        surname: data.surname,
+        email: data.email,
+        department: data.department,
+        faculty: data.faculty,
+        modules: data.modules || [],
+        mentorID: data.mentorID,
+        currentStudents: data.currentStudents || 0,
+        stream: data.stream
+      } as Mentor;
+    });
+
+    console.log('Available mentors:', this.mentors);
+  } catch (error) {
+    console.error('Error loading mentors:', error);
+    this.presentToast('Error loading mentors', 'danger');
   }
+}
+
 
   async assignMentor(student: Student, mentor: Mentor) {
+    if (!student) {
+      this.presentToast('No student selected', 'warning');
+      return;
+    }
+
+    if (student.average >= 50) {
+      this.presentToast('Can only assign mentors to students with average below 50%', 'warning');
+      return;
+    }
+
     try {
+      // Create mentorship record
       await this.firestore.collection('mentorships').add({
         studentNumber: student.studentNumber,
-        mentorId: mentor.id,
+        mentorID: mentor.mentorID,
         moduleCode: this.selectedModule,
         assignedDate: new Date(),
-        status: 'active'
+        status: 'active',
+        department: this.currentDepartment
       });
 
+      // Update mentor's current students count
       await this.firestore.collection('mentors').doc(mentor.id).update({
-        currentStudents: mentor.currentStudents + 1
+        currentStudents: (mentor.currentStudents || 0) + 1
       });
 
+<<<<<<< HEAD
+      this.presentToast(`Mentor ${mentor.name} assigned successfully`, 'success');
+=======
       this.presentToast('Mentor assigned successfully', 'success');
+>>>>>>> 12c2eea84dcd94d374a63b2fca88030231ae3ec0
       this.showMentorModal = false;
+      this.selectedStudent = null;
+      
+      // Refresh mentors list
+      await this.loadMentors();
     } catch (error) {
       console.error('Error assigning mentor:', error);
       this.presentToast('Error assigning mentor', 'danger');
     }
   }
+
 
   viewStudentDetails(student: Student) {
     this.selectedStudent = student;
