@@ -21,7 +21,13 @@ interface Student {
     test6: number;
     test7: number;
   };
+  assignedMentor?: {
+    id: string;
+    name: string;
+    surname: string;
+  };
 }
+
 
 interface Module {
   moduleCode: string;
