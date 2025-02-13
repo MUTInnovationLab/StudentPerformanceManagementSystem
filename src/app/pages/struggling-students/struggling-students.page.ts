@@ -163,6 +163,13 @@ export class StrugglingStudentsPage implements OnInit {
       this.router.navigate(['/login']);
     });
   }
+  supportFeedback(){
+    this.router.navigate(['/supportfeedback']);
+  }
+  mentorStudents(){
+    this.router.navigate(['/mentor-students']);
+  }
+
   
 
 
