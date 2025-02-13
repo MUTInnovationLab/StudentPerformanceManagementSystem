@@ -122,6 +122,10 @@
                   <ion-col>Test 1: {{ selectedStudent.tests.test1 }}%</ion-col>
                   <ion-col>Test 2: {{ selectedStudent.tests.test2 }}%</ion-col>
                   <ion-col>Test 3: {{ selectedStudent.tests.test3 }}%</ion-col>
+                  <ion-col>Test 4: {{ selectedStudent.tests.test4 }}%</ion-col>
+                  <ion-col>Test 5: {{ selectedStudent.tests.test5 }}%</ion-col>
+                  <ion-col>Test 6: {{ selectedStudent.tests.test6 }}%</ion-col>
+                  <ion-col>Test 7: {{ selectedStudent.tests.test7 }}%</ion-col>
                 </ion-row>
               </ion-grid>
             </ion-label>
@@ -142,20 +146,41 @@
           </ion-buttons>
         </ion-toolbar>
       </ion-header>
-
+  
       <ion-content class="ion-padding">
-        <ion-list>
+        <ion-list *ngIf="mentors.length > 0">
+          <ion-list-header>
+            <ion-label>
+              <h2>Available Mentors</h2>
+              <p>Department: {{ currentDepartment }}</p>
+              <p>Selected Module: {{ selectedModule }}</p>
+            </ion-label>
+          </ion-list-header>
+  
           <ion-item *ngFor="let mentor of mentors">
             <ion-label>
-              <h2>{{ mentor.name }}</h2>
-              <p>Current Students: {{ mentor.currentStudents }}</p>
+              <h2>{{ mentor.name }} {{ mentor.surname }}</h2>
+              <p>Department: {{ mentor.department }}</p>
+              <p>Modules: {{ mentor.modules.join(', ') }}</p>
+              <p>Current Students: {{ mentor.currentStudents || 0 }}</p>
+              <p>Mentor ID: {{ mentor.mentorID }}</p>
             </ion-label>
-            <ion-button slot="end" (click)="assignMentor(selectedStudent!, mentor)">
+            <ion-button slot="end" 
+                       [disabled]="!selectedStudent || selectedStudent.average >= 50"
+                       (click)="selectedStudent && assignMentor(selectedStudent, mentor)">
               Assign
             </ion-button>
           </ion-item>
         </ion-list>
+  
+        <div *ngIf="mentors.length === 0" class="ion-padding ion-text-center">
+          <p>No mentors available for this department and module.</p>
+          <p>Department: {{ currentDepartment }}</p>
+          <p>Selected Module: {{ selectedModule }}</p>
+        </div>
       </ion-content>
     </ng-template>
   </ion-modal>
+
+  
 </ion-content>
