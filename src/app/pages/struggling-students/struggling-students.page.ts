@@ -3,6 +3,8 @@ import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { ToastController } from '@ionic/angular';
 import { Router } from '@angular/router';
+import { AuthenticationService } from 'src/app/services/auths.service';
+
 import { DocumentData } from '@angular/fire/compat/firestore';
 
 // Interfaces
@@ -65,6 +67,7 @@ interface AssignedLectureData {
   styleUrls: ['./struggling-students.page.scss']
 })
 export class StrugglingStudentsPage implements OnInit {
+  menuVisible: boolean = false;
   selectedModule: string = '';
   minAverage: number = 50;
   sortDirection: 'asc' | 'desc' = 'asc';
@@ -77,6 +80,7 @@ export class StrugglingStudentsPage implements OnInit {
   staffIds: string[] = ['22446688', '33557799', '987001'];
 
   constructor(
+    private authService: AuthenticationService,
     private firestore: AngularFirestore,
     private auth: AngularFireAuth,
     private toastController: ToastController,
@@ -91,6 +95,27 @@ export class StrugglingStudentsPage implements OnInit {
         this.presentToast('Please login first', 'warning');
         this.router.navigate(['/login']);
       }
+    });
+  }
+  openMenu() {
+    this.menuVisible = !this.menuVisible;
+  }
+
+  goToMeeting() {
+    this.router.navigate(['/live-meet']);
+  }
+
+  goToCsv() {
+    this.router.navigate(['/csv']);
+  }
+
+  goToStudentsManagement() {
+    this.router.navigate(['/student-management']);
+  }
+
+  logout() {
+    this.authService.signOut().then(() => {
+      this.router.navigate(['/login']);
     });
   }
 

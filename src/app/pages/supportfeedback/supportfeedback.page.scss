@@ -11,22 +11,25 @@
     position: absolute;
     top: 50px;
     right: 20px;
-    background-color: white;
-    border-radius: 5px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    background-color: rgb(202, 33, 33);
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
     z-index: 1000;
     width: 200px;
     padding: 10px;
-  }
-  
-  .menu ion-item {
+}
+
+.menu ion-item {
     cursor: pointer;
     padding: 10px;
-  }
-  
-  .menu ion-item:hover {
-    background-color: #f1f1f1;
-  }
+    border-radius: 5px;
+    transition: background-color var(--transition-duration);
+    color: white; /* Text color set to white */
+}
+
+.menu ion-item:hover {
+    background-color: var(--menu-hover-background);
+}
   
   .header-with-icon {
     display: flex;
