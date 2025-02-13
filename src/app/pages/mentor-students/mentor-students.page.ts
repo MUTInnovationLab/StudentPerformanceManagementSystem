@@ -112,6 +112,12 @@ export class MentorStudentsPage implements OnInit {
   goToStudentsManagement() {
     this.router.navigate(['/student-management']);
   }
+  supportFeedback() {
+    this.router.navigate(['/supportfeedback']);
+  }
+  strugglingStudents() {
+    this.router.navigate(['/struggling-students']);
+  }
 
   logout() {
     this.authService.signOut().then(() => {
