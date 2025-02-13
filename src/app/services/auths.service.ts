@@ -1,70 +1,86 @@
 import { Injectable } from '@angular/core';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
-import { UserCredential } from 'firebase/auth'; 
+import { BehaviorSubject, Observable } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
 import { Staff } from '../models/staff.model';
-
-// User interface for staff data
-export interface User {
-  position: any;
-  staffNumber: any;
-  role: any;
-  id: string; 
-  department: string;
-  email: string;
-  fullName: string;
-  module: string; 
-  modules: string[];
-  phoneNumber: string;
-  password: string; 
-  confirmPassword: string; 
-}
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthenticationService {
-  private cachedStaff: Staff | null = null;
+  private currentStaffSubject = new BehaviorSubject<Staff | null>(null);
+  public readonly currentStaff$: Observable<Staff | null> = this.currentStaffSubject.asObservable();
 
-  constructor(private afAuth: AngularFireAuth, private firestore: AngularFirestore) {}
+  constructor(
+    private afAuth: AngularFireAuth,
+    private firestore: AngularFirestore
+  ) {
+    this.afAuth.authState.pipe(
+      switchMap(user => {
+        if (!user) {
+          this.currentStaffSubject.next(null);
+          return Promise.resolve(null);
+        }
+        
+        return this.firestore
+          .collection<Staff>('staff', ref => ref.where('email', '==', user.email))
+          .get()
+          .pipe(
+            map(snapshot => {
+              if (snapshot.empty) {
+                throw new Error('No staff data found for the logged-in user.');
+              }
+              const staffData = snapshot.docs[0].data() as Staff;
+              this.currentStaffSubject.next(staffData);
+              return staffData;
+            })
+          ).toPromise();
+      })
+    ).subscribe();
+  }
 
-  // Login method using Firebase Authentication
-  login(email: string, password: string) {
-    this.cachedStaff = null; // Clear cache on new login
+  // Explicitly define return type as Observable<boolean>
+  isAuthenticated(): Observable<boolean> {
+    return this.afAuth.authState.pipe(
+      map(user => !!user)
+    );
+  }
+
+  login(email: string, password: string): Promise<any> {
     return this.afAuth.signInWithEmailAndPassword(email, password);
   }
 
   async getLoggedInStaff(): Promise<Staff> {
-    if (this.cachedStaff) {
-      console.log('Using cached staff:', this.cachedStaff); // Log the cached staff
-      return this.cachedStaff;
+    const currentStaff = this.currentStaffSubject.getValue();
+    if (currentStaff) {
+      return currentStaff;
     }
 
     const user = await this.afAuth.currentUser;
-
     if (!user) {
       throw new Error('User not logged in.');
     }
 
-    const staffDataSnapshot = await this.firestore
-      .collection<Staff>('staff', (ref) => ref.where('email', '==', user.email))
+    const staffSnapshot = await this.firestore
+      .collection<Staff>('staff', ref => ref.where('email', '==', user.email))
       .get()
       .toPromise();
 
-    if (!staffDataSnapshot || staffDataSnapshot.empty) {
+    if (!staffSnapshot || staffSnapshot.empty) {
       throw new Error('No staff data found for the logged-in user.');
     }
 
-    this.cachedStaff = staffDataSnapshot.docs[0].data() as Staff;
-    console.log('Fetched staff data:', this.cachedStaff); // Log the fetched staff data
-    return this.cachedStaff;
+    const staffData = staffSnapshot.docs[0].data() as Staff;
+    this.currentStaffSubject.next(staffData);
+    return staffData;
   }
 
-  // Get the faculty of the logged-in staff
   async getLoggedInFaculty(): Promise<string> {
     const staff = await this.getLoggedInStaff();
     return staff.faculty;
   }
+
   async isHOD(): Promise<boolean> {
     const staff = await this.getLoggedInStaff();
     return staff.position === 'HOD';
@@ -75,8 +91,8 @@ export class AuthenticationService {
     return staff.department;
   }
 
-  signOut() {
-    this.cachedStaff = null; // Clear cache on logout
+  signOut(): Promise<void> {
+    this.currentStaffSubject.next(null);
     return this.afAuth.signOut();
   }
 }

@@ -3,12 +3,23 @@
     <ion-title>
       Student Performance Management
     </ion-title>
+    <ion-buttons slot="start">
+      <!-- Menu Button (3 dots) -->
+      <ion-button (click)="openMenu()">
+        <ion-icon name="ellipsis-vertical-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
 <ion-content [fullscreen]="true">
+  <div *ngIf="menuVisible" class="menu">
+    <ion-item (click)="goToMeeting()">Go to Meeting</ion-item>
+    <ion-item (click)="goToCsv()">Go to CSV</ion-item>
+    <ion-item (click)="goToStudentsManagement()">Go to students management</ion-item>
+    <ion-item (click)="logout()">Logout</ion-item>
+  </div>
   <div class="ion-padding">
-    <!-- Module Selection and Filters -->
     <ion-grid>
       <ion-row>
         <ion-col size="12" size-md="4">

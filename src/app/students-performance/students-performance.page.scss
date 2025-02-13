@@ -35,7 +35,7 @@ ion-title {
   position: absolute;
   top: 50px;
   right: 20px;
-  background-color: var(--menu-background);
+  background-color: rgb(202, 33, 33);
   border-radius: var(--border-radius);
   box-shadow: var(--box-shadow);
   z-index: 1000;
@@ -48,6 +48,7 @@ ion-title {
   padding: 10px;
   border-radius: 5px;
   transition: background-color var(--transition-duration);
+  color: white; /* Text color set to white */
 }
 
 .menu ion-item:hover {

@@ -190,6 +190,11 @@ const routes: Routes = [
     path: 'dashboard',
     loadChildren: () => import('./pages/dashboard/dashboard.module').then( m => m.DashboardPageModule)
   },
+  {
+    path: 'mentor-students',
+    loadChildren: () => import('./pages/mentor-students/mentor-students.module').then( m => m.MentorStudentsPageModule)
+  },
+
 
 
 ];

@@ -1,95 +1,179 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FirestoreService } from 'src/app/services/firestore.service';
 import { AuthenticationService } from '../../services/auths.service';
 import { Router } from '@angular/router';
 import { Module } from '../../models/assignedModules.model';
-import { switchMap } from 'rxjs/operators';
-import { ModuleAttendance } from '../../models/attendancePerfomance.model';
+import { switchMap, tap, takeUntil, catchError, distinctUntilChanged, filter } from 'rxjs/operators';
+import { AttendanceRecord, ModuleAttendance } from '../../models/attendancePerfomance.model';
+import { BehaviorSubject, Observable, of, Subject } from 'rxjs';
+import { Staff } from 'src/app/models/staff.model';
 
-
+interface AnalyticsState {
+  loading: boolean;
+  error: string | null;
+  attendedModules: ModuleAttendance[];
+  assignedModules: Module[];
+}
 
 @Component({
   selector: 'app-analytics',
   templateUrl: './analytics.page.html',
   styleUrls: ['./analytics.page.scss'],
 })
-export class AnalyticsPage implements OnInit {
-  menuVisible: boolean = false;
-  attendedModules: ModuleAttendance[] = [];
-  assignedModules: Module[] = [];
+export class AnalyticsPage implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
+  private stateSubject = new BehaviorSubject<AnalyticsState>({
+    loading: true,
+    error: null,
+    attendedModules: [],
+    assignedModules: []
+  });
+
+  state$ = this.stateSubject.asObservable();
+  menuVisible = false;
+  userPosition$ = new BehaviorSubject<string>('');
 
   constructor(
-    private firestoreService: FirestoreService,private router: Router, private authService: AuthenticationService,
-    
-
-  ) { }
+    private firestoreService: FirestoreService,
+    private router: Router,
+    private authService: AuthenticationService,
+  ) {}
 
   ngOnInit(): void {
-    this.loadModules();
-  }
+    this.initializeAuthentication();
 
-  private loadModules() {
-    this.authService.getLoggedInStaff().then(staff => {
-      console.log('Staff number:', staff.staffNumber);
-      if (!staff.staffNumber) {
-        console.error('No staff number found!');
-        return;
-      }
-
-      this.firestoreService.getAssignedModules(staff.staffNumber)
-        .pipe(
-          switchMap(modules => {
-            console.log('Retrieved modules:', modules);
-            this.assignedModules = modules;
-            const moduleCodes = modules.map(m => m.moduleCode);
-            console.log('Module codes to search:', moduleCodes);
-            if (moduleCodes.length === 0) {
-              console.warn('No module codes found for staff member');
-              return [];
-            }
-            return this.firestoreService.getAttendedModules(moduleCodes);
-          })
-        )
-        .subscribe({
-          next: (data: ModuleAttendance[]) => {
-            this.attendedModules = data;
-            console.log('Final attendance data:', this.attendedModules);
-          },
-          error: (error) => {
-            console.error('Error loading modules:', error);
-          }
-        });
-    }).catch(error => {
-      console.error('Error getting staff details:', error);
+    this.userPosition$.subscribe(position => {
+      console.log('Current user position:', position);
     });
   }
 
-  openMenu() {
-    this.menuVisible = !this.menuVisible;
+  private initializeAuthentication(): void {
+    this.authService.isAuthenticated()
+      .pipe(
+        takeUntil(this.destroy$),
+        tap(isAuthenticated => {
+          if (!isAuthenticated) {
+            this.router.navigate(['/login']);
+          }
+        }),
+        filter((isAuthenticated: boolean) => isAuthenticated),
+        switchMap(() => this.authService.currentStaff$),
+        filter((staff: Staff | null): staff is Staff => staff !== null),
+        distinctUntilChanged((prev: Staff, curr: Staff) => prev.staffNumber === curr.staffNumber),
+        tap((staff: Staff) => this.userPosition$.next(staff.position)),
+        switchMap((staff: Staff) => this.loadModulesByRole(staff))
+      )
+      .subscribe({
+        error: (error: Error) => this.handleError('Authentication error', error)
+      });
   }
-  Dashboard(){
-    this.router.navigate(['/dashboard']);  // Ensure you have this route set up
-    this.menuVisible = false;
 
+  private loadModulesByRole(staff: Staff): Observable<ModuleAttendance[]> {
+    const loadingState = { ...this.stateSubject.value, loading: true, error: null };
+    this.stateSubject.next(loadingState);
+
+    if (staff.position === 'Lecturer') {
+      return this.loadLecturerModules(staff.staffNumber);
+    } else if (staff.position === 'HOD') {
+      return this.loadHODModules(staff.department);
+    }
+    
+    return of([]);
   }
- 
-  goToMeeting() {
-    this.router.navigate(['/live-meet']);  // Ensure you have this route set up
-    this.menuVisible = false;  // Hide the menu after selecting
+
+  private loadLecturerModules(staffNumber: string): Observable<ModuleAttendance[]> {
+    return this.firestoreService.getAssignedModules(staffNumber).pipe(
+      tap(modules => {
+        const currentState = this.stateSubject.value;
+        this.stateSubject.next({ ...currentState, assignedModules: modules });
+      }),
+      switchMap(modules => {
+        const moduleCodes = modules.map(m => m.moduleCode);
+        return moduleCodes.length ? this.firestoreService.getAttendedModules(moduleCodes) : of([]);
+      }),
+      tap(attendance => {
+        const currentState = this.stateSubject.value;
+        this.stateSubject.next({
+          ...currentState,
+          attendedModules: attendance,
+          loading: false
+        });
+      }),
+      catchError((error: Error) => {
+        this.handleError('Failed to load lecturer modules', error);
+        return of([] as ModuleAttendance[]);
+      })
+    );
   }
-  async logout() {
+
+  private loadHODModules(department: string): Observable<ModuleAttendance[]> {
+    return this.firestoreService.getAllAssignedLectures().pipe(
+      switchMap(assignments => {
+        const departmentModules = new Set<string>();
+        assignments.forEach(assignment => {
+          assignment.modules
+            .filter(module => module.department === department)
+            .forEach(module => departmentModules.add(module.moduleCode));
+        });
+        
+        const moduleCodes = Array.from(departmentModules);
+        return moduleCodes.length ? this.firestoreService.getAttendedModules(moduleCodes) : of([]);
+      }),
+      tap(attendance => {
+        const currentState = this.stateSubject.value;
+        this.stateSubject.next({
+          ...currentState,
+          attendedModules: attendance,
+          loading: false
+        });
+      }),
+      catchError((error: Error) => {
+        this.handleError('Failed to load HOD modules', error);
+        return of([] as ModuleAttendance[]);
+      })
+    );
+  }
+
+  private handleError(message: string, error: Error): void {
+    console.error(message, error);
+    const currentState = this.stateSubject.value;
+    this.stateSubject.next({
+      ...currentState,
+      error: `${message}. Please try again.`,
+      loading: false
+    });
+  }
+
+  getDailyAttendance(dates: { [key: string]: AttendanceRecord[] }): AttendanceRecord[] {
+    return Object.values(dates).reduce((acc, val) => acc.concat(val), [] as AttendanceRecord[]);
+  }
+
+  toggleMenu(): void {
+    this.menuVisible = !this.menuVisible;
+    console.log('Menu visibility:', this.menuVisible); // Add this for debugging
+  }
+
+  navigateTo(route: string): void {
+    this.router.navigate([route]);
+    this.menuVisible = false;
+  }
+
+  async logout(): Promise<void> {
     try {
       await this.authService.signOut();
-      this.loadModules(); // Ensure the loadModules method is called after a new login to fetch the correct data
-      this.router.navigate(['/login']); // Redirect to login page after logout
-      this.menuVisible = false;  // Hide the menu after logging out
+      this.router.navigate(['/login']);
+      this.menuVisible = false;
     } catch (error) {
-      console.error('Logout failed:', error);
+      this.handleError('Logout failed', error as Error);
     }
   }
 
-  // Helper to get the keys of the 'dates' object (i.e., the dates)
-  objectKeys(obj: any): string[] {
+  objectKeys(obj: Record<string, unknown>): string[] {
     return Object.keys(obj);
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }
