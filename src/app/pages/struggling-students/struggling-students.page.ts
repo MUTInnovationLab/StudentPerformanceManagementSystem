@@ -48,6 +48,18 @@ interface Mentor {
   stream: string;
 }
 
+interface MentorData {
+  name: string;
+  surname: string;
+  email: string;
+  department: string;
+  faculty: string;
+  modules: string[];
+  mentorID: string;
+  currentStudents?: number;
+  stream: string;
+}
+
 interface StudentMarks {
   studentNumber: number;
   average: string;
@@ -70,6 +82,19 @@ interface EnrolledModule {
 
 interface AssignedLectureData {
   modules: Module[];
+}
+
+interface Mentor {
+  id: string;
+  name: string;
+  surname: string;
+  email: string;
+  department: string;
+  faculty: string;
+  modules: string[];
+  mentorID: string;
+  currentStudents?: number;
+  stream: string;
 }
 
 @Component({
@@ -103,6 +128,8 @@ export class StrugglingStudentsPage implements OnInit {
     this.auth.onAuthStateChanged((user) => {
       if (user && user.email) {
         this.getStaffNumberAndModules(user.email);
+        // Load mentors when the page initializes
+        this.loadMentors();
       } else {
         this.presentToast('Please login first', 'warning');
         this.router.navigate(['/login']);
@@ -130,6 +157,8 @@ export class StrugglingStudentsPage implements OnInit {
       this.router.navigate(['/login']);
     });
   }
+  
+
 
   async getStaffNumberAndModules(userEmail: string) {
     try {
@@ -315,41 +344,47 @@ export class StrugglingStudentsPage implements OnInit {
 
 
   async loadMentors() {
-  try {
-    const querySnapshot = await this.firestore
-      .collection<Mentor>('mentors')
-      .get()
-      .toPromise();
+    try {
+      const querySnapshot = await this.firestore
+        .collection<MentorData>('mentors')
+        .get()
+        .toPromise();
 
-    if (!querySnapshot) {
-      this.mentors = [];
-      return;
+      if (!querySnapshot) {
+        this.mentors = [];
+        return;
+      }
+
+      this.mentors = querySnapshot.docs.map(doc => {
+        const data = doc.data() as MentorData;
+        return {
+          id: doc.id,
+          name: data.name,
+          surname: data.surname,
+          email: data.email,
+          department: data.department,
+          faculty: data.faculty,
+          modules: data.modules || [],
+          mentorID: data.mentorID,
+          currentStudents: data.currentStudents || 0,
+          stream: data.stream
+        } as Mentor;
+      });
+
+      console.log('Loaded mentors:', this.mentors);
+    } catch (error) {
+      console.error('Error loading mentors:', error);
+      this.presentToast('Error loading mentors', 'danger');
     }
-
-    this.mentors = querySnapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        name: data.name,
-        surname: data.surname,
-        email: data.email,
-        department: data.department,
-        faculty: data.faculty,
-        modules: data.modules || [],
-        mentorID: data.mentorID,
-        currentStudents: data.currentStudents || 0,
-        stream: data.stream
-      } as Mentor;
-    });
-
-    console.log('Available mentors:', this.mentors);
-  } catch (error) {
-    console.error('Error loading mentors:', error);
-    this.presentToast('Error loading mentors', 'danger');
   }
-}
 
+  async openMentorModal(student: Student) {
+    this.selectedStudent = student;
+    await this.loadMentors();
+    this.showMentorModal = true;
+  }
 
+  
   async assignMentor(student: Student, mentor: Mentor) {
     if (!student) {
       this.presentToast('No student selected', 'warning');
@@ -377,7 +412,7 @@ export class StrugglingStudentsPage implements OnInit {
         currentStudents: (mentor.currentStudents || 0) + 1
       });
 
-      this.presentToast('Mentor assigned successfully', 'success');
+      this.presentToast(`Mentor ${mentor.name} assigned successfully`, 'success');
       this.showMentorModal = false;
       this.selectedStudent = null;
       
@@ -390,8 +425,10 @@ export class StrugglingStudentsPage implements OnInit {
   }
 
 
-  viewStudentDetails(student: Student) {
+   // Update the viewStudentDetails method to load mentors when opening details
+   viewStudentDetails(student: Student) {
     this.selectedStudent = student;
+    this.loadMentors(); // Load mentors when viewing student details
   }
 
   async presentToast(message: string, color: string) {

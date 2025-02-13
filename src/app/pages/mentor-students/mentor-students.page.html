@@ -1,0 +1,147 @@
+<ion-header [translucent]="true">
+  <ion-toolbar color="primary">
+    <ion-title>
+      Mentor Students
+    </ion-title>
+    <ion-buttons slot="start">
+      <ion-button (click)="openMenu()">
+        <ion-icon name="ellipsis-vertical-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <div *ngIf="menuVisible" class="menu">
+    <ion-item (click)="goToMeeting()">Go to Meeting</ion-item>
+    <ion-item (click)="goToCsv()">Go to CSV</ion-item>
+    <ion-item (click)="goToStudentsManagement()">Go to students management</ion-item>
+    <ion-item (click)="logout()">Logout</ion-item>
+  </div>
+
+  <div class="ion-padding">
+    <!-- Mentor Selection -->
+    <ion-grid>
+      <ion-row>
+        <ion-col size="12" size-md="6">
+          <ion-item>
+            <ion-label position="stacked">Select Mentor</ion-label>
+            <ion-select [(ngModel)]="selectedMentorId" (ionChange)="loadMentorStudents()">
+              <ion-select-option *ngFor="let mentor of mentors" [value]="mentor.mentorID">
+                {{ mentor.name }} {{ mentor.surname }} ({{ mentor.mentorID }})
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+        </ion-col>
+        <ion-col size="12" size-md="6" class="ion-align-self-end">
+          <ion-button expand="block" (click)="loadMentorStudents()">
+            <ion-icon name="search-outline" slot="start"></ion-icon>
+            Load Students
+          </ion-button>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+
+    <!-- Students List -->
+    <ion-card *ngIf="selectedMentorId">
+      <ion-card-header>
+        <ion-card-title>Assigned Students</ion-card-title>
+        <ion-card-subtitle *ngIf="selectedMentor">
+          Mentor: {{ selectedMentor?.name }} {{ selectedMentor?.surname }}
+          <br>
+          Department: {{ selectedMentor?.department }}
+        </ion-card-subtitle>
+      </ion-card-header>
+      
+      <ion-card-content>
+        <ion-list>
+          <ion-item class="header-row">
+            <ion-grid>
+              <ion-row>
+                <ion-col size="2">Student No.</ion-col>
+                <ion-col size="3">Name</ion-col>
+                <ion-col size="2">Module</ion-col>
+                <ion-col size="2">Average</ion-col>
+                <ion-col size="3">Actions</ion-col>
+              </ion-row>
+            </ion-grid>
+          </ion-item>
+
+          <ion-item *ngFor="let student of mentorStudents">
+            <ion-grid>
+              <ion-row>
+                <ion-col size="2">{{ student.studentNumber }}</ion-col>
+                <ion-col size="3">{{ student.firstName }} {{ student.lastName }}</ion-col>
+                <ion-col size="2">{{ student.moduleCode }}</ion-col>
+                <ion-col size="2">{{ student.average }}%</ion-col>
+                <ion-col size="3">
+                  <ion-button size="small" (click)="viewStudentDetails(student)">
+                    <ion-icon name="eye-outline" slot="start"></ion-icon>
+                    Details
+                  </ion-button>
+                  <ion-button size="small" color="danger" (click)="removeMentorship(student)">
+                    <ion-icon name="trash-outline" slot="start"></ion-icon>
+                    Remove
+                  </ion-button>
+                </ion-col>
+              </ion-row>
+            </ion-grid>
+          </ion-item>
+
+          <ion-item *ngIf="mentorStudents.length === 0">
+            <ion-label class="ion-text-center">
+              No students assigned to this mentor
+            </ion-label>
+          </ion-item>
+        </ion-list>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
+  <!-- Student Details Modal -->
+  <ion-modal [isOpen]="!!selectedStudent">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar color="primary">
+          <ion-title>Student Details</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="selectedStudent = null">Close</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content class="ion-padding" *ngIf="selectedStudent">
+        <ion-list>
+          <ion-item>
+            <ion-label>
+              <h2>{{ selectedStudent.firstName }} {{ selectedStudent.lastName }}</h2>
+              <p>Student Number: {{ selectedStudent.studentNumber }}</p>
+              <p>Module: {{ selectedStudent.moduleCode }}</p>
+            </ion-label>
+          </ion-item>
+
+          <ion-item>
+            <ion-label>
+              <h3>Test Results</h3>
+              <ion-grid>
+                <ion-row>
+                  <ion-col>Test 1: {{ selectedStudent.tests?.test1 }}%</ion-col>
+                  <ion-col>Test 2: {{ selectedStudent.tests?.test2 }}%</ion-col>
+                  <ion-col>Test 3: {{ selectedStudent.tests?.test3 }}%</ion-col>
+                </ion-row>
+                <ion-row>
+                  <ion-col>Test 4: {{ selectedStudent.tests?.test4 }}%</ion-col>
+                  <ion-col>Test 5: {{ selectedStudent.tests?.test5 }}%</ion-col>
+                  <ion-col>Test 6: {{ selectedStudent.tests?.test6 }}%</ion-col>
+                </ion-row>
+                <ion-row>
+                  <ion-col>Test 7: {{ selectedStudent.tests?.test7 }}%</ion-col>
+                </ion-row>
+              </ion-grid>
+            </ion-label>
+          </ion-item>
+        </ion-list>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+</ion-content>
