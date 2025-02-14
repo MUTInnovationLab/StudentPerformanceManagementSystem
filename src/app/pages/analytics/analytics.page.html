@@ -15,7 +15,6 @@
   <!-- Side Menu -->
   <div *ngIf="menuVisible" class="menu">
     <ion-list>
-      <!-- Show these items for all users -->
       <ion-item (click)="navigateTo('/dashboard')">
         <ion-icon name="home-outline" slot="start"></ion-icon>
         Dashboard
@@ -58,33 +57,21 @@
       </ion-card>
     </div>
 
-    <!-- Main Content -->
-    <div *ngIf="!state.loading && !state.error" class="main-content">
-      <!-- User Role Info -->
-      <ion-item lines="none" class="user-role-info">
-        <ion-label>
-          <h2>Viewing as: {{ userPosition$ | async }}</h2>
-        </ion-label>
-      </ion-item>
-
-      <!-- No Data State -->
-      <div *ngIf="!state.loading && state.attendedModules.length === 0" class="no-data">
-        <ion-card>
-          <ion-card-content>
-            <div class="empty-state">
-              <ion-icon name="document-outline" size="large"></ion-icon>
-              <h2>No Data Available</h2>
-              <p>No attendance records have been found for your modules.</p>
-            </div>
-          </ion-card-content>
-        </ion-card>
-      </div>
+    <!-- No Data State -->
+    <div *ngIf="!state.loading && !state.error && state.attendedModules.length === 0" class="no-data">
+      <ion-card>
+        <ion-card-content>
+          <div class="empty-state">
+            <ion-icon name="document-outline" size="large"></ion-icon>
+            <h2>No Data Available</h2>
+            <p>No attendance records have been found for your modules.</p>
+          </div>
+        </ion-card-content>
+      </ion-card>
     </div>
 
-<ion-content>
-  <ng-container *ngIf="state$ | async as state">
     <!-- Main Content -->
-    <div *ngIf="!state.loading && !state.error" class="main-content">
+    <div *ngIf="!state.loading && !state.error && state.attendedModules.length > 0" class="main-content">
       <div *ngFor="let module of state.attendedModules" class="module-container">
         <h2 class="module-title">{{ module.moduleName }}</h2>
 
