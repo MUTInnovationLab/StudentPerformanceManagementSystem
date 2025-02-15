@@ -35,6 +35,8 @@ export class StudentsPerformancePage implements OnInit {
     this.loadStudentMarks();
   }
 
+
+
   openMenu() {
     this.menuVisible = !this.menuVisible;
   }
@@ -57,6 +59,38 @@ export class StudentsPerformancePage implements OnInit {
     });
   }
 
+  private async loadAttendanceData(moduleCodes: string[]): Promise<void> {
+    try {
+      const attendancePromises = moduleCodes.map(async (moduleCode) => {
+        const attendanceQuery = await this.firestore
+          .collection('Attended')
+          .ref.where('moduleCode', '==', moduleCode)
+          .get();
+  
+        if (!attendanceQuery || attendanceQuery.empty) {
+          console.warn(`No attendance data found for module: ${moduleCode}`);
+          return;
+        }
+  
+        attendanceQuery.docs.forEach((doc) => {
+          const data = doc.data() as { studentNumber: string };
+          if (data && data.studentNumber) {
+            if (!this.studentsAttendance[data.studentNumber]) {
+              this.studentsAttendance[data.studentNumber] = {};
+            }
+            this.studentsAttendance[data.studentNumber][moduleCode] = data;
+          }
+        });
+      });
+  
+      await Promise.all(attendancePromises);
+      console.log('Attendance data loaded:', this.studentsAttendance); // Debug log
+    } catch (error) {
+      console.error('Error loading attendance data:', error);
+      throw error;
+    }
+  }
+  
   private async loadStudentMarks() {
     this.isLoading = true; // Set loading state to true
     try {
@@ -77,27 +111,34 @@ export class StudentsPerformancePage implements OnInit {
         return;
       }
   
-      console.log('User found in staff collection:', staffSnapshot.docs.map(doc => doc.data()));
+      const staffData = staffSnapshot.docs[0].data() as { position: string };
+      console.log('User found in staff collection:', staffData);
   
-      const assignedLecturesDoc = await this.firestore.collection('assignedLectures')
-        .doc(user.staffNumber)
-        .get()
-        .toPromise();
+      if (staffData.position === 'HOD') {
+        // If the staff member is an HOD, retrieve all students' details
+        this.students = await this.retrieveAllStudentsMarks();
+      } else {
+        const assignedLecturesDoc = await this.firestore.collection('assignedLectures')
+          .doc(user.staffNumber)
+          .get()
+          .toPromise();
   
-      if (!assignedLecturesDoc || !assignedLecturesDoc.exists) {
-        this.error = 'User not found in assignedLectures collection';
-        console.log('Assigned lectures document not found for staffNumber:', user.staffNumber);
-        return;
+        if (!assignedLecturesDoc || !assignedLecturesDoc.exists) {
+          this.error = 'User not found in assignedLectures collection';
+          console.log('Assigned lectures document not found for staffNumber:', user.staffNumber);
+          return;
+        }
+  
+        const assignedLecturesData = assignedLecturesDoc.data();
+        console.log('User found in assignedLectures collection:', assignedLecturesData);
+  
+        const assignedModules = (assignedLecturesData as { modules: any[] })?.modules || [];
+        const moduleCodes = assignedModules.map((module: { moduleCode: string }) => module.moduleCode);
+  
+        this.students = await this.retrieveStudentMarks(moduleCodes);
+        await this.loadAttendanceData(moduleCodes); // Load attendance data
       }
   
-      const assignedLecturesData = assignedLecturesDoc.data();
-      console.log('User found in assignedLectures collection:', assignedLecturesData);
-  
-      const assignedModules = (assignedLecturesData as { modules: any[] })?.modules || [];
-      const moduleCodes = assignedModules.map((module: { moduleCode: string }) => module.moduleCode);
-  
-      this.students = await this.retrieveStudentMarks(moduleCodes);
-      await this.loadAttendanceData(moduleCodes); // Load attendance data
       this.studentsNeedingAttention = this.getStudentsNeedingAttention(this.students);
       console.log('Students needing attention:', this.studentsNeedingAttention); // Debug log
     } catch (error) {
@@ -111,37 +152,7 @@ export class StudentsPerformancePage implements OnInit {
       this.isLoading = false; // Set loading state to false
     }
   }
-
-  private async loadAttendanceData(moduleCodes: string[]) {
-    try {
-      for (const moduleCode of moduleCodes) {
-        const attendanceDoc = await this.firestore
-          .collection('Attended')
-          .doc(moduleCode.trim())
-          .get()
-          .toPromise();
   
-        if (attendanceDoc?.exists) {
-          const attendanceData = attendanceDoc.data();
-          if (attendanceData) {
-            for (const date in attendanceData) {
-              const dailyAttendance = (attendanceData as { [key: string]: any })[date];
-              dailyAttendance.forEach((record: any) => {
-                if (!this.studentsAttendance[record.studentNumber]) {
-                  this.studentsAttendance[record.studentNumber] = {};
-                }
-                this.studentsAttendance[record.studentNumber][moduleCode] = record.scanTime;
-              });
-            }
-          }
-        }
-      }
-      console.log('Attendance data:', this.studentsAttendance); // Debug log
-    } catch (error) {
-      console.error('Error loading attendance data:', error);
-    }
-  }
-
   private async retrieveStudentMarks(moduleCodes: string[]): Promise<DetailedStudentInfo[]> {
     const students: DetailedStudentInfo[] = [];
     try {
@@ -151,6 +162,10 @@ export class StudentsPerformancePage implements OnInit {
           .collection('marks')
           .ref.where('moduleCode', 'in', moduleChunk)
           .get();
+  
+        if (!marksQuery || marksQuery.empty) {
+          throw new Error('Marks query is undefined or empty');
+        }
   
         const studentNumbers = new Set<string>();
         const moduleMarks = new Map<string, any>();
@@ -175,6 +190,10 @@ export class StudentsPerformancePage implements OnInit {
             .collection('students')
             .ref.where('studentNumber', 'in', studentChunk)
             .get();
+  
+          if (!studentsQuery || studentsQuery.empty) {
+            throw new Error('Students query is undefined or empty');
+          }
   
           studentsQuery.docs.forEach(doc => {
             studentMap.set(doc.id, doc.data());
@@ -230,7 +249,78 @@ export class StudentsPerformancePage implements OnInit {
     }
     return students;
   }
-
+  
+  private async retrieveAllStudentsMarks(): Promise<DetailedStudentInfo[]> {
+    const students: DetailedStudentInfo[] = [];
+    try {
+      const studentsQuery = await this.firestore.collection('students').get().toPromise();
+      if (!studentsQuery || studentsQuery.empty) {
+        throw new Error('Students query is undefined or empty');
+      }
+  
+      const studentMap = new Map<string, any>();
+      studentsQuery.docs.forEach(doc => {
+        studentMap.set(doc.id, doc.data());
+      });
+  
+      const marksQuery = await this.firestore.collection('marks').get().toPromise();
+      if (!marksQuery || marksQuery.empty) {
+        throw new Error('Marks query is undefined or empty');
+      }
+  
+      const moduleMarks = new Map<string, any>();
+      marksQuery.docs.forEach(doc => {
+        const data = doc.data() as ModuleMarksDocument;
+        moduleMarks.set(doc.id, data);
+      });
+  
+      moduleMarks.forEach((moduleData, moduleCode) => {
+        moduleData.marks.forEach((mark: any) => {
+          if (!mark.studentNumber) return;
+  
+          const average = mark.average ? Number(mark.average) : 
+                         this.calculateStudentAverage(mark, moduleData.testPercentages);
+  
+          const studentData = studentMap.get(mark.studentNumber.toString());
+  
+          if (studentData) {
+            const studentDetail: DetailedStudentInfo = {
+              studentNumber: mark.studentNumber,
+              name: studentData.name ?? 'N/A',
+              surname: studentData.surname ?? 'N/A',
+              email: studentData.email ?? 'N/A',
+              department: studentData.department ?? 'N/A',
+              average,
+              moduleName: moduleData.moduleName,
+              moduleCode: moduleCode,
+              marks: {
+                studentNumber: mark.studentNumber,
+                average: mark.average,
+                test1: mark.test1 ?? 0,
+                test2: mark.test2 ?? 0,
+                test3: mark.test3 ?? 0,
+                test4: mark.test4 ?? 0,
+                test5: mark.test5 ?? 0,
+                test6: mark.test6 ?? 0,
+                test7: mark.test7 ?? 0,
+                moduleCode: moduleCode,
+                scanTime: mark.scanTime ?? null // Ensure scanTime is included
+              },
+              attendance: studentData.attendance ?? {}
+            };
+            students.push(studentDetail);
+          }
+        });
+      });
+  
+      console.log('Retrieved all students:', students); // Debug log
+    } catch (error) {
+      console.error('Error retrieving all students marks:', error);
+      throw error;
+    }
+    return students;
+  }
+  
   private getStudentsNeedingAttention(students: DetailedStudentInfo[]): DetailedStudentInfo[] {
     return students.filter(student => {
       const failedTests = [
@@ -245,7 +335,7 @@ export class StudentsPerformancePage implements OnInit {
       return failedTests.length > 2;
     });
   }
-
+  
   private chunkArray<T>(array: T[], size: number): T[][] {
     const chunks: T[][] = [];
     for (let i = 0; i < array.length; i += size) {
@@ -253,7 +343,7 @@ export class StudentsPerformancePage implements OnInit {
     }
     return chunks;
   }
-
+  
   private calculateStudentAverage(mark: any, testPercentages: any): number {
     let totalWeightedScore = 0;
     let totalWeight = 0;
@@ -271,7 +361,7 @@ export class StudentsPerformancePage implements OnInit {
   
     return totalWeight > 0 ? totalWeightedScore / totalWeight : 0;
   }
-
+  
   getScoreColor(score: number | null | undefined, outOf: number | null | undefined): string {
     if (outOf === null || outOf === undefined || score === null || score === undefined) {
       return 'black';
@@ -285,7 +375,7 @@ export class StudentsPerformancePage implements OnInit {
       return 'red';
     }
   }
-
+  
   getScoreColorClass(score: number, outOf: number): string {
     const percentage = (score / outOf) * 100;
     if (percentage >= 75) {
@@ -296,11 +386,11 @@ export class StudentsPerformancePage implements OnInit {
       return 'poor-performance-bg';
     }
   }
-
+  
   hasTestMarks(testNumber: number): boolean {
     return this.students.some(student => student.marks[`test${testNumber}`] !== null && student.marks[`test${testNumber}`] !== undefined && student.marks[`test${testNumber}`] !== 0);
   }
-
+  
   handleFileInput(event: any) {
     const file = event.target.files[0];
     if (file) {
@@ -316,7 +406,7 @@ export class StudentsPerformancePage implements OnInit {
       reader.readAsArrayBuffer(file);
     }
   }
-
+  
   processExcelData(data: any[]) {
     const headers = data[0];
     const rows = data.slice(1);
@@ -325,14 +415,14 @@ export class StudentsPerformancePage implements OnInit {
       headers.forEach((header: string, index: number) => {
         student[header] = row[index];
       });
-
+  
       // Parse attendance data
-      const attendanceEntries = student.attendance.split('\n').map((entry: string) => entry.split(': '));
+      const attendanceEntries = student.attendance ? student.attendance.split('\n').map((entry: string) => entry.split(': ')) : [];
       const attendanceData: { [module: string]: string } = {};
       attendanceEntries.forEach(([module, time]: [string, string]) => {
         attendanceData[module] = time;
       });
-
+  
       return {
         studentNumber: student.studentNumber,
         name: student.name,
@@ -358,18 +448,18 @@ export class StudentsPerformancePage implements OnInit {
         attendance: attendanceData // Include parsed attendance data
       };
     });
-
+  
     const filteredUploadedStudents = uploadedStudents.filter(student => {
       return this.students.some(existingStudent => existingStudent.studentNumber === student.studentNumber);
     });
-
+  
     this.studentsNeedingAttention = this.getStudentsNeedingAttention(filteredUploadedStudents);
   }
-
+  
   onFileChange(event: any) {
     this.handleFileInput(event);
   }
-
+  
   downloadExcel() {
     try {
       const filteredStudents = this.students.map(student => {
@@ -379,11 +469,11 @@ export class StudentsPerformancePage implements OnInit {
             obj[key] = student.marks[key];
             return obj;
           }, {} as any);
-
+  
         const attendance = this.getObjectKeys(this.studentsAttendance[student.studentNumber])
           .map(module => `${module}: ${this.studentsAttendance[student.studentNumber][module]}`)
           .join('\n');
-
+  
         return {
           studentNumber: student.studentNumber,
           name: student.name,
@@ -396,24 +486,24 @@ export class StudentsPerformancePage implements OnInit {
           ...filteredMarks
         };
       });
-
+  
       const worksheet: XLSX.WorkSheet = XLSX.utils.json_to_sheet(filteredStudents);
       const workbook: XLSX.WorkBook = { Sheets: { 'data': worksheet }, SheetNames: ['data'] };
       const excelBuffer: any = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-
+  
       // Create a Blob from the buffer
       const data: Blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       const url = window.URL.createObjectURL(data);
-
+  
       // Create a link element
       const link = document.createElement('a');
       link.href = url;
       link.download = 'StudentMarks.xlsx';
-
+  
       // Append the link to the document body and click it to trigger the download
       document.body.appendChild(link);
       link.click();
-
+  
       // Clean up and remove the link
       document.body.removeChild(link);
     } catch (error) {
@@ -421,7 +511,7 @@ export class StudentsPerformancePage implements OnInit {
       this.error = 'Failed to download Excel file. Please check your permissions and try again.';
     }
   }
-
+  
   getObjectKeys(obj: any): string[] {
     return obj ? Object.keys(obj) : [];
   }

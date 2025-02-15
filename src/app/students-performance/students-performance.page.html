@@ -117,7 +117,7 @@
                       <th *ngIf="hasTestMarks(5)">Test 5</th>
                       <th *ngIf="hasTestMarks(6)">Test 6</th>
                       <th *ngIf="hasTestMarks(7)">Test 7</th>
-                      <th>Scan Time</th>
+                      <!-- <th>Scan Time</th> -->
                     </tr>
                   </thead>
                   <tbody>
@@ -134,7 +134,7 @@
                       <td *ngIf="hasTestMarks(5)" [ngClass]="getScoreColorClass(student.marks.test5 ?? 0, testOutOf[4] ?? 100)">{{ student.marks.test5 }}</td>
                       <td *ngIf="hasTestMarks(6)" [ngClass]="getScoreColorClass(student.marks.test6 ?? 0, testOutOf[5] ?? 100)">{{ student.marks.test6 }}</td>
                       <td *ngIf="hasTestMarks(7)" [ngClass]="getScoreColorClass(student.marks.test7 ?? 0, testOutOf[6] ?? 100)">{{ student.marks.test7 }}</td>
-                      <td>{{ studentsAttendance[student.studentNumber]?.[student.moduleCode] }}</td>
+                      <!-- <td>{{ studentsAttendance[student.studentNumber]?.[student.moduleCode] }}</td> -->
                     </tr>
                   </tbody>
                 </table>
@@ -149,7 +149,7 @@
                         <th>Student Surname</th>
                         <th>Student Email</th>
                         <th>Student Module</th>
-                        <th>Attendance (Scan Time)</th>
+                        <!-- <th>Attendance (Scan Time)</th> -->
                       </tr>
                     </thead>
                     <tbody>
@@ -159,11 +159,11 @@
                         <td>{{ student.surname }}</td>
                         <td>{{ student.email }}</td>
                         <td>{{ student.moduleCode }}</td>
-                        <td>
+                        <!-- <td>
                           <div *ngFor="let module of getObjectKeys(studentsAttendance[student.studentNumber])">
                             {{ module }}: {{ studentsAttendance[student.studentNumber]?.[module] }}
                           </div>
-                        </td>
+                        </td> -->
                       </tr>
                     </tbody>
                   </table>
@@ -174,25 +174,14 @@
               <div class="file-input">
                 <input type="file" (change)="onFileChange($event)" accept=".xlsx, .xls" />
               </div>
-              <!-- Display error messages -->
-              <div *ngIf="error" class="error">
-                {{ error }}
-              </div>
-              <!-- Instructions for the user -->
-              <div *ngIf="error" class="quota-exceeded">
-                <h3>Quota Exceeded</h3>
-                <p>
-                  The Firestore quota has been exceeded. This means that the data from the first table cannot be read from the database.
-                  To resolve this issue, please follow these steps:
-                </p>
+             
+              <!-- Download button for the user to download the data displayed in the first table as an Excel file -->
+              <div class="download-button">
                 <ol>
                   <li>Download the data from the first table as an Excel file.</li>
                   <li>Upload the Excel file using the file input below.</li>
                   <li>The data will be read, processed, and displayed in the second table.</li>
                 </ol>
-              </div>
-              <!-- Download button for the user to download the data displayed in the first table as an Excel file -->
-              <div class="download-button">
                 <button (click)="downloadExcel()">Download Excel</button>
               </div>
             </div>
