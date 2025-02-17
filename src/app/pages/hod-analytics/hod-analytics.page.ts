@@ -72,6 +72,11 @@ export class HODANALYTICSPage implements OnInit {
     this.router.navigate(['/live-meet']);  // Ensure you have this route set up
     this.menuVisible = false;  // Hide the menu after selecting
   }
+  dashboard(){
+    this.router.navigate(['/dashboard']);  // Ensure you have this route set up
+    this.menuVisible = false;  // Hide the menu after selecting
+  }
+  
   async logout() {
     try {
       await this.authService.signOut();

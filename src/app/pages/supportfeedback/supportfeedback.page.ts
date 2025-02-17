@@ -45,6 +45,11 @@ export class SupportfeedbackPage implements OnInit {
     this.router.navigate(['/live-meet']);  // Ensure you have this route set up
     this.menuVisible = false;  // Hide the menu after selecting
   }
+  dashboard(){
+    this.router.navigate(['/dashboard']);
+    this.menuVisible = false;
+  }
+  
   async logout() {
     try {
       await this.authService.signOut();
