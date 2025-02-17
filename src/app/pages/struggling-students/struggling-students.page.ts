@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { ToastController } from '@ionic/angular';
@@ -162,6 +162,10 @@ export class StrugglingStudentsPage implements OnInit {
   goToStudentsManagement() {
     this.router.navigate(['/student-management']);
   }
+  goTodashboard(){
+    this.router.navigate(['/dashboard']);
+  }
+
   logout() {
     this.authService.signOut().then(() => {
       this.router.navigate(['/login']);

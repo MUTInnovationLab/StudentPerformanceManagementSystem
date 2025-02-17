@@ -35,8 +35,6 @@ export class StudentsPerformancePage implements OnInit {
     this.loadStudentMarks();
   }
 
-
-
   openMenu() {
     this.menuVisible = !this.menuVisible;
   }
@@ -50,7 +48,14 @@ export class StudentsPerformancePage implements OnInit {
   }
 
   goToStudentsManagement() {
-    this.router.navigate(['/students-management']);
+    this.router.navigate(['/student-management']);
+  }
+ 
+  goToFeedback() {
+    this.router.navigate(['/supportfeedback']);
+  }
+  goTodashboard(){
+    this.router.navigate(['/dashboard']);
   }
 
   logout() {
