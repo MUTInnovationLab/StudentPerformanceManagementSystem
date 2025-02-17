@@ -47,8 +47,8 @@
             </div>
             <!-- Data content -->
             <div *ngIf="!isLoading">
-              <div *ngFor="let i of [1, 2, 3, 4, 5, 6, 7]; let idx = index" class="test-input">
-                <label for="testOutOf{{ i }}">Test {{ i }} :Out Of / (*<i>Note:</i> 100 is by Default*)</label>
+              <div *ngFor="let i of testCount; let idx = index" class="test-input">
+                <label for="testOutOf{{ i }}">Test {{ i }} : Out Of</label>
                 <input 
                   [(ngModel)]="testOutOf[i - 1]" 
                   placeholder="Type what Test {{ i }} was Out Of" 
@@ -69,121 +69,57 @@
                   <tr>
                     <th>Student Number</th>
                     <th>Student Module</th>
-                    <th *ngIf="hasTestMarks(1)">Test 1</th>
-                    <th *ngIf="hasTestMarks(2)">Test 2</th>
-                    <th *ngIf="hasTestMarks(3)">Test 3</th>
-                    <th *ngIf="hasTestMarks(4)">Test 4</th>
-                    <th *ngIf="hasTestMarks(5)">Test 5</th>
-                    <th *ngIf="hasTestMarks(6)">Test 6</th>
-                    <th *ngIf="hasTestMarks(7)">Test 7</th>
-                    <!-- <th>Average</th>  -->
+                    <ng-container *ngFor="let test of testOutOf; let i = index">
+                      <th *ngIf="hasTestMarks(i + 1)">Test {{ i + 1 }}</th>
+                    </ng-container>
                   </tr>
                 </thead>
                 <tbody>
                   <tr *ngFor="let student of students">
                     <td>{{ student.studentNumber }}</td>
-                    <td>{{ student.moduleCode}}</td>
-                    <td *ngIf="student.marks.test1 !== null" [ngClass]="getScoreColorClass(student.marks.test1 ?? 0, testOutOf[0] ?? 100)">{{ student.marks.test1 }}</td>
-                    <td *ngIf="student.marks.test2 !== null" [ngClass]="getScoreColorClass(student.marks.test2 ?? 0, testOutOf[1] ?? 100)">{{ student.marks.test2 }}</td>
-                    <td *ngIf="student.marks.test3 !== null" [ngClass]="getScoreColorClass(student.marks.test3 ?? 0, testOutOf[2] ?? 100)">{{ student.marks.test3 }}</td>
-                    <td *ngIf="student.marks.test4 !== null && student.marks.test4 !== undefined" [ngClass]="getScoreColorClass(student.marks.test4 ?? 0, testOutOf[3] ?? 100)">{{ student.marks.test4 }}</td>
-                    <td *ngIf="student.marks.test5 !== null && student.marks.test5 !== undefined" [ngClass]="getScoreColorClass(student.marks.test5 ?? 0, testOutOf[4] ?? 100)">{{ student.marks.test5 }}</td>
-                    <td *ngIf="student.marks.test6 !== null && student.marks.test6 !== undefined" [ngClass]="getScoreColorClass(student.marks.test6 ?? 0, testOutOf[5] ?? 100)">{{ student.marks.test6 }}</td>
-                    <td *ngIf="student.marks.test7 !== null && student.marks.test7 !== undefined" [ngClass]="getScoreColorClass(student.marks.test7 ?? 0, testOutOf[6] ?? 100)">{{ student.marks.test7 }}</td>
-                    <!-- <td>{{ student.average }}</td> -->
+                    <td>{{ student.moduleCode }}</td>
+                    <ng-container *ngFor="let test of testOutOf; let i = index">
+                      <td *ngIf="student.marks['test' + (i + 1)] !== ''">{{ student.marks['test' + (i + 1)] }}</td>
+                    </ng-container>
                   </tr>
                 </tbody>
               </table>
               <!-- Table for students who need critical attention -->
               <div *ngIf="!isLoading">
-              <div *ngIf="studentsNeedingAttention.length > 0" class="students-needing-attention">
-                <h2>Students who need attention are processed into the excel file</h2>
-                <div class="total-students-needing-attention">
-                  <h3>Total number of students needing attention: {{ studentsNeedingAttention.length }}</h3>
-                  <h2>Download and Upload the excel file</h2>
+                <div *ngIf="studentsNeedingAttention.length > 0" class="students-needing-attention">
+                    <div class="total-students-needing-attention">
+                        <h3>Students needing attention below.</h3>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Student Number</th>
+                                <th>Student Name</th>
+                                <th>Student Surname</th>
+                                <th>Student Email</th>
+                                <th>Student Module</th>
+                                <ng-container *ngFor="let test of testOutOf; let i = index">
+                                    <th *ngIf="hasTestMarksForAttention(i + 1)">Test {{ i + 1 }}</th>
+                                </ng-container>
+                            </tr>
+                        </thead>
+                        <tbody>
+                          <ng-container *ngFor="let student of studentsNeedingAttention" >
+                            <tr *ngIf="hasFailedMoreThanTwoTests(student)">
+                                <td>{{ student.studentNumber }}</td>
+                                <td>{{ student.name }}</td>
+                                <td>{{ student.surname }}</td>
+                                <td>{{ student.email }}</td>
+                                <td>{{ student.moduleCode }}</td>
+                                <ng-container *ngFor="let test of testOutOf; let i = index">
+                                  <td *ngIf="student.marks['test' + (i + 1)] !== ''">{{ student.marks['test' + (i + 1)] }}</td>
+                                </ng-container>
+                            </tr>
+                          </ng-container>
+                        </tbody>
+                    </table>
                 </div>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Student Number</th>
-                      <th>Student Name</th>
-                      <th>Student Surname</th>
-                      <th>Student Email</th>
-                      <th>Student Module</th>
-                      <th *ngIf="hasTestMarks(1)">Test 1</th>
-                      <th *ngIf="hasTestMarks(2)">Test 2</th>
-                      <th *ngIf="hasTestMarks(3)">Test 3</th>
-                      <th *ngIf="hasTestMarks(4)">Test 4</th>
-                      <th *ngIf="hasTestMarks(5)">Test 5</th>
-                      <th *ngIf="hasTestMarks(6)">Test 6</th>
-                      <th *ngIf="hasTestMarks(7)">Test 7</th>
-                      <!-- <th>Scan Time</th> -->
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr *ngFor="let student of studentsNeedingAttention">
-                      <td>{{ student.studentNumber }}</td>
-                      <td>{{ student.name }}</td>
-                      <td>{{ student.surname }}</td>
-                      <td>{{ student.email }}</td>
-                      <td>{{ student.moduleCode }}</td>
-                      <td *ngIf="hasTestMarks(1)" [ngClass]="getScoreColorClass(student.marks.test1 ?? 0, testOutOf[0] ?? 100)">{{ student.marks.test1 }}</td>
-                      <td *ngIf="hasTestMarks(2)" [ngClass]="getScoreColorClass(student.marks.test2 ?? 0, testOutOf[1] ?? 100)">{{ student.marks.test2 }}</td>
-                      <td *ngIf="hasTestMarks(3)" [ngClass]="getScoreColorClass(student.marks.test3 ?? 0, testOutOf[2] ?? 100)">{{ student.marks.test3 }}</td>
-                      <td *ngIf="hasTestMarks(4)" [ngClass]="getScoreColorClass(student.marks.test4 ?? 0, testOutOf[3] ?? 100)">{{ student.marks.test4 }}</td>
-                      <td *ngIf="hasTestMarks(5)" [ngClass]="getScoreColorClass(student.marks.test5 ?? 0, testOutOf[4] ?? 100)">{{ student.marks.test5 }}</td>
-                      <td *ngIf="hasTestMarks(6)" [ngClass]="getScoreColorClass(student.marks.test6 ?? 0, testOutOf[5] ?? 100)">{{ student.marks.test6 }}</td>
-                      <td *ngIf="hasTestMarks(7)" [ngClass]="getScoreColorClass(student.marks.test7 ?? 0, testOutOf[6] ?? 100)">{{ student.marks.test7 }}</td>
-                      <!-- <td>{{ studentsAttendance[student.studentNumber]?.[student.moduleCode] }}</td> -->
-                    </tr>
-                  </tbody>
-                </table>
-                <!-- Display attendance data -->
-                <div class="attendance-data">
-                  <h2>Student Attendance</h2>
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Student Number</th>
-                        <th>Student Name</th>
-                        <th>Student Surname</th>
-                        <th>Student Email</th>
-                        <th>Student Module</th>
-                        <!-- <th>Attendance (Scan Time)</th> -->
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr *ngFor="let student of studentsNeedingAttention">
-                        <td>{{ student.studentNumber }}</td>
-                        <td>{{ student.name }}</td>
-                        <td>{{ student.surname }}</td>
-                        <td>{{ student.email }}</td>
-                        <td>{{ student.moduleCode }}</td>
-                        <!-- <td>
-                          <div *ngFor="let module of getObjectKeys(studentsAttendance[student.studentNumber])">
-                            {{ module }}: {{ studentsAttendance[student.studentNumber]?.[module] }}
-                          </div>
-                        </td> -->
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-              </div>
-              <!-- File input for uploading Excel files -->
-              <div class="file-input">
-                <input type="file" (change)="onFileChange($event)" accept=".xlsx, .xls" />
-              </div>
-             
-              <!-- Download button for the user to download the data displayed in the first table as an Excel file -->
-              <div class="download-button">
-                <ol>
-                  <li>Download the data from the first table as an Excel file.</li>
-                  <li>Upload the Excel file using the file input below.</li>
-                  <li>The data will be read, processed, and displayed in the second table.</li>
-                </ol>
-                <button (click)="downloadExcel()">Download Excel</button>
-              </div>
+            </div>
             </div>
           </ion-card-content>
         </ion-card>
