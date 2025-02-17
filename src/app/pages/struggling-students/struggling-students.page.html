@@ -93,11 +93,14 @@
                       View Details
                     </ion-button>
                     
-                  
-                    <ion-button size="small" color="tertiary" (click)="openMentorModal(student)">
-                      <ion-icon name="person-add-outline" slot="start"></ion-icon>
-                      Assign Mentor
-                    </ion-button>
+                    <ion-button 
+                    size="small" 
+                    color="tertiary" 
+                    [disabled]="student.hasMentor"
+                    (click)="student.hasMentor ? null : openMentorModal(student)">
+                    <ion-icon name="person-add-outline" slot="start"></ion-icon>
+                    {{ getMentorDisplayText(student) }}
+                  </ion-button>
 
 
 
@@ -192,7 +195,8 @@
         </ion-list>
   
         <div *ngIf="mentors.length === 0" class="ion-padding ion-text-center">
-          <p>No mentors available at the moment.</p>
+          <p>No mentors available for department: {{currentDepartment}}</p>
+          <p>Please check mentor assignments for this department.</p>
         </div>
       </ion-content>
     </ng-template>
