@@ -392,6 +392,7 @@ export class FacultyAnalyticPage implements OnInit, AfterViewInit {
       }
     });
   }
+  
   private async presentToast(message: string) {
     const toast = await this.toastController.create({
       message,
