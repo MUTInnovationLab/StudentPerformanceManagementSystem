@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { ToastController } from '@ionic/angular';
@@ -23,6 +23,21 @@ interface Student {
     test6: number;
     test7: number;
   };
+  hasMentor: boolean;
+  assignedMentor?: {
+    id: string;
+    name: string;
+    surname: string;
+  };
+}
+
+interface MentorshipData {
+  studentNumber: string;
+  mentorID: string;
+  moduleCode: string;
+  assignedDate: Date;
+  status: string;
+  department: string;
 }
 
 interface Module {
@@ -147,6 +162,9 @@ export class StrugglingStudentsPage implements OnInit {
   goToStudentsManagement() {
     this.router.navigate(['/student-management']);
   }
+  goTodashboard(){
+    this.router.navigate(['/dashboard']);
+  }
 
   logout() {
     this.authService.signOut().then(() => {
@@ -159,9 +177,6 @@ export class StrugglingStudentsPage implements OnInit {
   mentorStudents(){
     this.router.navigate(['/mentor-students']);
   }
-
-  
-
 
   async getStaffNumberAndModules(userEmail: string) {
     try {
@@ -223,7 +238,7 @@ export class StrugglingStudentsPage implements OnInit {
         console.log('No enrolled students document found');
         return;
       }
-
+  
       const enrolledData = enrolledDoc.data() as EnrolledModule;
       if (!enrolledData?.Enrolled || !Array.isArray(enrolledData.Enrolled)) {
         console.error('Invalid enrolled data structure:', enrolledData);
@@ -273,7 +288,7 @@ export class StrugglingStudentsPage implements OnInit {
               mark => mark.studentNumber.toString() === enrolled.studentNumber
             );
   
-            // Get tests from marks collection
+            // Process tests and calculate average
             const tests = {
               test1: Number(studentMarks?.test1) || 0,
               test2: Number(studentMarks?.test2) || 0,
@@ -284,8 +299,11 @@ export class StrugglingStudentsPage implements OnInit {
               test7: Number(studentMarks?.test7) || 0
             };
   
-            // Get average from marks collection instead of calculating
-            const average = Number(studentMarks?.average) || 0;
+            // Calculate average only from tests that have marks
+            const validTests = Object.values(tests).filter(mark => mark > 0);
+            const average = validTests.length > 0
+              ? validTests.reduce((sum, mark) => sum + mark, 0) / validTests.length
+              : 0;
   
             // Check for existing mentor
             const mentorshipDocs = await this.firestore
@@ -348,6 +366,7 @@ export class StrugglingStudentsPage implements OnInit {
       this.presentToast('Error loading students data', 'danger');
     }
   }
+
   
   async assignMentor(student: Student, mentor: Mentor) {
     if (!student) {
