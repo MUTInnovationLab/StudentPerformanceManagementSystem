@@ -40,6 +40,31 @@ export class SupportfeedbackPage implements OnInit {
   openMenu() {
     this.menuVisible = !this.menuVisible;
   }
+  Dashboard(){
+    this.router.navigate(['/dashboard']);  // Ensure you have this route set up
+    this.menuVisible = false;  // Hide the menu after selecting
+  }
+  goToStudentsManagement(){
+    this.router.navigate(['/student-management']);  // Ensure you have this route set up
+    this.menuVisible = false;  // Hide the menu after selecting
+  }
+  goToStrugglingStudents(){
+    this.router.navigate(['/struggling-students']);  // Ensure you have this route set up
+    this.menuVisible = false;  // Hide the menu after selecting
+  }
+  goToMentorStudents(){
+    this.router.navigate(['/mentor-students']);  // Ensure you have this route set up
+    this.menuVisible = false;  // Hide the menu after selecting
+  }
+  studentPerformance(){
+    this.router.navigate(['/student-perfomance']);  // Ensure you have this route set up
+    this.menuVisible = false;  // Hide the menu after selecting
+  }
+
+  Csv(){
+    this.router.navigate(['/csv']);  // Ensure you have this route set up
+    this.menuVisible = false;  // Hide the menu after selecting
+  }
  
   goToMeeting() {
     this.router.navigate(['/live-meet']);  // Ensure you have this route set up

@@ -157,6 +157,10 @@ export class AnalyticsPage implements OnInit, OnDestroy {
     this.router.navigate([route]);
     this.menuVisible = false;
   }
+  Csv(){
+    this.router.navigate(['/csv']);
+    this.menuVisible = false;
+  }
 
   async logout(): Promise<void> {
     try {

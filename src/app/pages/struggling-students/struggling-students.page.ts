@@ -166,7 +166,7 @@ export class StrugglingStudentsPage implements OnInit {
   goToStudentsManagement() {
     this.router.navigate(['/student-management']);
   }
-  goTodashboard(){
+  dashboard(){
     this.router.navigate(['/dashboard']);
   }
 

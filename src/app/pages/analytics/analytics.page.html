@@ -23,6 +23,26 @@
         <ion-icon name="videocam-outline" slot="start"></ion-icon>
         Go to Meeting
       </ion-item>
+      <ion-item (click)="navigateTo('/student-management')">
+        <ion-icon name="person-outline" slot="start"></ion-icon>
+        Student Management
+      </ion-item>
+      <ion-item (click)="navigateTo('/struggling-students')">
+        <ion-icon name="sad-outline" slot="start"></ion-icon>
+        Struggling Students
+      </ion-item>
+      <ion-item (click)="navigateTo('/mentor-students')">
+        <ion-icon name="school-outline" slot="start"></ion-icon>
+        Mentor Students
+      </ion-item>
+      <ion-item (click)="navigateTo('/supportfeedback')">
+        <ion-icon name="chatbubble-ellipses-outline" slot="start"></ion-icon>
+        Feedback
+      </ion-item>
+      <ion-item (click)="Csv()">
+        <ion-icon name="document-text-outline" slot="start"></ion-icon>
+        Go to CSV
+      </ion-item>
       <ion-item (click)="logout()">
         <ion-icon name="log-out-outline" slot="start"></ion-icon>
         Logout

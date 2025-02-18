@@ -16,12 +16,36 @@
 
 <ion-content class="ion-padding custom-content">
   <div *ngIf="menuVisible" class="menu">
-    <ion-item (click)="Dashboard()">Dashboard</ion-item>
-    <ion-item (click)="goToMeeting()">Go to Meeting</ion-item>
-    <ion-item (click)="goToStudentManagement()">Go to student management</ion-item>
-    <ion-item (click)="supportfeedback()">Support Feedback</ion-item>
-    <ion-item (click)="logout()">Logout</ion-item>
+    <ion-item (click)="Dashboard()">
+      <ion-icon slot="start" name="home-outline"></ion-icon>
+      Dashboard
+    </ion-item>
+    <ion-item (click)="goToMeeting()">
+      <ion-icon slot="start" name="videocam-outline"></ion-icon>
+      Go to Meeting
+    </ion-item>
+    <ion-item (click)="goToStrugglingStudents()">
+      <ion-icon slot="start" name="warning-outline"></ion-icon>
+      Go to Struggling Students
+    </ion-item>
+    <ion-item (click)="goToStudentManagement()">
+      <ion-icon slot="start" name="people-outline"></ion-icon>
+      Go to Student Management
+    </ion-item>
+    <ion-item (click)="goToMentorStudents()">
+      <ion-icon slot="start" name="school-outline"></ion-icon>
+      Go to Mentor Students
+    </ion-item>
+    <ion-item (click)="supportfeedback()">
+      <ion-icon slot="start" name="chatbubble-ellipses-outline"></ion-icon>
+      Support Feedback
+    </ion-item>
+    <ion-item (click)="logout()">
+      <ion-icon slot="start" name="log-out-outline"></ion-icon>
+      Logout
+    </ion-item>
   </div>
+  
   <ion-card class="custom-card">
     <ion-card-header>
       <ion-card-title>
