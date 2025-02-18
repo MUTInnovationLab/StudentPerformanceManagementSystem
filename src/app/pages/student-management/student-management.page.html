@@ -12,26 +12,10 @@
 
 <ion-content>
   <div *ngIf="menuVisible" class="menu">
-    <ion-item (click)="goToMeeting()">
-      <ion-icon name="videocam-outline" slot="start"></ion-icon>
-      Go to Meeting
-    </ion-item>
-    <ion-item (click)="dashboard()">
-      <ion-icon name="home-outline" slot="start"></ion-icon>
-      Dashboard
-    </ion-item>
-    <ion-item (click)="goToCsv()">
-      <ion-icon name="document-text-outline" slot="start"></ion-icon>
-      Go to CSV
-    </ion-item>
-    <ion-item (click)="goToStudentPerformance()">
-      <ion-icon name="bar-chart-outline" slot="start"></ion-icon>
-      Go to Student Performance
-    </ion-item>
-    <ion-item (click)="logout()">
-      <ion-icon name="log-out-outline" slot="start"></ion-icon>
-      Logout
-    </ion-item>
+    <ion-item (click)="goToMeeting()">Go to Meeting</ion-item>
+    <ion-item (click)="goToCsv()">Go to CSV</ion-item>
+    <ion-item (click)="goToStudentPerformance()">Go to student perfomance</ion-item>
+    <ion-item (click)="logout()">Logout</ion-item>
   </div>
   
   <div class="filters-container">

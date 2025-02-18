@@ -1,4 +1,4 @@
-import { Component, OnInit, HostListener } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { ToastController } from '@ionic/angular';
@@ -23,21 +23,6 @@ interface Student {
     test6: number;
     test7: number;
   };
-  hasMentor: boolean;
-  assignedMentor?: {
-    id: string;
-    name: string;
-    surname: string;
-  };
-}
-
-interface MentorshipData {
-  studentNumber: string;
-  mentorID: string;
-  moduleCode: string;
-  assignedDate: Date;
-  status: string;
-  department: string;
 }
 
 interface Module {
@@ -162,9 +147,6 @@ export class StrugglingStudentsPage implements OnInit {
   goToStudentsManagement() {
     this.router.navigate(['/student-management']);
   }
-  goTodashboard(){
-    this.router.navigate(['/dashboard']);
-  }
 
   logout() {
     this.authService.signOut().then(() => {
@@ -177,6 +159,9 @@ export class StrugglingStudentsPage implements OnInit {
   mentorStudents(){
     this.router.navigate(['/mentor-students']);
   }
+
+  
+
 
   async getStaffNumberAndModules(userEmail: string) {
     try {
@@ -238,7 +223,7 @@ export class StrugglingStudentsPage implements OnInit {
         console.log('No enrolled students document found');
         return;
       }
-  
+
       const enrolledData = enrolledDoc.data() as EnrolledModule;
       if (!enrolledData?.Enrolled || !Array.isArray(enrolledData.Enrolled)) {
         console.error('Invalid enrolled data structure:', enrolledData);
