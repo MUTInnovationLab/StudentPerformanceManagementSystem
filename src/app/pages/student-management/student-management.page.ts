@@ -119,11 +119,6 @@ isAttendanceModalOpen = false;
     this.router.navigate(['/students-performance']);  // Ensure you have this route set up
     this.menuVisible = false;  // Hide the menu after selecting
   }
-  dashboard(){
-    this.router.navigate(['/dashboard']);  // Ensure you have this route set up
-    this.menuVisible = false;  // Hide the menu after selecting
-  }
-
   goToMeeting() {
     this.router.navigate(['/live-meet']);  // Ensure you have this route set up
     this.menuVisible = false;  // Hide the menu after selecting

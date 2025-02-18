@@ -30,16 +30,9 @@
 
 <ion-content>
   <div *ngIf="menuVisible" class="menu">
-    <ion-item (click)="Dashboard()">
-      <ion-icon name="home-outline" slot="start"></ion-icon>
-      Dashboard
-    </ion-item>
-    <ion-item (click)="logout()">
-      <ion-icon name="log-out-outline" slot="start"></ion-icon>
-      Logout
-    </ion-item>
+    <ion-item (click)="Dashboard()">Dashboard</ion-item>
+    <ion-item (click)="logout()">Logout</ion-item>
   </div>
-  
   <!-- Join Meeting Form -->
   <div class="input-container" *ngIf="!isJoined">
     <h2>Join Meeting</h2>

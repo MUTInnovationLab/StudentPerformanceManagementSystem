@@ -17,20 +17,10 @@
 
 <ion-content [fullscreen]="true">
   <div *ngIf="menuVisible" class="menu">
-    <ion-item (click)="goToMeeting()">
-      <ion-icon name="videocam-outline" slot="start"></ion-icon>
-      Go to Meeting
-    </ion-item>
-    <ion-item (click)="Dashboard()">
-      <ion-icon name="home-outline" slot="start"></ion-icon>
-      Dashboard
-    </ion-item>
-    <ion-item (click)="logout()">
-      <ion-icon name="log-out-outline" slot="start"></ion-icon>
-      Logout
-    </ion-item>
+    <ion-item (click)="goToMeeting()">Go to Meeting</ion-item>
+    <ion-item (click)="Dashboard()">Dashboard</ion-item>
+    <ion-item (click)="logout()">Logout</ion-item>
   </div>
-  
   <!-- Loading spinner -->
   <div *ngIf="isLoading" class="loading-container">
     <ion-spinner name="circular"></ion-spinner>
