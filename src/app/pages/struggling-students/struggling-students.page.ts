@@ -216,88 +216,114 @@ export class StrugglingStudentsPage implements OnInit {
     }
   }
 
+
   async loadStudents() {
     if (!this.selectedModule) {
       this.presentToast('Please select a module', 'warning');
       return;
     }
+    
+    console.log('Loading students for module:', this.selectedModule);
+    this.students = []; // Clear existing students
+    
     try {
+      // 1. Get enrolled students
       const enrolledDoc = await this.firestore
         .collection('enrolledModules')
         .doc(this.selectedModule)
         .get()
         .toPromise();
+        
       if (!enrolledDoc?.exists) {
-        console.log('No enrolled students found');
-        this.students = [];
+        console.log('No enrolled students document found');
         return;
       }
+  
       const enrolledData = enrolledDoc.data() as EnrolledModule;
-      if (!enrolledData.Enrolled || !Array.isArray(enrolledData.Enrolled)) {
-        console.error('Enrolled data is not in expected format:', enrolledData);
-        this.students = [];
+      if (!enrolledData?.Enrolled || !Array.isArray(enrolledData.Enrolled)) {
+        console.error('Invalid enrolled data structure:', enrolledData);
         return;
       }
-      const enrolledStudents = enrolledData.Enrolled.filter(
-        student => student.status === 'Enrolled'
-      );
+  
+      // 2. Get marks for the module
       const marksDoc = await this.firestore
         .collection('marks')
         .doc(this.selectedModule)
         .get()
         .toPromise();
-      const marksData = marksDoc?.data() as { marks: StudentMarks[] } || { marks: [] };
-      const studentPromises = enrolledStudents.map(async (enrolled) => {
-        try {
-          const studentSnapshot = await this.firestore
-            .collection('students')
-            .doc(enrolled.studentNumber)
-            .get()
-            .toPromise();
-          if (!studentSnapshot?.exists) {
-            console.log(`No student data found for ${enrolled.studentNumber}`);
-            return null;
-          }
-          const studentData = studentSnapshot.data() as {
-            name: string;
-            surname: string;
-            email: string;
-            studentNumber: string;
-          };
-          const studentMarks = marksData.marks?.find(
-            mark => mark.studentNumber.toString() === enrolled.studentNumber
-          );
-          const tests = {
-            test1: studentMarks?.test1 ?? 0,
-            test2: studentMarks?.test2 ?? 0,
-            test3: studentMarks?.test3 ?? 0,
-            test4: studentMarks?.test4 ?? 0,
-            test5: studentMarks?.test5 ?? 0,
-            test6: studentMarks?.test6 ?? 0,
-            test7: studentMarks?.test7 ?? 0
-          };
-          const average = studentMarks 
-            ? parseFloat(studentMarks.average)
-            : ((tests.test1 + tests.test2 + tests.test3 + tests.test4) / 4) || 0;
-          const mentorshipQuery = this.firestore.collection('mentorships', ref => 
-            ref.where('studentNumber', '==', enrolled.studentNumber)
-               .where('moduleCode', '==', this.selectedModule)
-               .where('status', '==', 'active')
-          );
-          const mentorshipSnapshot = await mentorshipQuery.get().toPromise();
-          let hasMentor = false;
-          let assignedMentor: { id: string; name: string; surname: string; } | undefined;
-          if (mentorshipSnapshot) {
-            hasMentor = !mentorshipSnapshot.empty;
-            if (hasMentor) {
-              const mentorshipData = mentorshipSnapshot.docs[0].data() as MentorshipData;
+  
+      const marksData = marksDoc?.exists 
+        ? (marksDoc.data() as { marks: StudentMarks[] })
+        : { marks: [] };
+  
+      // 3. Process each enrolled student
+      const enrolledStudents = enrolledData.Enrolled.filter(
+        student => student.status === 'Enrolled'
+      );
+  
+      const processedStudents = await Promise.all(
+        enrolledStudents.map(async (enrolled) => {
+          try {
+            // Get student details
+            const studentDoc = await this.firestore
+              .collection('students')
+              .doc(enrolled.studentNumber)
+              .get()
+              .toPromise();
+  
+            if (!studentDoc?.exists) {
+              console.log(`No data found for student ${enrolled.studentNumber}`);
+              return null;
+            }
+  
+            const studentData = studentDoc.data() as {
+              name: string;
+              surname: string;
+              email: string;
+              studentNumber: string;
+            };
+  
+            // Find student marks
+            const studentMarks = marksData.marks?.find(
+              mark => mark.studentNumber.toString() === enrolled.studentNumber
+            );
+  
+            // Get tests from marks collection
+            const tests = {
+              test1: Number(studentMarks?.test1) || 0,
+              test2: Number(studentMarks?.test2) || 0,
+              test3: Number(studentMarks?.test3) || 0,
+              test4: Number(studentMarks?.test4) || 0,
+              test5: Number(studentMarks?.test5) || 0,
+              test6: Number(studentMarks?.test6) || 0,
+              test7: Number(studentMarks?.test7) || 0
+            };
+  
+            // Get average from marks collection instead of calculating
+            const average = Number(studentMarks?.average) || 0;
+  
+            // Check for existing mentor
+            const mentorshipDocs = await this.firestore
+              .collection('mentorships')
+              .ref.where('studentNumber', '==', enrolled.studentNumber)
+              .where('moduleCode', '==', this.selectedModule)
+              .where('status', '==', 'active')
+              .get();
+  
+            let hasMentor = false;
+            let assignedMentor: { id: string; name: string; surname: string; } | undefined;
+  
+            if (!mentorshipDocs.empty) {
+              const mentorshipData = mentorshipDocs.docs[0].data() as MentorshipData;
               const mentorDoc = await this.firestore
                 .collection('mentors')
                 .doc(mentorshipData.mentorID)
                 .get()
                 .toPromise();
+  
               if (mentorDoc?.exists) {
                 const mentorData = mentorDoc.data() as Mentor;
+                hasMentor = true;
                 assignedMentor = {
                   id: mentorDoc.id,
                   name: mentorData.name,
@@ -305,30 +331,36 @@ export class StrugglingStudentsPage implements OnInit {
                 };
               }
             }
+  
+            // Construct and return student object
+            return {
+              studentNumber: studentData.studentNumber,
+              firstName: studentData.name,
+              lastName: studentData.surname,
+              email: studentData.email,
+              average: Number(average.toFixed(2)),
+              tests,
+              hasMentor,
+              assignedMentor
+            } as Student;
+  
+          } catch (error) {
+            console.error(`Error processing student ${enrolled.studentNumber}:`, error);
+            return null;
           }
-          return {
-            studentNumber: studentData.studentNumber,
-            firstName: studentData.name,
-            lastName: studentData.surname,
-            email: studentData.email,
-            average: Number(average.toFixed(2)),
-            tests,
-            hasMentor,
-            assignedMentor
-          } as Student;
-        } catch (error) {
-          console.error(`Error loading student ${enrolled.studentNumber}:`, error);
-          return null;
-        }
-      });
-      const loadedStudents = await Promise.all(studentPromises);
-      this.students = loadedStudents.filter((student): student is Student => 
-        student !== null && typeof student.average === 'number' && !isNaN(student.average)
+        })
       );
-      console.log('Loaded students:', this.students);  
+  
+      // Filter out null values and assign to students array
+      this.students = processedStudents.filter((student): student is Student => 
+        student !== null
+      );
+  
+      console.log(`Successfully loaded ${this.students.length} students`);
+  
     } catch (error) {
-      console.error('Error loading students:', error);
-      this.presentToast('Error loading students', 'danger');
+      console.error('Error in loadStudents:', error);
+      this.presentToast('Error loading students data', 'danger');
     }
   }
   
@@ -490,5 +522,6 @@ export class StrugglingStudentsPage implements OnInit {
       position: 'top'
     });
     toast.present();
+  
   }
 }

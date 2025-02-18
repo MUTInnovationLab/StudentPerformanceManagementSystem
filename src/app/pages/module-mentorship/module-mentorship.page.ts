@@ -161,7 +161,6 @@ export class ModuleMentorshipPage implements OnInit, AfterViewInit {
     });
   }
 
-
   private updateViewBasedOnSelection() {
     switch (this.selectedView) {
       case 'all':
@@ -227,7 +226,6 @@ export class ModuleMentorshipPage implements OnInit, AfterViewInit {
 
     this.departmentMentorshipChart = new Chart(canvas, config);
   }
-
 
   howStudentsNeedingMentorship() {
     this.selectedView = 'needingMentorship';
@@ -297,8 +295,6 @@ export class ModuleMentorshipPage implements OnInit, AfterViewInit {
 
     this.departmentMentorshipChart = new Chart(canvas, config);
   }
-
-
   onRangeChange(event: any) {
     this.selectedRange = event.detail.value;
     
@@ -321,72 +317,6 @@ export class ModuleMentorshipPage implements OnInit, AfterViewInit {
       this.updateChartsForMentorship();
     }
   }
-
-
-  
-
-  private createRangePieCharts() {
-    // Destroy existing charts
-    Object.values(this.rangePieCharts).forEach((chart: Chart) => chart.destroy());
-    this.rangePieCharts = {};
-
-    // Create pie chart for each range
-    this.ranges.forEach(range => {
-      const canvas = document.getElementById(`pieChart${range.value}`) as HTMLCanvasElement;
-      if (!canvas) return;
-
-      const [min, max] = range.value === 'all' 
-        ? [0, 100] 
-        : range.value.split('-').map(Number);
-
-      const modulesInRange = this.allModules.filter(module => {
-        if (range.value === 'all') return true;
-        return module.averageMarks >= min && module.averageMarks <= max;
-      });
-
-      const totalStudents = this.allModules.reduce((sum, module) => 
-        sum + module.totalStudents, 0);
-      const studentsInRange = modulesInRange.reduce((sum, module) => 
-        sum + module.totalStudents, 0);
-
-      const config: ChartConfiguration = {
-        type: 'pie',
-        data: {
-          labels: ['In Range', 'Outside Range'],
-          datasets: [{
-            data: [studentsInRange, totalStudents - studentsInRange],
-            backgroundColor: ['#4CAF50', '#F44336']
-          }]
-        },
-        options: {
-          plugins: {
-            title: {
-              display: true,
-              text: `Students in ${range.label} Range`
-            }
-          }
-        }
-      };
-
-      this.rangePieCharts[range.value] = new Chart(canvas, config);
-    });
-  }
-
- /* onRangeChange(event: any) {
-    this.selectedRange = event.detail.value;
-    
-    if (this.selectedRange === 'all') {
-      this.filteredModules = [...this.allModules];
-    } else {
-      const [min, max] = this.selectedRange.split('-').map(Number);
-      this.filteredModules = this.allModules.filter(module => {
-        return module.averageMarks >= min && module.averageMarks <= max;
-      });
-    }
-    
-    this.updateCharts();
-  }*/
-
 
   calculateRangeStatistics() {
     const allStudentMarks: StudentMark[] = [];
@@ -1035,7 +965,6 @@ private chunkArray<T>(array: T[], size: number): T[][] {
         module => module.studentsNeedingMentorship > 0
       );
     }
-
     if (!this.searchQuery.trim()) {
       this.filteredModules = baseModules;
     } else {
