@@ -126,6 +126,22 @@ isAttendanceModalOpen = false;
     this.router.navigate(['/live-meet']);  // Ensure you have this route set up
     this.menuVisible = false;  // Hide the menu after selecting
   }
+  goToDashboard(){
+    this.router.navigate(['/dashboard']);  // Ensure you have this route set up
+    this.menuVisible = false;  // Hide the menu after selecting
+  }
+  goToMentorStudents(){
+    this.router.navigate(['/mentor-students']);  // Ensure you have this route set up
+    this.menuVisible = false;  // Hide the menu after selecting
+  }
+  goToStrugglingStudents(){
+    this.router.navigate(['/struggling-students']);  // Ensure you have this route set up
+    this.menuVisible = false;  // Hide the menu after selecting
+  }
+  analytics(){
+    this.router.navigate(['/analytics']);  // Ensure you have this route set up
+    this.menuVisible = false;  // Hide the menu after selecting
+  }
   async logout() {
     try {
       await this.authService.signOut();

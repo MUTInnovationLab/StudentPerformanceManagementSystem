@@ -36,12 +36,14 @@ ion-title {
   top: 50px;
   right: 20px;
   background-color: white;
+  border: 1px solid black; /* Ensure border is visible */
   border-radius: var(--border-radius);
   box-shadow: var(--box-shadow);
   z-index: 1000;
-  width: 200px;
+  width: 220px;
+  max-height: 300px; /* Set max height to enable scrolling */
+  overflow-y: auto; /* Enables vertical scrolling */
   padding: 10px;
-  border: 2px solid rgba(0, 0, 0, 0.2); /* Light grayish border */
 }
 
 
