@@ -100,6 +100,9 @@ export class MentorStudentsPage implements OnInit {
   openMenu() {
     this.menuVisible = !this.menuVisible;
   }
+  dashboard(){
+    this.router.navigate(['/dashboard']);
+  }
 
   goToMeeting() {
     this.router.navigate(['/live-meet']);
@@ -117,6 +120,9 @@ export class MentorStudentsPage implements OnInit {
   }
   strugglingStudents() {
     this.router.navigate(['/struggling-students']);
+  }
+  studentPerformance(){
+    this.router.navigate(['/students-performance']);
   }
 
   logout() {

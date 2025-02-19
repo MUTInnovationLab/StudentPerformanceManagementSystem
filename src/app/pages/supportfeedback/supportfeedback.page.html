@@ -14,9 +14,40 @@
   </ion-buttons>
 
   <div *ngIf="menuVisible" class="menu">
-    <ion-item (click)="goToMeeting()">Go to Meeting</ion-item>
-    <ion-item (click)="logout()">Logout</ion-item>
+    <ion-item (click)="Dashboard()">
+      <ion-icon slot="start" name="home-outline"></ion-icon>
+      Dashboard
+    </ion-item>
+    <ion-item (click)="Csv()">
+      <ion-icon slot="start" name="document-text-outline"></ion-icon>
+      Go to CSV
+    </ion-item>
+    <ion-item (click)="goToStudentsManagement()">
+      <ion-icon slot="start" name="people-outline"></ion-icon>
+      Go to Students Management
+    </ion-item>
+    <ion-item (click)="goToStrugglingStudents()">
+      <ion-icon slot="start" name="warning-outline"></ion-icon>
+      Go to Struggling Students
+    </ion-item>
+    <ion-item (click)="goToMentorStudents()">
+      <ion-icon slot="start" name="school-outline"></ion-icon>
+      Go to Mentor Students
+    </ion-item>
+    <ion-item (click)="studentPerformance()">
+      <ion-icon slot="start" name="bar-chart-outline"></ion-icon>
+      Student Performance
+    </ion-item>
+    <ion-item (click)="goToMeeting()">
+      <ion-icon slot="start" name="videocam-outline"></ion-icon>
+      Go to Meeting
+    </ion-item>
+    <ion-item (click)="logout()">
+      <ion-icon slot="start" name="log-out-outline"></ion-icon>
+      Logout
+    </ion-item>
   </div>
+  
 
   <!-- Student List View -->
   <div class="view-container" *ngIf="activeView === 'list'">

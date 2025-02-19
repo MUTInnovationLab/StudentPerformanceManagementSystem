@@ -113,7 +113,10 @@ isAttendanceModalOpen = false;
   goToCsv(){
     this.router.navigate(['/csv']);  // Ensure you have this route set up
     this.menuVisible = false;  // Hide the menu after selecting
-
+  }
+  goToStudentManagement(){
+    this.router.navigate(['/student-management']);  // Ensure you have this route set up
+    this.menuVisible = false;  // Hide the menu after selecting
   }
   goToStudentPerformance() {
     this.router.navigate(['/students-performance']);  // Ensure you have this route set up
@@ -121,6 +124,22 @@ isAttendanceModalOpen = false;
   }
   goToMeeting() {
     this.router.navigate(['/live-meet']);  // Ensure you have this route set up
+    this.menuVisible = false;  // Hide the menu after selecting
+  }
+  goToDashboard(){
+    this.router.navigate(['/dashboard']);  // Ensure you have this route set up
+    this.menuVisible = false;  // Hide the menu after selecting
+  }
+  goToMentorStudents(){
+    this.router.navigate(['/mentor-students']);  // Ensure you have this route set up
+    this.menuVisible = false;  // Hide the menu after selecting
+  }
+  goToStrugglingStudents(){
+    this.router.navigate(['/struggling-students']);  // Ensure you have this route set up
+    this.menuVisible = false;  // Hide the menu after selecting
+  }
+  analytics(){
+    this.router.navigate(['/analytics']);  // Ensure you have this route set up
     this.menuVisible = false;  // Hide the menu after selecting
   }
   async logout() {

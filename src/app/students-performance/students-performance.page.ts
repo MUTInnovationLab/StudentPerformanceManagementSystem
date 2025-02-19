@@ -63,6 +63,18 @@ export class StudentsPerformancePage implements OnInit {
   openMenu() {
     this.menuVisible = !this.menuVisible;
   }
+  dashboard(){
+    this.router.navigate(['/dashboard']);
+    this.menuVisible = false;
+  }
+  supportFeedback(){
+    this.router.navigate(['/support-feedback']);
+    this.menuVisible = false
+  }
+  strugglingStudents(){
+    this.router.navigate(['/struggling-students']);
+    this.menuVisible = false;
+  }
 
   goToMeeting() {
     this.router.navigate(['/meeting']);
@@ -74,6 +86,10 @@ export class StudentsPerformancePage implements OnInit {
 
   goToStudentsManagement() {
     this.router.navigate(['/students-management']);
+  }
+  mentorStudents(){
+    this.router.navigate(['/mentor-students']);
+    this.menuVisible = false;
   }
 
   logout() {

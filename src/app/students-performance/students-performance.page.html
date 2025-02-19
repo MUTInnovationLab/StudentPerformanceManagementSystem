@@ -12,10 +12,38 @@
 
 <ion-content [fullscreen]="true">
   <div *ngIf="menuVisible" class="menu">
-    <ion-item (click)="goToMeeting()">Go to Meeting</ion-item>
-    <ion-item (click)="goToCsv()">Go to CSV</ion-item>
-    <ion-item (click)="goToStudentsManagement()">Go to students management</ion-item>
-    <ion-item (click)="logout()">Logout</ion-item>
+    <ion-item (click)="dashboard()">
+      <ion-icon slot="start" name="home-outline"></ion-icon>
+      Dashboard
+    </ion-item>
+    <ion-item (click)="goToMeeting()">
+      <ion-icon slot="start" name="videocam-outline"></ion-icon>
+      Go to Meeting
+    </ion-item>
+    <ion-item (click)="goToCsv()">
+      <ion-icon slot="start" name="document-text-outline"></ion-icon>
+      Go to CSV
+    </ion-item>
+    <ion-item (click)="goToStudentsManagement()">
+      <ion-icon slot="start" name="people-outline"></ion-icon>
+      Go to Students Management
+    </ion-item>
+    <ion-item (click)="supportFeedback()">
+      <ion-icon slot="start" name="chatbubbles-outline"></ion-icon>
+      Support Feedback
+    </ion-item>
+    <ion-item (click)="strugglingStudents()">
+      <ion-icon slot="start" name="alert-circle-outline"></ion-icon>
+      Struggling Students
+    </ion-item>
+    <ion-item (click)="mentorStudents()">
+      <ion-icon slot="start" name="school-outline"></ion-icon>
+      Mentor Students
+    </ion-item>
+    <ion-item (click)="logout()">
+      <ion-icon slot="start" name="log-out-outline"></ion-icon>
+      Logout
+    </ion-item>
   </div>
   <ion-header collapse="condense">
     <ion-toolbar>

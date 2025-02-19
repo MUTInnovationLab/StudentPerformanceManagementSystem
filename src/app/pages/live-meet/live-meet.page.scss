@@ -35,20 +35,22 @@ ion-toolbar {--background: #{$primary-blue};
   position: absolute;
   top: 50px;
   right: 20px;
-  background-color: rgb(202, 33, 33);
+  background-color: white;
   border-radius: var(--border-radius);
   box-shadow: var(--box-shadow);
   z-index: 1000;
   width: 200px;
   padding: 10px;
+  border: 2px solid rgba(0, 0, 0, 0.2); /* Light grayish border */
 }
+
 
 .menu ion-item {
   cursor: pointer;
   padding: 10px;
   border-radius: 5px;
   transition: background-color var(--transition-duration);
-  color: white; /* Text color set to white */
+  color: black; /* Text color set to white */
 }
 
 .menu ion-item:hover {
