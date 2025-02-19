@@ -130,6 +130,7 @@ export class StrugglingStudentsPage implements OnInit {
   assignedModules: Module[] = [];
   staffIds: string[] = ['22446688', '33557799', '987001'];
   currentDepartment: string = '';
+  showStudentDetailsModal = false;
 
   constructor(
     private authService: AuthenticationService,
@@ -177,6 +178,9 @@ export class StrugglingStudentsPage implements OnInit {
   mentorStudents(){
     this.router.navigate(['/mentor-students']);
   }
+
+
+  
 
   async getStaffNumberAndModules(userEmail: string) {
     try {
@@ -512,10 +516,12 @@ export class StrugglingStudentsPage implements OnInit {
     this.selectedStudent = student;
     await this.loadMentors();
     this.showMentorModal = true;
+    this.showStudentDetailsModal = false;
   }
    viewStudentDetails(student: Student) {
     this.selectedStudent = student;
     this.loadMentors(); // Load mentors when viewing student details
+    this.showMentorModal = false;
   }
 
   async presentToast(message: string, color: string) {
