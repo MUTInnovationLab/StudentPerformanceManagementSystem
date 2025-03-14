@@ -1,202 +1,70 @@
 /* Header Title Styling */
 ion-title {
   text-align: center;
-  font-weight: 700;
+  font-weight: bold;
   font-size: 1.8rem;
   letter-spacing: 2px;
   color: white;
   font-family: 'Times New Roman', serif;
 }
 
-/* Page Container */
-:host {
-  display: block;
-  background: #ffffff;
-  height: 100%;
-}
-
+/* Page Background */
 ion-content {
   --background: #ffffff;
   --padding-bottom: 20px;
 }
 
-/* Main container to allow scrolling */
-.page-container {
-  height: 100%;
-  overflow-y: auto;
-  padding-bottom: 60px; /* Add padding at bottom to prevent cutoff */
-}
-
-/* Module Title (CF100, COM200) */
-h2 {
-  color: #34495e;
-  font-size: 2.8rem;
-  text-align: center;
-  margin: 5px 0;
-  font-family: 'Times New Roman', serif;
-  font-weight: normal;
-  position: relative;
-  cursor: pointer;
-}
-
-/* Yellow underline on hover for module code */
-h2::after {
-  content: '';
-  position: absolute;
-  bottom: -5px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 0;
-  height: 3px;
-  background-color: #ffb700;
-  transition: width 0.3s ease;
-}
-
-h2:hover::after {
-  width: 60px;
-}
-
-/* Date Text */
-.date-text {
-  font-size: 1.1rem;
-  margin: 10px 10px;
-  display: block;
-  color: #000;
-}
-
-/* Student List Container */
-.attendance-list {
-  padding: 0 15px;
-}
-
-/* Individual Student Item */
-.student-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 20px;
-  margin: 2px 0;
-  background: #ffffff;
-  border-radius: 3px;
-  position: relative;
-  transition: all 0.3s ease;
-}
-
-/* Left Border Gradient */
-.student-item::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 4px;
-  height: 100%;
-  background: linear-gradient(180deg, #a60d0d, #ffb700);
-}
-
-/* Student Number Text */
-.student-number {
-  color: #34495e;
-  font-size: 1.4rem;
-  font-family: 'Times New Roman', serif;
-}
-
-/* Scan Time Text */
-.scan-time {
-  color: #7f8c8d;
-  font-style: italic;
-  font-size: 1.1rem;
-}
-
-/* Hover Effects for Student Items */
-.student-item:hover {
-  transform: translateX(10px);
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.9), #ecf0f1);
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
-  z-index: 1;
-}
-
-/* Menu Styling */
-.menu {
-  position: absolute;
-  top: 50px;
-  right: 20px;
-  background-color: white;
-  border: 1px solid black; /* Ensure border is visible */
-  border-radius: var(--border-radius);
-  box-shadow: var(--box-shadow);
-  z-index: 1000;
-  width: 220px;
-  max-height: 300px; /* Set max height to enable scrolling */
-  overflow-y: auto; /* Enables vertical scrolling */
-  padding: 10px;
-}
-
-.menu-item {
+/* Button Styling */
+ion-button {
+  --background: #3880ff;
+  --border-radius: 8px;
+  --color: white;
+  font-size: 1rem;
+  text-transform: none;
   padding: 10px 20px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
 }
 
-.menu-item:hover {
-  background-color: #f5f5f5;
+/* Input Fields */
+ion-input, ion-textarea {
+  --background: white;
+  --border-radius: 5px;
+  --padding: 8px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
 }
 
-/* Module Section */
-.module-section {
-  margin-bottom: 15px;
-  padding-bottom: 20px; /* Add space after each module section */
+/* Container for Forms */
+.form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  padding: 20px;
 }
 
-/* Last Module Section */
-.module-section:last-child {
-  margin-bottom: 60px; /* Extra space for last section */
+/* Labels */
+ion-label {
+  font-weight: 600;
+  color: #333;
+  font-size: 1rem;
 }
 
-.module-container {
-  padding: 16px;
+/* Segment Buttons */
+ion-segment {
+  --background: #f8f8f8;
+  border-radius: 8px;
 }
 
-.module-title {
-  font-size: 1.2rem;
-  font-weight: bold;
-  margin-bottom: 16px;
+ion-segment-button {
+  --color-checked: #3880ff;
+  --color: #333;
+  font-weight: 500;
 }
 
-.date-section {
-  margin-bottom: 24px;
-}
-
-.date-text {
-  color: var(--ion-color-medium);
-  margin-bottom: 8px;
-}
-
-.student-item {
-  --padding-start: 0;
-}
-
-.scan-time {
-  font-size: 0.9rem;
-  color: var(--ion-color-medium);
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  h2 {
-    font-size: 2rem;
-  }
-
-  .student-item {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .student-number {
-    margin-bottom: 3px;
-  }
-
-  .scan-time {
-    align-self: flex-end;
-  }
-
+/* List Items */
+ion-item {
+  --background: white;
+  --padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }

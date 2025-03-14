@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { Module } from '../models/faculty.model';
 import { AttendanceRecord, DailyAttendance } from '../models/attendancePerfomance.model';
+import { StudentModuleAttendance, StudentAttendanceReport } from '../models/studentAttendance.model';
 
 export interface ModuleAttendancePerformance {
   moduleCode: string;
@@ -204,5 +205,113 @@ export class AttendanceService {
     }
 
     return attendanceMap;
+  }
+
+  async getStudentAttendanceReport(studentNumber: string): Promise<StudentAttendanceReport> {
+    // Get all modules from assignedLectures
+    const assignedModulesSnapshot = await this.firestore
+      .collection('assignedLectures')
+      .get()
+      .toPromise();
+
+    const modules: StudentModuleAttendance[] = [];
+    let totalAttendancePercentage = 0;
+
+    for (const doc of assignedModulesSnapshot!.docs) {
+      const assignedLectures = doc.data() as { modules: Module[] };
+      
+      for (const module of assignedLectures.modules) {
+        const attendance = await this.calculateStudentModuleAttendance(
+          studentNumber,
+          module
+        );
+        
+        if (attendance) {
+          modules.push(attendance);
+          totalAttendancePercentage += attendance.attendancePercentage;
+        }
+      }
+    }
+
+    return {
+      studentNumber,
+      modules,
+      overallAttendance: modules.length > 0 
+        ? totalAttendancePercentage / modules.length 
+        : 0
+    };
+  }
+
+  private async calculateStudentModuleAttendance(
+    studentNumber: string,
+    module: Module
+  ): Promise<StudentModuleAttendance> {
+    const attendanceDoc = await this.firestore
+      .collection('Attended')
+      .doc(module.moduleCode)
+      .get()
+      .toPromise();
+
+    const attendance = attendanceDoc?.data() as DailyAttendance;
+    const attendanceDates: string[] = [];
+    let lastAttendance: string | undefined;
+    
+    // Count total sessions from available attendance dates
+    const totalSessions = attendance ? Object.keys(attendance).length : 0;
+
+    if (attendance) {
+      Object.entries(attendance).forEach(([date, records]) => {
+        const studentPresent = records.some(
+          record => record.studentNumber === studentNumber
+        );
+        if (studentPresent) {
+          attendanceDates.push(date);
+          lastAttendance = date;
+        }
+      });
+    }
+
+    const attendedSessions = attendanceDates.length;
+    const attendancePercentage = totalSessions > 0 
+      ? (attendedSessions / totalSessions) * 100 
+      : 0;
+
+    return {
+      moduleCode: module.moduleCode,
+      moduleName: module.moduleName,
+      totalSessions,
+      attendedSessions,
+      attendancePercentage,
+      lastAttendance,
+      attendanceDates
+    };
+  }
+
+  async getModuleAttendanceForStudent(
+    studentNumber: string,
+    moduleCode: string
+  ): Promise<StudentModuleAttendance | null> {
+    const moduleDoc = await this.firestore
+      .collection('assignedLectures')
+      .get()
+      .toPromise();
+
+    let targetModule: Module | null = null;
+
+    moduleDoc?.docs.forEach(doc => {
+      const assignedLectures = doc.data() as { modules: Module[] };
+      const foundModule = assignedLectures.modules.find(
+        m => m.moduleCode === moduleCode
+      );
+      if (foundModule) {
+        targetModule = foundModule;
+      }
+    });
+
+    if (!targetModule) {
+      return null;
+    }
+
+    return this.calculateStudentModuleAttendance(studentNumber, targetModule);
   }
 }

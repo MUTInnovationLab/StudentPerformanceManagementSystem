@@ -115,6 +115,71 @@ export class FirestoreService {
       .valueChanges() as Observable<Student[]>;
   }
 
+  // Add this method to get all students
+  async getAllStudents(): Promise<Array<{ studentNumber: string, [key: string]: any }>> {
+    try {
+      const snapshot = await this.firestore.collection('students').get().toPromise();
+      return snapshot ? snapshot.docs.map(doc => doc.data() as { studentNumber: string, [key: string]: any }) : [];
+    } catch (error) {
+      console.error('Error getting students:', error);
+      return [];
+    }
+  }
+
+  async getEnrolledStudentsForModules(moduleCodes: string[]): Promise<string[]> {
+    try {
+      const enrolledStudents: string[] = [];
+      
+      for (const moduleCode of moduleCodes) {
+        const enrolledDoc = await this.firestore
+          .collection('enrolledModules')
+          .doc(moduleCode.trim())
+          .get()
+          .toPromise();
+  
+        if (enrolledDoc?.exists) {
+          const enrolledData = enrolledDoc.data() as { 
+            Enrolled?: Array<{
+              studentNumber: string, 
+              status: string
+            }> 
+          };
+  
+          const students = enrolledData?.Enrolled
+            ?.filter(student => student.status === 'Enrolled')
+            ?.map(student => student.studentNumber) || [];
+            
+          enrolledStudents.push(...students);
+        }
+      }
+  
+      return [...new Set(enrolledStudents)]; // Remove duplicates
+    } catch (error) {
+      console.error('Error getting enrolled students:', error);
+      return [];
+    }
+  }
+  
+  getAllStudentsInDepartment(department: string): Observable<Student[]> {
+    return this.firestore
+      .collection('students', ref => ref.where('department', '==', department))
+      .valueChanges() as Observable<Student[]>;
+  }
+  
+  getDepartmentModules(department: string): Observable<Module[]> {
+    return this.getAllAssignedLectures().pipe(
+      map(assignments => {
+        const departmentModules: Module[] = [];
+        assignments.forEach(assignment => {
+          assignment.modules
+            .filter(module => module.department === department)
+            .forEach(module => departmentModules.push(module));
+        });
+        return departmentModules;
+      })
+    );
+  }
+
   // Feedback-related methods
   addFeedback(feedback: Feedback): Promise<any> {
     return this.firestore.collection('feedback').add(feedback);

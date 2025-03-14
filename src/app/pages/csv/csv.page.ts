@@ -21,6 +21,7 @@ export class CsvPage implements OnInit {
   isToastOpen: boolean = false;
   toastMessage: string = '';
   toastColor: string = 'success';
+  
 
   tests = [
     { name: 'test1', percentage: 0 },
@@ -32,7 +33,7 @@ export class CsvPage implements OnInit {
     { name: 'test7', percentage: 0 },
   ];
 
-  constructor(private firestore: AngularFirestore,private router: Router,private alertController: AlertController,private authService: AuthenticationService,
+  constructor(private firestore: AngularFirestore, private router: Router, private alertController: AlertController, private authService: AuthenticationService,
 
   ) { }
 
@@ -43,25 +44,25 @@ export class CsvPage implements OnInit {
     this.router.navigate(['/dashboard']);  // Ensure you have this route set up
     this.menuVisible = false;  // Hide the menu after selecting
   }
-  supportfeedback(){
+  supportfeedback() {
     this.router.navigate(['/supportfeedback']);  // Ensure you have this route set up
     this.menuVisible = false;  // Hide the menu after selecting
 
   }
-  goToStudentManagement(){
+  goToStudentManagement() {
     this.router.navigate(['/student-management']);  // Ensure you have this route set up
     this.menuVisible = false;  // Hide the menu after selecting
 
   }
-  goToCsv(){
+  goToCsv() {
     this.router.navigate(['/csv']);  // Ensure you have this route set up
     this.menuVisible = false;  // Hide the menu after selecting
   }
-  goToStrugglingStudents(){
+  goToStrugglingStudents() {
     this.router.navigate(['/struggling-students']);  // Ensure you have this route set up
     this.menuVisible = false;  // Hide the menu after selecting
   }
-  goToMentorStudents(){
+  goToMentorStudents() {
     this.router.navigate(['/mentor-students']);  // Ensure you have this route set up
     this.menuVisible = false;  // Hide the menu after selecting
   }
@@ -81,31 +82,83 @@ export class CsvPage implements OnInit {
 
   ngOnInit() { }
 
-  generateSpreadsheet() {
+  async generateSpreadsheet() {
     this.isLoading = true;
-    const data = [
-      ['Student Number', 'Test 1', 'Test 2', 'Test 3', 'Test 4', 'Test 5', 'Test 6', 'Test 7'],
-      ['', '', '', '', '', '', '', '']
-    ];
-
-    const ws: XLSX.WorkSheet = XLSX.utils.aoa_to_sheet(data);
-    const wb: XLSX.WorkBook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Marks');
-
-    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-    const blob = new Blob([wbout], { type: 'application/octet-stream' });
-
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${this.moduleCode}_marks_template.xlsx`;
-    a.click();
-    window.URL.revokeObjectURL(url);
-
-    this.isLoading = false;
-    this.showToast('Template generated successfully!', 'success');
+    
+    try {
+      if (!this.moduleCode) {
+        this.showToast('Please enter a module code first.', 'warning');
+        this.isLoading = false;
+        return;
+      }
+      
+      // Fetch the document for the specific module code
+      const moduleDoc = await this.firestore
+        .collection('enrolledModules')
+        .doc(this.moduleCode)
+        .get()
+        .toPromise();
+      
+      if (!moduleDoc || !moduleDoc.exists) {
+        this.showToast('No enrolled students found for this module.', 'warning');
+        this.isLoading = false;
+        return;
+      }
+      
+      const moduleData = moduleDoc.data() as { Enrolled?: Array<{studentNumber: string, status: string}> } || {};
+      
+      // Check if the Enrolled array exists
+      if (!moduleData?.Enrolled || !Array.isArray(moduleData.Enrolled)) {
+        this.showToast('No enrolled students data found for this module.', 'warning');
+        this.isLoading = false;
+        return;
+      }
+      
+      // Extract student numbers from students with "Enrolled" or "enrolled" status
+      const studentNumbers = moduleData.Enrolled
+        .filter(student => 
+          student.status?.toLowerCase() === 'enrolled')
+        .map(student => student.studentNumber || '');
+      
+      // Prepare the spreadsheet data with headers
+      const data = [
+        ['Student Number', 'Test 1', 'Test 2', 'Test 3', 'Test 4', 'Test 5', 'Test 6', 'Test 7']
+      ];
+      
+      // Add a row for each student number
+      studentNumbers.forEach(studentNumber => {
+        data.push([studentNumber, '', '', '', '', '', '', '']);
+      });
+      
+      // If no students were found, add an empty row
+      if (studentNumbers.length === 0) {
+        data.push(['', '', '', '', '', '', '', '']);
+        this.showToast('No enrolled students found with "Enrolled" status.', 'warning');
+      }
+      
+      // Generate the Excel file
+      const ws: XLSX.WorkSheet = XLSX.utils.aoa_to_sheet(data);
+      const wb: XLSX.WorkBook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Marks');
+      
+      const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+      const blob = new Blob([wbout], { type: 'application/octet-stream' });
+      
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${this.moduleCode}_marks_template.xlsx`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      
+      this.isLoading = false;
+      this.showToast(`Template generated with ${studentNumbers.length} enrolled students!`, 'success');
+    } catch (error) {
+      console.error('Error generating template:', error);
+      this.isLoading = false;
+      this.showToast('Error generating template: ' + error, 'danger');
+    }
   }
-
   onFileChange(event: any) {
     this.file = event.target.files[0];
     this.readExcel();
@@ -161,7 +214,7 @@ export class CsvPage implements OnInit {
 
   calculateAverages() {
     const totalPercentage = this.tests.reduce((sum, test) => sum + test.percentage, 0);
-    
+
     if (totalPercentage !== 100) {
       this.showToast('The sum of test percentages must equal 100%. Please adjust your percentages.', 'warning');
       return;
@@ -210,14 +263,14 @@ export class CsvPage implements OnInit {
       testPercentages: this.tests.reduce((obj, test) => ({ ...obj, [test.name]: test.percentage }), {}),
       marks: this.previewData
     })
-    .then(() => {
-      this.isLoading = false;
-      this.showToast('Marks and averages uploaded successfully!', 'success');
-    })
-    .catch((error) => {
-      this.isLoading = false;
-      this.showToast('Error uploading marks: ' + error, 'danger');
-    });
+      .then(() => {
+        this.isLoading = false;
+        this.showToast('Marks and averages uploaded successfully!', 'success');
+      })
+      .catch((error) => {
+        this.isLoading = false;
+        this.showToast('Error uploading marks: ' + error, 'danger');
+      });
   }
 
   previewSpreadsheet() {
