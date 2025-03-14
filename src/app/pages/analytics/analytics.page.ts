@@ -3,16 +3,22 @@ import { FirestoreService } from 'src/app/services/firestore.service';
 import { AuthenticationService } from '../../services/auths.service';
 import { Router } from '@angular/router';
 import { Module } from '../../models/assignedModules.model';
-import { switchMap, tap, takeUntil, catchError, distinctUntilChanged, filter } from 'rxjs/operators';
+import { switchMap, tap, takeUntil, catchError, distinctUntilChanged, filter, take } from 'rxjs/operators';
 import { AttendanceRecord, ModuleAttendance } from '../../models/attendancePerfomance.model';
 import { BehaviorSubject, Observable, of, Subject } from 'rxjs';
 import { Staff } from 'src/app/models/staff.model';
+import { AttendanceService } from 'src/app/services/attendance.service';
+import { StudentAttendanceReport } from 'src/app/models/studentAttendance.model';
 
 interface AnalyticsState {
   loading: boolean;
   error: string | null;
   attendedModules: ModuleAttendance[];
   assignedModules: Module[];
+  studentReports: StudentAttendanceReport[];
+  selectedStudent?: string;
+  currentStaffRole?: string;
+  currentStaffDepartment?: string;
 }
 
 @Component({
@@ -26,7 +32,8 @@ export class AnalyticsPage implements OnInit, OnDestroy {
     loading: true,
     error: null,
     attendedModules: [],
-    assignedModules: []
+    assignedModules: [],
+    studentReports: []
   });
 
   state$ = this.stateSubject.asObservable();
@@ -37,6 +44,7 @@ export class AnalyticsPage implements OnInit, OnDestroy {
     private firestoreService: FirestoreService,
     private router: Router,
     private authService: AuthenticationService,
+    private attendanceService: AttendanceService
   ) {}
 
   ngOnInit(): void {
@@ -45,6 +53,8 @@ export class AnalyticsPage implements OnInit, OnDestroy {
     this.userPosition$.subscribe(position => {
       console.log('Current user position:', position);
     });
+
+    this.loadStudentAttendance();
   }
 
   private initializeAuthentication(): void {
@@ -73,9 +83,17 @@ export class AnalyticsPage implements OnInit, OnDestroy {
     this.stateSubject.next(loadingState);
 
     if (staff.position === 'Lecturer') {
-      return this.loadLecturerModules(staff.staffNumber);
+      return this.loadLecturerModules(staff.staffNumber).pipe(
+        tap(modules => {
+          console.log('Loaded lecturer modules:', modules);
+        })
+      );
     } else if (staff.position === 'HOD') {
-      return this.loadHODModules(staff.department);
+      return this.loadHODModules(staff.department).pipe(
+        tap(modules => {
+          console.log('Loaded HOD department modules:', modules);
+        })
+      );
     }
     
     return of([]);
@@ -132,6 +150,108 @@ export class AnalyticsPage implements OnInit, OnDestroy {
         return of([] as ModuleAttendance[]);
       })
     );
+  }
+
+  private async loadStudentAttendance() {
+    try {
+      const currentStaff = await this.authService.currentStaff$.pipe(
+        filter((staff: Staff | null): staff is Staff => staff !== null),
+        take(1)
+      ).toPromise();
+
+      if (!currentStaff) {
+        throw new Error('No authenticated staff found');
+      }
+
+      // Store staff role and department in state for UI access control
+      const currentState = this.stateSubject.value;
+      this.stateSubject.next({
+        ...currentState,
+        currentStaffRole: currentStaff.position,
+        currentStaffDepartment: currentStaff.department
+      });
+
+      let studentNumbers: string[] = [];
+      let relevantModules: Module[] = [];
+
+      if (currentStaff.position === 'Lecturer') {
+        // Get only students enrolled in lecturer's modules
+        const assignedModules = await this.firestoreService.getAssignedModules(currentStaff.staffNumber)
+          .pipe(take(1))
+          .toPromise() || [];
+        
+        relevantModules = assignedModules;
+        
+        // Get enrolled students for these modules
+        const enrolledStudents = await this.firestoreService.getEnrolledStudentsForModules(
+          assignedModules.map(module => module.moduleCode)
+        );
+        studentNumbers = [...new Set(enrolledStudents)]; // Remove duplicates
+      } else if (currentStaff.position === 'HOD') {
+        // Get all modules in this department
+        const departmentModules = await this.firestoreService.getDepartmentModules(currentStaff.department)
+          .pipe(take(1))
+          .toPromise() || [];
+        
+        relevantModules = departmentModules;
+        
+        // Get all students in the department
+        const allStudents = await this.firestoreService.getAllStudents();
+        studentNumbers = allStudents
+          .filter(student => student['department'] === currentStaff.department)
+          .map(student => student['studentNumber']);
+      }
+
+      const reports = await Promise.all(
+        studentNumbers.map(async studentNumber => {
+          const report = await this.attendanceService.getStudentAttendanceReport(studentNumber);
+          
+          // Filter modules based on staff role
+          if (currentStaff.position === 'Lecturer') {
+            // Lecturer should only see their assigned modules
+            const moduleCodeSet = new Set(relevantModules.map(m => m.moduleCode));
+            report.modules = report.modules.filter(module => moduleCodeSet.has(module.moduleCode));
+            
+            // Recalculate overall attendance after filtering
+            if (report.modules.length > 0) {
+              report.overallAttendance = report.modules.reduce((sum, module) => 
+                sum + module.attendancePercentage, 0) / report.modules.length;
+            } else {
+              report.overallAttendance = 0;
+            }
+          }
+          
+          return report;
+        })
+      );
+
+      // Filter out students with no modules
+      const filteredReports = reports.filter(report => report.modules.length > 0);
+
+      this.stateSubject.next({
+        ...this.stateSubject.value,
+        studentReports: filteredReports,
+        loading: false
+      });
+      
+      console.log('Loaded student reports:', filteredReports);
+    } catch (error) {
+      this.handleError('Failed to load student attendance', error as Error);
+    }
+  }
+
+  selectStudent(studentNumber: string) {
+    const currentState = this.stateSubject.value;
+    this.stateSubject.next({
+      ...currentState,
+      selectedStudent: studentNumber
+    });
+  }
+
+  getAttendanceColor(percentage: number): string {
+    if (percentage >= 75) return 'success';
+    if (percentage >= 50) return 'warning';
+    return 'danger';
   }
 
   private handleError(message: string, error: Error): void {

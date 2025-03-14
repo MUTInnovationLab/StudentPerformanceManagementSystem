@@ -1,67 +1,66 @@
 <ion-header>
   <ion-toolbar color="primary">
-    <ion-title class="ion-text-center">
-      <strong>Analytics</strong>
-    </ion-title>
     <ion-buttons slot="start">
       <ion-button (click)="toggleMenu()">
         <ion-icon name="menu-outline"></ion-icon>
       </ion-button>
     </ion-buttons>
+    <ion-title class="ion-text-center">
+      <strong>Analytics</strong>
+    </ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content>
-  <!-- Side Menu -->
-  <div *ngIf="menuVisible" class="menu">
-    <ion-list>
-      <ion-item (click)="navigateTo('/dashboard')">
-        <ion-icon name="home-outline" slot="start"></ion-icon>
-        Dashboard
+  <div *ngIf="menuVisible" class="ion-padding ion-margin-bottom" style="position: absolute; background: white; z-index: 100; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 250px;">
+    <ion-list lines="full">
+      <ion-item button (click)="navigateTo('/dashboard')">
+        <ion-icon name="home-outline" slot="start" color="primary"></ion-icon>
+        <ion-label>Dashboard</ion-label>
       </ion-item>
-      <ion-item (click)="navigateTo('/live-meet')">
-        <ion-icon name="videocam-outline" slot="start"></ion-icon>
-        Go to Meeting
+      <ion-item button (click)="navigateTo('/live-meet')">
+        <ion-icon name="videocam-outline" slot="start" color="primary"></ion-icon>
+        <ion-label>Go to Meeting</ion-label>
       </ion-item>
-      <ion-item (click)="navigateTo('/student-management')">
-        <ion-icon name="person-outline" slot="start"></ion-icon>
-        Student Management
+      <ion-item button (click)="navigateTo('/student-management')">
+        <ion-icon name="person-outline" slot="start" color="primary"></ion-icon>
+        <ion-label>Student Management</ion-label>
       </ion-item>
-      <ion-item (click)="navigateTo('/struggling-students')">
-        <ion-icon name="sad-outline" slot="start"></ion-icon>
-        Struggling Students
+      <ion-item button (click)="navigateTo('/struggling-students')">
+        <ion-icon name="sad-outline" slot="start" color="secondary"></ion-icon>
+        <ion-label>Struggling Students</ion-label>
       </ion-item>
-      <ion-item (click)="navigateTo('/mentor-students')">
-        <ion-icon name="school-outline" slot="start"></ion-icon>
-        Mentor Students
+      <ion-item button (click)="navigateTo('/mentor-students')">
+        <ion-icon name="school-outline" slot="start" color="tertiary"></ion-icon>
+        <ion-label>Mentor Students</ion-label>
       </ion-item>
-      <ion-item (click)="navigateTo('/supportfeedback')">
-        <ion-icon name="chatbubble-ellipses-outline" slot="start"></ion-icon>
-        Feedback
+      <ion-item button (click)="navigateTo('/supportfeedback')">
+        <ion-icon name="chatbubble-ellipses-outline" slot="start" color="primary"></ion-icon>
+        <ion-label>Feedback</ion-label>
       </ion-item>
-      <ion-item (click)="Csv()">
-        <ion-icon name="document-text-outline" slot="start"></ion-icon>
-        Go to CSV
+      <ion-item button (click)="Csv()">
+        <ion-icon name="document-text-outline" slot="start" color="primary"></ion-icon>
+        <ion-label>Go to CSV</ion-label>
       </ion-item>
-      <ion-item (click)="logout()">
-        <ion-icon name="log-out-outline" slot="start"></ion-icon>
-        Logout
+      <ion-item button (click)="logout()">
+        <ion-icon name="log-out-outline" slot="start" color="secondary"></ion-icon>
+        <ion-label>Logout</ion-label>
       </ion-item>
     </ion-list>
   </div>
 
-  <ng-container *ngIf="state$ | async as state">
-    <!-- Loading State -->
-    <div *ngIf="state.loading" class="loading-container">
-      <ion-spinner name="circular"></ion-spinner>
-      <ion-text>
-        <p>Loading attendance data...</p>
-      </ion-text>
-    </div>
+  <div class="ion-padding">
+    <ng-container *ngIf="state$ | async as state">
+      <!-- Loading State - Using built-in Ionic components -->
+      <ion-card *ngIf="state.loading" class="ion-text-center ion-padding">
+        <ion-spinner name="circular" color="primary"></ion-spinner>
+        <ion-text>
+          <p>Loading attendance data...</p>
+        </ion-text>
+      </ion-card>
 
-    <!-- Error State -->
-    <div *ngIf="state.error" class="error-container">
-      <ion-card>
+      <!-- Error State - Using built-in Ionic card styles -->
+      <ion-card *ngIf="state.error">
         <ion-card-header>
           <ion-card-title color="danger">
             <ion-icon name="alert-circle-outline"></ion-icon>
@@ -75,39 +74,136 @@
           </ion-button>
         </ion-card-content>
       </ion-card>
-    </div>
 
-    <!-- No Data State -->
-    <div *ngIf="!state.loading && !state.error && state.attendedModules.length === 0" class="no-data">
-      <ion-card>
-        <ion-card-content>
-          <div class="empty-state">
-            <ion-icon name="document-outline" size="large"></ion-icon>
-            <h2>No Data Available</h2>
-            <p>No attendance records have been found for your modules.</p>
-          </div>
-        </ion-card-content>
-      </ion-card>
-    </div>
+      <!-- Student Attendance Analytics - Restructured using Ionic Grid for responsive layout -->
+      <div *ngIf="!state.loading && !state.error">
+        <!-- Role indicator banner with Ionic styling -->
+        <ion-card class="ion-margin-bottom">
+          <ion-card-content class="ion-text-center">
+            <ion-chip [color]="state.currentStaffRole === 'HOD' ? 'tertiary' : 'primary'" class="ion-margin-bottom">
+              <ion-icon [name]="state.currentStaffRole === 'HOD' ? 'school' : 'person'"></ion-icon>
+              <ion-label>Viewing as: {{ state.currentStaffRole }}</ion-label>
+            </ion-chip>
+            <div *ngIf="state.currentStaffRole === 'HOD'" class="ion-text-center">
+              <ion-badge color="tertiary" mode="ios">Department: {{ state.currentStaffDepartment }}</ion-badge>
+            </div>
+          </ion-card-content>
+        </ion-card>
 
-    <!-- Main Content -->
-    <div *ngIf="!state.loading && !state.error && state.attendedModules.length > 0" class="main-content">
-      <div *ngFor="let module of state.attendedModules" class="module-container">
-        <h2 class="module-title">{{ module.moduleName }}</h2>
+        <ion-grid>
+          <ion-row>
+            <!-- Student List Column -->
+            <ion-col size="12" size-md="5">
+              <ion-card>
+                <ion-card-header>
+                  <ion-title>
+                    <ion-icon name="people" color="primary"></ion-icon>
+                    Student Attendance Overview
+                  </ion-title>
+                </ion-card-header>
+                <ion-card-content>
+                  <ng-container *ngIf="state.studentReports.length > 0; else noStudents">
+                    <ion-list>
+                      <ion-item *ngFor="let report of state.studentReports" 
+                                button
+                                [class.selected]="report.studentNumber === state.selectedStudent"
+                                (click)="selectStudent(report.studentNumber)"
+                                lines="full">
+                        <ion-label>
+                          <h2>Student: {{ report.studentNumber }}</h2>
+                          <p>Overall Attendance: 
+                            <ion-text [color]="getAttendanceColor(report.overallAttendance)">
+                              <b>{{ report.overallAttendance | number:'1.0-0' }}%</b>
+                            </ion-text>
+                          </p>
+                          <p>
+                            <ion-text color="medium">
+                              Enrolled in {{ report.modules.length }} module(s)
+                            </ion-text>
+                          </p>
+                        </ion-label>
+                        <ion-icon name="chevron-forward" slot="end" *ngIf="report.studentNumber === state.selectedStudent"></ion-icon>
+                      </ion-item>
+                    </ion-list>
+                  </ng-container>
+                  
+                  <ng-template #noStudents>
+                    <div class="ion-text-center ion-padding">
+                      <ion-icon name="alert-circle" color="medium" size="large"></ion-icon>
+                      <ion-text color="medium">
+                        <p>No students found for your assigned modules</p>
+                      </ion-text>
+                    </div>
+                  </ng-template>
+                </ion-card-content>
+              </ion-card>
+            </ion-col>
 
-        <div *ngFor="let dateKey of objectKeys(module.dates)" class="date-section">
-          <p class="date-text">Date: {{ dateKey }}</p>
-          
-          <ion-list>
-            <ion-item *ngFor="let attendance of module.dates[dateKey]" class="student-item">
-              <ion-label>
-                <h3 class="student-number">Student Number: <strong>{{ attendance.studentNumber }}</strong></h3>
-              </ion-label>
-              <ion-text class="scan-time">- Scan Time: {{ attendance.scanTime }}</ion-text>
-            </ion-item>
-          </ion-list>
-        </div>
+            <!-- Module Details Column -->
+            <ion-col size="12" size-md="7">
+              <div *ngIf="state.selectedStudent">
+                <ng-container *ngFor="let report of state.studentReports">
+                  <ion-card *ngIf="report.studentNumber === state.selectedStudent">
+                    <ion-card-header>
+                      <ion-title>
+                        <ion-icon name="school" color="primary"></ion-icon>
+                        {{ report.studentNumber }} - Module Attendance
+                      </ion-title>
+                      <ion-card-subtitle>
+                        <!-- <ion-badge color="light" mode="ios" *ngIf="state.currentStaffRole === 'Lecturer'">
+                          Showing your assigned modules only
+                        </ion-badge> -->
+                        <ion-badge color="light" mode="ios" *ngIf="state.currentStaffRole === 'HOD'">
+                          Showing all departmental modules
+                        </ion-badge>
+                      </ion-card-subtitle>
+                    </ion-card-header>
+
+                    <ion-card-content>
+                      <ion-list>
+                        <ion-item *ngFor="let module of report.modules" lines="full" class="ion-margin-bottom">
+                          <ion-label>
+                            <h3>
+                              <ion-text color="primary">{{ module.moduleCode }}</ion-text> - {{ module.moduleName }}
+                            </h3>
+                            <div class="ion-margin-vertical">
+                              <ion-text color="medium">Sessions Attended: {{ module.attendedSessions }}/{{ module.totalSessions }}</ion-text>
+                              <ion-progress-bar
+                                [color]="getAttendanceColor(module.attendancePercentage)"
+                                [value]="module.attendancePercentage / 100"
+                                class="ion-margin-top">
+                              </ion-progress-bar>
+                              <div class="ion-text-right ion-margin-top">
+                                <ion-badge [color]="getAttendanceColor(module.attendancePercentage)" mode="ios">
+                                  {{ module.attendancePercentage | number:'1.0-0' }}%
+                                </ion-badge>
+                              </div>
+                            </div>
+                            <p *ngIf="module.lastAttendance" class="ion-margin-top">
+                              <ion-text color="medium">
+                                <ion-icon name="time-outline" class="ion-margin-end"></ion-icon>
+                                Last Attended: {{ module.lastAttendance | date:'medium' }}
+                              </ion-text>
+                            </p>
+                          </ion-label>
+                        </ion-item>
+                      </ion-list>
+                    </ion-card-content>
+                  </ion-card>
+                </ng-container>
+              </div>
+              
+              <!-- No student selected state -->
+              <ion-card *ngIf="!state.selectedStudent">
+                <ion-card-content class="ion-text-center ion-padding">
+                  <ion-icon name="finger-print" color="medium" size="large"></ion-icon>
+                  <p>Select a student to view detailed module attendance</p>
+                </ion-card-content>
+              </ion-card>
+            </ion-col>
+          </ion-row>
+        </ion-grid>
       </div>
-    </div>
-  </ng-container>
+    </ng-container>
+  </div>
 </ion-content>
