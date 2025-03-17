@@ -40,7 +40,7 @@ interface DeviceInfo {
 @Component({
   selector: 'app-live-meet',
   templateUrl: './live-meet.page.html',
-  styleUrls: ['./live-meet.page.scss'],
+  styleUrls: ['./live-meet.page.scss','./live-meet1.page.scss'],
 })
 export class LiveMeetPage implements OnInit, OnDestroy {
   menuVisible: boolean = false;

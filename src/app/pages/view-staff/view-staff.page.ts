@@ -6,7 +6,7 @@ import { User } from 'src/app/models/users.model';
 @Component({
   selector: 'app-view-staff',
   templateUrl: './view-staff.page.html',
-  styleUrls: ['./view-staff.page.scss'],
+  styleUrls: ['./view-staff.page.scss','./view-staff1.page.scss'],
 })
 export class ViewStaffPage implements OnInit {
 

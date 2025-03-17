@@ -1,24 +1,4 @@
-// Override Ionic Variables
-:root {
-  --ion-color-primary: #1a365d;
-  --ion-color-primary-rgb: 26, 54, 93;
-  --ion-color-primary-contrast: #ffffff;
-  --ion-color-primary-contrast-rgb: 255, 255, 255;
-  --ion-color-primary-shade: #173052;
-  --ion-color-primary-tint: #314a6d;
-  --ion-color-secondary: #4299e1;
-  --ion-color-secondary-rgb: 66, 153, 225;
-  --ion-color-secondary-contrast: #ffffff;
-  --ion-color-secondary-contrast-rgb: 255, 255, 255;
-  --ion-color-secondary-shade: #3a87c6;
-  --ion-color-secondary-tint: #55a3e4;
-}
 
-// Custom Variables
-$gradient-start: var(--ion-color-primary);
-$gradient-end: var(--ion-color-primary-tint);
-$card-bg: rgba(255, 255, 255, 0.1);
-$text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 
 // Main Content Styles
 ion-content {

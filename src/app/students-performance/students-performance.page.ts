@@ -11,7 +11,7 @@ import * as XLSX from 'xlsx';
 @Component({
   selector: 'app-students-performance',
   templateUrl: './students-performance.page.html',
-  styleUrls: ['./students-performance.page.scss'],
+  styleUrls: ['./students-performance.page.scss','./students-performance1.page.scss'],
 })
 export class StudentsPerformancePage implements OnInit {
 
