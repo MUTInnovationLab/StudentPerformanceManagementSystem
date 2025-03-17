@@ -115,44 +115,41 @@
               <!-- Table for students who need critical attention -->
               <div *ngIf="!isLoading">
                 <div *ngIf="studentsNeedingAttention.length > 0" class="students-needing-attention">
-                    <div class="total-students-needing-attention">
-                        <h3>Students needing attention (Average ≤ 50% or failed more than 2 tests)</h3>
-                    </div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Student Number</th>
-                                <th>Student Name</th>
-                                <th>Student Surname</th>
-                                <th>Student Email</th>
-                                <th>Student Module</th>
-                                <th>Average</th>
-                                <ng-container *ngFor="let test of testOutOf; let i = index">
-                                    <th *ngIf="hasTestMarksForAttention(i + 1)">Test {{ i + 1 }}</th>
-                                </ng-container>
-                            </tr>
-                        </thead>
-                        <tbody>
-                          <tr *ngFor="let student of studentsNeedingAttention">
-                              <td>{{ student.studentNumber }}</td>
-                              <td>{{ student.name }}</td>
-                              <td>{{ student.surname }}</td>
-                              <td>{{ student.email }}</td>
-                              <td>{{ student.moduleCode }}</td>
-                              <td [ngClass]="getScoreColorClass(student.average, 100)">
-                                {{ student.average?.toFixed(1) }}%
-                              </td>
-                              <ng-container *ngFor="let test of testOutOf; let i = index">
-                                <td *ngIf="student.marks['test' + (i + 1)] !== ''"
-                                    [ngClass]="getScoreColorClass(student.marks['test' + (i + 1)], testOutOf[i])">
-                                    {{ student.marks['test' + (i + 1)] }}
-                                </td>
-                              </ng-container>
-                          </tr>
-                        </tbody>
-                    </table>
+                  <div class="total-students-needing-attention">
+                    <h3>Students needing attention below.</h3>
+                  </div>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Student Number</th>
+                        <th>Student Name</th>
+                        <th>Student Surname</th>
+                        <th>Student Email</th>
+                        <th>Student Module</th>
+                        <ng-container *ngFor="let test of testOutOf; let i = index">
+                          <th *ngIf="hasTestMarks(i + 1)">Test {{ i + 1 }}</th>
+                        </ng-container>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let student of students">
+                        <!-- Calculate the average and check if it is less than 50 -->
+                        <ng-container *ngIf="getAverage(student) < 50">
+                          <td>{{ student.studentNumber }}</td>
+                          <td>{{ student.name }}</td>
+                          <td>{{ student.surname }}</td>
+                          <td>{{ student.email }}</td>
+                          <td>{{ student.moduleCode }}</td>
+                          <ng-container *ngFor="let test of testOutOf; let i = index">
+                            <td *ngIf="student.marks['test' + (i + 1)] !== ''">{{ student.marks['test' + (i + 1)] }}</td>
+                          </ng-container>
+                        </ng-container>
+                      </tr>
+                    </tbody>
+                  </table>                  
                 </div>
-            </div>
+              </div>
+   
             </div>
           </ion-card-content>
         </ion-card>

@@ -405,20 +405,43 @@ private async retrieveAllStudentsMarks(): Promise<DetailedStudentInfo[]> {
   }
   return students;
 }
+
+getAverage(student: any): number {
+  let totalMarks = 0;
+  let testCount = 0;
+
+  // Loop through the marks and calculate the total
+  for (let i = 0; i < this.testOutOf.length; i++) {
+    const testMark = student.marks['test' + (i + 1)];
+    if (testMark !== '') {
+      totalMarks += +testMark; // Add mark to total
+      testCount++; // Count number of tests with marks
+    }
+  }
+
+  // Calculate the average if there are marks
+  return testCount > 0 ? totalMarks / testCount : 0;
+}
+
   
 private getStudentsNeedingAttention(
   students: DetailedStudentInfo[],
   testOutOf: number[] // Array of test totals (e.g., [50, 100, 75, ...])
 ): DetailedStudentInfo[] {
-  return students.filter(student => {
-    const failedTests = testOutOf.map((outOf, index) => {
+  return students.filter(student => 
+    testOutOf.some((outOf, index) => {
+      // Dynamically get the test key for the student's score (e.g., "test1", "test2")
       const testKey = `test${index + 1}`;
+      // Get the student's score for the current test
       const score = student.marks[testKey];
-      return score !== null && score !== undefined && score <= (outOf ?? 0) * 0.5;
-    }).filter(failed => failed);
-    return failedTests.length > 2;
-  });
+      
+      // Return true if the score is less than or equal to 50% of the test's total
+      return score !== null && score !== undefined && score <= (outOf * 0.5);
+    })
+  );
 }
+
+
 
 private chunkArray<T>(array: T[], size: number): T[][] {
   const chunks: T[][] = [];

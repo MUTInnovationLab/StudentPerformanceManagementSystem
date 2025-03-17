@@ -1,343 +1,149 @@
-$primary-blue: #0078d4;$secondary-blue: #2b579a;
-$light-blue: #deecf9;$white: #ffffff;$gray-100: #f3f2f1;
-$gray-200: #edebe9;$gray-300: #e1dfdd;$gray-400: #a19f9d;
-$gray-800: #323130;$danger: #d92c2c;$success: #28a745;
-$warning: #ffc107;$shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+$primary-blue: #0078d4;
+$secondary-blue: #2b579a;
+$light-blue: #deecf9;
+$white: #ffffff;
+$gray-100: #f3f2f1;
+$gray-200: #edebe9;
+$gray-300: #e1dfdd;
+$gray-400: #a19f9d;
+$gray-800: #323130;
+$danger: #d92c2c;
+$success: #28a745;
+$warning: #ffc107;
+$shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 $shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.15);
 
 .center-content {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 8px; /* Space between icon and text */
+  gap: 8px;
   text-align: center;
 }
 
-:host {display: block; height: 100%;
-}
+:host, ion-content::part(scroll) { display: block; height: 100%; }
 
-ion-content {--background: #{$white};
-&::part(scroll) { height: 100%; }
-}
+ion-content { --background: #{$white}; }
 
-ion-toolbar {--background: #{$primary-blue}; 
---color: #{$white};
-
-  ion-title {font-size: 1.25rem; font-weight: 500;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
+ion-toolbar {
+  --background: $primary-blue;
+  --color: $white;
+  ion-title {
+    font-size: 1.25rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     ion-icon { margin-right: 8px; }
   }
 }
+
 .menu {
   position: absolute;
   top: 50px;
   right: 20px;
-  background-color: white;
+  background: $white;
   border-radius: var(--border-radius);
   box-shadow: var(--box-shadow);
   z-index: 1000;
   width: 200px;
   padding: 10px;
-  border: 2px solid rgba(0, 0, 0, 0.2); /* Light grayish border */
-}
-
-
-.menu ion-item {
-  cursor: pointer;
-  padding: 10px;
-  border-radius: 5px;
-  transition: background-color var(--transition-duration);
-  color: black; /* Text color set to white */
-}
-
-.menu ion-item:hover {
-  background-color: var(--menu-hover-background);
-}
-
-
-.input-container {max-width: 400px;margin: 2rem auto;
-  padding: 2rem;background: $white;border-radius: 12px;
-  box-shadow: $shadow;
-
-  h2 {
-    margin: 0 0 1.5rem;color: $gray-800;
-    font-size: 1.5rem;font-weight: 500;
-    text-align: center;
-  }
+  border: 2px solid rgba(0, 0, 0, 0.2);
 
   ion-item {
-    --background: #{$gray-100};--border-radius: 8px;
-    --padding-start: 16px;--padding-end: 16px;
-    --inner-padding-end: 16px;margin-bottom: 1rem;
-    &:last-of-type { margin-bottom: 1.5rem; }
+    cursor: pointer;
+    padding: 10px;
+    border-radius: 5px;
+    transition: background-color var(--transition-duration);
+    color: black;
+    &:hover { background-color: var(--menu-hover-background); }
+  }
+}
 
+.input-container {
+  max-width: 400px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: $white;
+  border-radius: 12px;
+  box-shadow: $shadow;
+  h2 {
+    margin-bottom: 1.5rem;
+    color: $gray-800;
+    font-size: 1.5rem;
+    font-weight: 500;
+    text-align: center;
+  }
+  ion-item {
+    --background: #{$gray-100};
+    --border-radius: 8px;
+    margin-bottom: 1rem;
+    &:last-of-type { margin-bottom: 1.5rem; }
     ion-label { --color: #{$gray-800}; font-weight: 500; }
-    ion-input {--padding-start: 8px;--padding-end: 8px;
-      --placeholder-color: #{$gray-400};--placeholder-opacity: 1;
+    ion-input {
+      --placeholder-color: #{$gray-400};
+      --placeholder-opacity: 1;
     }
   }
-
   ion-button {
-    margin: 0;height: 48px;
+    height: 48px;
     --border-radius: 8px;
     font-weight: 500;
   }
 }
 
-.meeting-container {
-  height: 100%;position: relative;
-  background: $gray-100;
-  display: flex;flex-direction: column;
-}
-
 .video-grid {
-  flex: 1;display: grid;
+  flex: 1;
+  display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1rem;padding: 1rem;height: calc(100% - 80px);
-  overflow: auto;background: $gray-800;
-  &.with-participants { padding-right: 320px; }
+  gap: 1rem;
+  padding: 1rem;
+  background: $gray-800;
+  overflow: auto;
 
   .video-container {
-    position: relative;background: $gray-800;
-    border-radius: 12px;overflow: hidden;
+    position: relative;
+    background: $gray-800;
+    border-radius: 12px;
+    overflow: hidden;
     aspect-ratio: 16 / 9;
-
-    .video-player {
-      width: 100%;height: 100%;
-      object-fit: cover;
-      background: $gray-800;
-    }
-
+    .video-player { width: 100%; height: 100%; object-fit: cover; }
     .participant-info {
-      position: absolute;bottom: 0;
-      left: 0;right: 0;padding: 12px;
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 12px;
       background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
-      color: $white;display: flex;
+      color: $white;
+      display: flex;
       justify-content: space-between;
       align-items: center;
-
-      .name { font-size: 1rem; font-weight: 500; }
-      .status-icons {
-        display: flex; gap: 8px;ion-icon { font-size: 1.25rem; color: $gray-300; }
-      }
-    }
-  }
-}
-
-.local-video-container {
-  position: absolute;bottom: 100px;
-  right: 1rem;width: 280px;
-  aspect-ratio: 16 / 9;background: $gray-800;
-  border-radius: 12px;overflow: hidden;
-  box-shadow: $shadow-lg; z-index: 100;
-
-  &::before {
-    content: '';position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    border: 2px solid $white;border-radius: 12px;
-    pointer-events: none;
-  }
-}
-
-.participant-container {
-  position: absolute;
-  top: 1rem;right: 1rem;
-  width: 300px;background: $white;
-  border-radius: 12px;box-shadow: $shadow;
-  z-index: 100;
-
-  h3 {
-    margin: 0;padding: 16px;
-    border-bottom: 1px solid $gray-200;
-    font-size: 1rem;font-weight: 600;
-    color: $gray-800;display: flex;
-    align-items: center;gap: 8px;
-    ion-icon { font-size: 1.25rem; color: $primary-blue; }
-  }
-
-  .participant-list {
-    max-height: 400px;overflow-y: auto;
-
-  .participant-item {
-    display: flex;align-items: center;
-    padding: 12px 16px;border-bottom: 1px solid $gray-200;
-    &:last-child { border-bottom: none; }
-
-  .participant-avatar {
-    width: 36px; height: 36px;border-radius: 50%;
-    background: $primary-blue;color: $white;
-    display: flex;align-items: center;
-    justify-content: center;
-    margin-right: 12px;font-weight: 500;
-    font-size: 1rem;
-  }
-
-  .participant-details {
-    flex: 1;display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-  .name { font-size: 0.875rem; font-weight: 500; color: $gray-800; }
-  .status-icons {
-     display: flex;
-     gap: 8px;
-
-     ion-icon {
-     font-size: 1rem;
-     color: $gray-400;
-
-          &.active { color: $success; }
-          }
-        }
-      }
     }
   }
 }
 
 .control-buttons {
-  position: fixed;bottom: 0; left: 0; right: 0;
-  height: 80px;display: flex;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  display: flex;
   justify-content: center;
-  align-items: center;gap: 1rem;
-  padding: 1rem;background: rgba($white, 0.95);
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba($white, 0.95);
   backdrop-filter: blur(10px);
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
   z-index: 1000;
-
-  ion-button {--padding-start: 24px;
-    --padding-end: 24px;--border-radius: 8px;
-    height: 48px;font-weight: 500;
-
-    &.button-solid {
-      --background: #{$primary-blue};
-      --background-hover: #{$secondary-blue};
-      --background-activated: #{$secondary-blue};
-      --background-focused: #{$secondary-blue};
-
-      &.danger {
-        --background: #{$danger};
-        --background-hover: #{darken($danger, 10%)};
-        --background-activated: #{darken($danger, 10%)};
-        --background-focused: #{darken($danger, 10%)};
-      }
-
-      &.warning {
-        --background: #{$warning};
-        --background-hover: #{darken($warning, 10%)};
-        --background-activated: #{darken($warning, 10%)};
-        --background-focused: #{darken($warning, 10%)};
-      }
-    }
-
-    &.button-outline {
-      --border-color: #{$primary-blue};
-      color: #{$primary-blue};
-
-      &:hover {
-        --background: rgba($primary-blue, 0.1);
-      }
-    }
-  }
 }
-
 @media (max-width: 600px) {
-  .video-grid {
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1rem;padding: 1rem;
-    height: calc(100% - 60px);
-  }
+  .video-grid { height: calc(100% - 60px); }
 }
-
 @keyframes fadeIn {
   0% { opacity: 0; }
   100% { opacity: 1; }
 }
-
-.fade-in {
-  animation: fadeIn 0.5s ease-in-out forwards;
-}
-
-.video-wrapper {
-  position: relative;width: 100%;
-  aspect-ratio: 16/9;background: #000;
-  border-radius: 8px;overflow: hidden;
-  transition: all 0.3s ease;
-
-  &.fullscreen {
-    position: fixed;top: 0;
-    left: 0;width: 100vw;
-    height: 100vh;z-index: 1000;
-    border-radius: 0;
-  }
-}
-.video-player {
-  width: 100%;height: 100%;object-fit: cover;
-}
-
-.video-controls {
-  position: absolute;top: 8px;
-  right: 8px;display: flex;
-  gap: 4px;opacity: 0;
-  transition: opacity 0.2s ease;
-  z-index: 2;
-
-  ion-button {
-    --padding-start: 4px;
-    --padding-end: 4px;
-    --background: rgba(0, 0, 0, 0.5);
-    --background-hover: rgba(0, 0, 0, 0.7);
-
-    &:hover {
-      --background: rgba(0, 0, 0, 0.7);
-    }
-  }
-}
-.video-wrapper:hover .video-controls {
-  opacity: 1;
-}
-
-.participant-info {
-  position: absolute;bottom: 0;left: 0;right: 0;
-  padding: 8px;background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
-  color: white;display: flex;justify-content: space-between;
-  align-items: center;z-index: 1;
-
-  .name {
-    font-size: 14px;font-weight: 500;
-  }
-
-  .status-icons {
-    display: flex;gap: 8px;
-
-    ion-icon {
-      font-size: 18px;color: #ff4444;
-    }
-  }
-}
-
-.minimized-videos {
-  position: fixed;bottom: 80px;right: 16px;display: flex;
-  flex-direction: column;gap: 8px;z-index: 100;
-}
-
-.mini-video-container {
-  width: 240px;aspect-ratio: 16/9;background: #000;border-radius: 8px;
-  overflow: hidden;position: relative;box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-
-  .restore-button {
-    position: absolute;top: 4px;right: 4px;
-    --padding-start: 4px;--padding-end: 4px;
-    --background: rgba(0, 0, 0, 0.5);
-  }
-}
-
-
-
-
-
- 
-
-
+.fade-in { animation: fadeIn 0.5s ease-in-out forwards; }
