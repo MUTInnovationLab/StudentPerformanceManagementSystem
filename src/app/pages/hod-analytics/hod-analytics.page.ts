@@ -68,6 +68,10 @@ export class HODANALYTICSPage implements OnInit {
   openMenu() {
     this.menuVisible = !this.menuVisible;
   }
+  Dashboard(){
+    this.router.navigate(['/dashboard']);  // Ensure you have this route set up
+    this.menuVisible = false;  // Hide the menu after selecting
+  }
   goToMeeting() {
     this.router.navigate(['/live-meet']);  // Ensure you have this route set up
     this.menuVisible = false;  // Hide the menu after selecting

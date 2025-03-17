@@ -18,8 +18,15 @@
 
 <ion-content>
   <div *ngIf="menuVisible" class="menu">
-    <ion-item (click)="goToMeeting()">Go to Meeting</ion-item>
-    <ion-item (click)="logout()">Logout</ion-item>
+    <ion-item (click)="Dashboard()">
+      <ion-icon slot="start" name="home-outline"></ion-icon>
+      Dashboard</ion-item>
+    <ion-item (click)="goToMeeting()">
+      <ion-icon slot="start" name="videocam-outline"></ion-icon>
+      Go to Meeting</ion-item>
+    <ion-item (click)="logout()">
+      <ion-icon slot="start" name="videocam-outline"></ion-icon>
+      Logout</ion-item>
   </div>
   <div class="analytics-container">
     <div class="charts-grid">
